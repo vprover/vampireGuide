@@ -1,5 +1,5 @@
 export async function runVampire(problemText, args) {
-  const createVampire = (await import("./vampire/build-ems64/vampire.js")).default;
+  const createVampire = (await import("./vampire.js")).default;
   let stdout = [];
   let stderr = [];
   let resolvePromise;
