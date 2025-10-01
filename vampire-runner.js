@@ -20,6 +20,7 @@ export async function runVampire(problemText, args) {
 
   try {
     const mod = await createVampire(Module);
+    window.mod = mod;    
     mod.FS.mkdir('/work'); // idempotent
     mod.FS.writeFile('/work/input.p', new TextEncoder().encode(problemText));
 
