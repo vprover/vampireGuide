@@ -1,0 +1,58 @@
+<!doctype html>
+<head>
+  <meta charset="utf-8" />
+  <title>Vampire wasm64 runner</title>
+  <style>
+    body { font: 14px/1.35 system-ui, sans-serif; margin: auto; max-width: 980px; }
+    textarea{width:100%;height:12rem}
+    pre{white-space:pre-wrap;background:#111;color:#eee;padding:12px;border-radius:8px}
+    button{padding:.5rem .9rem}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+    label{display:block;font-weight:600;margin:.4rem 0}
+    code.kbd{background:#eee;padding:.1rem .3rem;border-radius:4px}
+  </style>
+</head>
+
+<body>
+  <script src="coi-serviceworker.min.js"></script>
+  
+  <div class="row">
+    <div>
+      <label for="tptp">TPTP problem</label>
+      <textarea id="tptp" placeholder="Paste TPTP here...">
+% Minimal PUZ001+1.p
+fof(someone_killed_agatha, axiom, ( ? [X] : ( lives(X) & killed(X,agatha) ) )).
+fof(agatha_lives, axiom,  lives(agatha)).
+fof(butler_lives, axiom,  lives(butler)).
+fof(charles_lives, axiom, lives(charles)).
+fof(only_three, axiom, ( ! [X] : ( lives(X) => (X = agatha | X = butler | X = charles) ) )).
+fof(killer_hates, axiom,  ( ! [X,Y] : ( killed(X,Y) => hates(X,Y) ) )).
+fof(killer_not_richer, axiom, ( ! [X,Y] : ( killed(X,Y) => ~ richer(X,Y) ) )).
+fof(charles_rule, axiom, ( ! [X] : ( hates(agatha,X) => ~ hates(charles,X) ) )).
+fof(agatha_hates_all_but_butler, axiom, ( ! [X] : ( X != butler => hates(agatha,X) ) )).
+fof(butler_hates_not_richer, axiom, ( ! [X] : ( ~ richer(X,agatha) => hates(butler,X) ) )).
+fof(butler_hates_agatha_hates, axiom, ( ! [X] : ( hates(agatha,X) => hates(butler,X) ) )).
+fof(no_total_haters, axiom, ( ! [X] : ? [Y] : ~ hates(X,Y) )).
+fof(agatha_ne_butler, axiom, agatha != butler).
+fof(goal, conjecture, killed(agatha,agatha)).
+      </textarea>
+    </div>
+    <div>
+      <label for="args">Vampire command-line arguments</label>
+      <textarea id="args" placeholder="Example:
+  --proof on --mode casc"></textarea>
+      <small>
+        If you don’t provide a positional file, <code class="kbd">/work/input.p</code> will be added.
+        Use <code>--</code> to mark end of options if needed.
+      </small>
+    </div>
+  </div>
+
+  <p>
+    <button id="run">Run Vampire</button>
+  </p>
+
+  <pre id="out">Loading…</pre>
+
+  <script type="module" src="script.js"></script>
+</body>
