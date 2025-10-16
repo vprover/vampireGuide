@@ -2,4 +2,31 @@ import VampireRunner from '@site/src/components/VampireRunner';
 
 # Playground
 
-<VampireRunner />
+<!-- Default (shows args, 20rem output max-height) -->
+<VampireRunner
+  defaultProblem={
+`% Minimal PUZ001+1.p
+fof(someone_killed_agatha, axiom, ( ? [X] : ( lives(X) & killed(X,agatha) ) )).
+fof(agatha_lives, axiom,  lives(agatha)).
+fof(butler_lives, axiom,  lives(butler)).
+fof(charles_lives, axiom, lives(charles)).
+fof(only_three, axiom, ( ! [X] : ( lives(X) => (X = agatha | X = butler | X = charles) ) )).
+fof(killer_hates, axiom,  ( ! [X,Y] : ( killed(X,Y) => hates(X,Y) ) )).
+fof(killer_not_richer, axiom, ( ! [X,Y] : ( killed(X,Y) => ~ richer(X,Y) ) )).
+fof(charles_rule, axiom, ( ! [X] : ( hates(agatha,X) => ~ hates(charles,X) ) )).
+fof(agatha_hates_all_but_butler, axiom, ( ! [X] : ( X != butler => hates(agatha,X) ) )).
+fof(butler_hates_not_richer, axiom, ( ! [X] : ( ~ richer(X,agatha) => hates(butler,X) ) )).
+fof(butler_hates_agatha_hates, axiom, ( ! [X] : ( hates(agatha,X) => hates(butler,X) ) )).
+fof(no_total_haters, axiom, ( ! [X] : ? [Y] : ~ hates(X,Y) )).
+fof(agatha_ne_butler, axiom, agatha != butler).
+fof(goal, conjecture, killed(agatha,agatha)).`
+  }
+/>
+
+<!--
+
+    <VampireRunner showArgs={false} />
+    <VampireRunner outputMaxHeight="32rem" />
+    <VampireRunner showArgs={false} outputMaxHeight="28rem" />
+
+-->

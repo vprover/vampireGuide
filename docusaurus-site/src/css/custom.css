@@ -5,8 +5,8 @@
  */
 
 
-*{
-  transition: 0.4s all;
+img, div, span, p, h1, h2, h3, h4, h5, h6, a {
+  transition: 0.25s all;
 }
 
 /* You can override the default Infima variables here. */

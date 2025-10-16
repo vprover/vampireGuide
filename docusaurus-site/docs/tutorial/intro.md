@@ -1,47 +1,95 @@
 ---
 sidebar_position: 1
+title: Introduction to TPTP
 ---
 
-# Tutorial Intro
+import VampireRunner from '@site/src/components/VampireRunner';
 
-Let's discover **Docusaurus in less than 5 minutes**.
+# Introduction to TPTP & Automated Reasoning
 
-## Getting Started
+Welcome! This guide introduces the **TPTP** language (Thousands of Problems for Theorem Provers) and lets you **run problems live** using the Vampire theorem prover below.
 
-Get started by **creating a new site**.
+---
 
-Or **try Docusaurus immediately** with **[docusaurus.new](https://docusaurus.new)**.
+## What is TPTP?
 
-### What you'll need
+TPTP is a standard language and library for sharing logic problems. In the **FOF** (First-Order Form) dialect, each statement is a named formula with a role:
 
-- [Node.js](https://nodejs.org/en/download/) version 20.0 or above:
-  - When installing Node.js, you are recommended to check all checkboxes related to dependencies.
-
-## Generate a new site
-
-Generate a new Docusaurus site using the **classic template**.
-
-The classic template will automatically be added to your project after you run the command:
-
-```bash
-npm init docusaurus@latest my-website classic
+```tptp
+fof(name, role, formula).
 ```
 
-You can type this command into Command Prompt, Powershell, Terminal, or any other integrated terminal of your code editor.
+**Common roles**
 
-The command also installs all necessary dependencies you need to run Docusaurus.
+- `axiom`: Assumed to be true (background knowledge)
+- `hypothesis`: Optional premise
+- `conjecture`: The statement we want to prove (or refute)
 
-## Start your site
+**Quantifiers & Connectives (FOF)**
 
-Run the development server:
+- Universal: `! [X] : φ`  
+- Existential: `? [X] : φ`  
+- Connectives: `&` (and), `|` (or), `~` (not), `=>` (implies), `<=>` (iff)
 
-```bash
-cd my-website
-npm run start
+---
+
+## Example: Who Killed Agatha? (PUZ001+1)
+
+Here’s a classic TPTP puzzle. Read it, then **run it below** in Vampire.
+
+```tptp
+% Minimal PUZ001+1.p
+fof(someone_killed_agatha, axiom, ( ? [X] : ( lives(X) & killed(X,agatha) ) )).
+fof(agatha_lives, axiom,  lives(agatha)).
+fof(butler_lives, axiom,  lives(butler)).
+fof(charles_lives, axiom, lives(charles)).
+fof(only_three, axiom, ( ! [X] : ( lives(X) => (X = agatha | X = butler | X = charles) ) )).
+fof(killer_hates, axiom,  ( ! [X,Y] : ( killed(X,Y) => hates(X,Y) ) )).
+fof(killer_not_richer, axiom, ( ! [X,Y] : ( killed(X,Y) => ~ richer(X,Y) ) )).
+fof(charles_rule, axiom, ( ! [X] : ( hates(agatha,X) => ~ hates(charles,X) ) )).
+fof(agatha_hates_all_but_butler, axiom, ( ! [X] : ( X != butler => hates(agatha,X) ) )).
+fof(butler_hates_not_richer, axiom, ( ! [X] : ( ~ richer(X,agatha) => hates(butler,X) ) )).
+fof(butler_hates_agatha_hates, axiom, ( ! [X] : ( hates(agatha,X) => hates(butler,X) ) )).
+fof(no_total_haters, axiom, ( ! [X] : ? [Y] : ~ hates(X,Y) )).
+fof(agatha_ne_butler, axiom, agatha != butler).
+fof(goal, conjecture, killed(agatha,agatha)).
 ```
 
-The `cd` command changes the directory you're working with. In order to work with your newly created Docusaurus site, you'll need to navigate the terminal there.
+### Try it now
 
-The `npm run start` command builds your website locally and serves it through a development server, ready for you to view at http://localhost:3000/.
+<VampireRunner
+  defaultProblem={
+`% Minimal PUZ001+1.p
+fof(someone_killed_agatha, axiom, ( ? [X] : ( lives(X) & killed(X,agatha) ) )).
+fof(agatha_lives, axiom,  lives(agatha)).
+fof(butler_lives, axiom,  lives(butler)).
+fof(charles_lives, axiom, lives(charles)).
+fof(only_three, axiom, ( ! [X] : ( lives(X) => (X = agatha | X = butler | X = charles) ) )).
+fof(killer_hates, axiom,  ( ! [X,Y] : ( killed(X,Y) => hates(X,Y) ) )).
+fof(killer_not_richer, axiom, ( ! [X,Y] : ( killed(X,Y) => ~ richer(X,Y) ) )).
+fof(charles_rule, axiom, ( ! [X] : ( hates(agatha,X) => ~ hates(charles,X) ) )).
+fof(agatha_hates_all_but_butler, axiom, ( ! [X] : ( X != butler => hates(agatha,X) ) )).
+fof(butler_hates_not_richer, axiom, ( ! [X] : ( ~ richer(X,agatha) => hates(butler,X) ) )).
+fof(butler_hates_agatha_hates, axiom, ( ! [X] : ( hates(agatha,X) => hates(butler,X) ) )).
+fof(no_total_haters, axiom, ( ! [X] : ? [Y] : ~ hates(X,Y) )).
+fof(agatha_ne_butler, axiom, agatha != butler).
+fof(goal, conjecture, killed(agatha,agatha)).`
+  }
+/>
 
-Open `docs/intro.md` (this page) and edit some lines: the site **reloads automatically** and displays your changes.
+---
+
+## Tips for Writing Your Own Problems
+
+- Keep function and predicate names **lowercase** (`lives(agatha)`), variables **uppercase** (`X`, `Y`).
+- Each formula ends with a **period**.
+- Start small: add a few `axiom`s, then a single `conjecture`.
+- If Vampire times out, try adding `--time_limit 2` in the arguments box.
+
+---
+
+## Next Steps
+
+- Learn more: **FOF syntax essentials**  
+- Add arithmetic or equality reasoning  
+- Explore proof outputs and strategies (`--proof on`, `--show_options on`)
