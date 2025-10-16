@@ -5,16 +5,21 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
-# Required for Pages
 permissions:
   contents: read
   pages: write
   id-token: write
 
-# Avoid overlapping deploys
 concurrency:
   group: "pages"
   cancel-in-progress: true
+
+env:
+  # Change this if your Docusaurus site is in a subfolder like "website"
+  SITE_DIR: .
+  # Where your WASM build outputs land; copy them into Docusaurus static/
+  WASM_OUT: dist-wasm
+  STATIC_TARGET: static/vampire-runner
 
 jobs:
   build:
@@ -23,31 +28,59 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # Node for Docusaurus
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: ${{ env.SITE_DIR }}/package-lock.json
+
       # Emscripten toolchain (emcc, emcmake, emconfigure, etc.)
       - name: Setup Emscripten
         uses: mymindstorm/setup-emsdk@v14
         # with:
-        #   version: 3.1.57  # optional: pin a specific SDK version
+        #   version: 3.1.57
 
-      - name: Verify toolchain
+      - name: Verify toolchains
         run: |
           emcc -v
-          emcmake --version || true
+          node -v
+          npm -v
 
+      # Build your WASM
       - name: Make build script executable
         run: chmod +x ./buildVampireWasm.sh
 
-      - name: Build site
+      - name: Build WASM
         run: ./buildVampireWasm.sh
 
-      # Prepare Pages artifact from the REPO ROOT
+      # Ensure Docusaurus has the artifacts in /static so they are copied into /build
+      # (Skip if your script already writes directly to /static)
+      - name: Stage WASM into Docusaurus static/
+        run: |
+          mkdir -p "${{ env.SITE_DIR }}/${{ env.STATIC_TARGET }}"
+          if [ -d "${{ env.WASM_OUT }}" ]; then
+            cp -a "${{ env.WASM_OUT }}/." "${{ env.SITE_DIR }}/${{ env.STATIC_TARGET }}/"
+          fi
+
+      # Install Docusaurus deps & build the site
+      - name: Install deps
+        working-directory: ${{ env.SITE_DIR }}
+        run: npm ci
+
+      - name: Build Docusaurus
+        working-directory: ${{ env.SITE_DIR }}
+        run: npm run build
+
+      # Prepare Pages artifact from Docusaurus build output
       - name: Configure Pages
         uses: actions/configure-pages@v5
 
-      - name: Upload artifact (root)
+      - name: Upload artifact (Docusaurus build/)
         uses: actions/upload-pages-artifact@v3
         with:
-          path: .
+          path: ${{ env.SITE_DIR }}/build
 
   deploy:
     environment:
