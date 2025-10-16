@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1"
+     viewBox="0 0 256 256" width="256" height="256"
+     shape-rendering="geometricPrecision">
+  <!-- Colors baked in for maximum compatibility -->
+  <!-- Background -->
+  <circle cx="128" cy="128" r="120" fill="#0f0f12"/>
+
+  <!-- V (stroke-based) -->
+  <path d="M72 78 L128 194 L184 78"
+        fill="none"
+        stroke="#d0d0f0"
+        stroke-width="13"
+        stroke-linecap="straight"
+        stroke-linejoin="straight"/>
+
+  <!-- Fang chevron -->
+  <path d="M116 168 L128 196 L140 168 L128 180 Z"
+        fill="#c00018"/>
+
+  <!-- Proof node -->
+  <circle cx="120" cy="120" r="4" fill="#c00018"/>
+  <circle cx="136" cy="120" r="4" fill="#c00018"/>
+  <circle cx="128" cy="130" r="4" fill="#c00018"/>
+</svg>

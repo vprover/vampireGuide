@@ -27,7 +27,7 @@ chmod +x smallWasmBuild.sh
 
 # 6. Copy build artifacts back to parent directory
 echo "Copying build artifacts..."
-cp build-ems64/vampire.js build-ems64/vampire.wasm ..
+cp build-ems64/vampire.js build-ems64/vampire.wasm ../docusaurus-site/static/vampire-runner/
 
-echo "Done! Built files are in parent directory."
+echo "Done! Built files are in docusaurus-site/static/vampire-runner."
 
