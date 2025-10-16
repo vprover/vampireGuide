@@ -116,7 +116,7 @@ const config = {
     }),
 
     scripts: [
-      {'src': '/vampireGuide/js/coi-serviceworker.min.js', 'type': 'text/javascript', defer:true}
+      {'src': '/vampireGuide/coi-serviceworker.min.js', 'type': 'text/javascript', defer:true}
     ]
 };
 
