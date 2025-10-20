@@ -1,0 +1,180 @@
+
+
+
+
+%-------------------------------------------------------------
+%\section{An Example}
+
+
+                     \begin{frame}\frametitle{First-Order Theorem
+                         Proving. An Example}
+
+\alert{Group theory theorem:} if a group
+satisfies the identity $x^2 = 1$, then it is commutative. 
+
+\visible<2->{
+  \alert{More formally:}
+  in a group ``\RedViolet{assuming} that $x^2=1$ for all $x$ 
+  \RedViolet{prove} that $x \cdot y = y \cdot x$ 
+  holds for all $x,y$.'' 
+}
+
+\visible<3->{
+  \alert{What is implicit:} axioms of the group theory. 
+  \[
+  \begin{array}{ll}
+          & \forall x(1 \cdot x = x) \\
+          & \forall x(x^{-1} \cdot x = 1) \\
+          & \forall x \forall y \forall z((x \cdot y) \cdot z = x \cdot (y \cdot z))
+  \end{array}
+  \]
+}
+
+                                \end{frame}
+
+%---------------------------------------------------------------------
+
+
+                     \begin{frame}\frametitle{Formulation in First-Order Logic}
+
+
+\[
+  \begin{array}{ll}
+          & \forall x(1 \cdot x = x) \\
+    \Mulberry{\text{Axioms (of group theory):}}
+          & \forall x(x^{-1} \cdot x = 1) \\
+          & \forall x \forall y \forall z((x \cdot y) \cdot z = x \cdot (y \cdot z))\\[2ex]
+    \Mulberry{\text{Assumptions:}}
+          & \forall x(x \cdot x = 1) \\
+    \hline
+    \Mulberry{\text{Conjecture:}}
+          & \forall x \forall y(x \cdot y = y \cdot x)
+  \end{array}
+\]
+
+
+                                \end{frame}
+
+%---------------------------------------------------------------------
+
+
+                            \begin{frame}
+                   \frametitle{In the TPTP Syntax}
+
+
+\small
+The \alert{TPTP} library (\alert{T}housands 
+of \alert{P}roblems for \alert{T}heorem \alert{P}rovers), 
+\RoyalBlue{\url{http://www.tptp.org}} contains a large collection of
+first-order problems.
+
+For representing these problems it uses the \alert{TPTP syntax}, which
+is understood by all modern theorem provers, including Vampire.
+
+\vs<2->{
+In the TPTP syntax this group theory problem can be written down as
+follows: 
+
+\begin{alltt}
+\alert{\%---- 1 * x = x}\\
+\RoyalBlue{fof(left\_identity,axiom,\\
+~~~~\MidnightBlue{\textbf{! [X] : mult(e,X) = X}}).}\\
+\alert{\%---- i(x) * x = 1}\\
+\RoyalBlue{fof(left\_inverse,axiom,\\
+~~~~\MidnightBlue{\textbf{! [X] : mult(inverse(X),X) = e}}).}\\
+\alert{\%---- (x * y) * z = x * (y * z)}\\
+\RoyalBlue{fof(associativity,axiom,\\
+~~~~\MidnightBlue{\textbf{! [X,Y,Z] : mult(mult(X,Y),Z) = mult(X,mult(Y,Z))}}).}\\
+\alert{\%---- x * x = 1}\\
+\RoyalBlue{fof(group\_of\_order\_2,hypothesis,\\
+~~~~\MidnightBlue{\textbf{! [X] :  mult(X,X) = e}}).}\\
+\alert{\%---- prove x * y = y * x}\\
+\RoyalBlue{fof(commutativity,\Fuchsia{\textbf{conjecture}},\\
+~~~~\MidnightBlue{\textbf{! [X] : mult(X,Y) = mult(Y,X)}}).}
+\end{alltt}
+}
+
+                                \end{frame}
+
+%---------------------------------------------------------------------
+
+\begin{frame}
+\frametitle{Running Vampire on a TPTP file}
+
+is easy: simply use
+
+\Blue{%
+\begin{alltt}
+vampire <filename>
+\end{alltt}}
+
+\vs<2->{
+One can also run Vampire with various options, some of them will be
+explained later. For example, save the group theory problem in a file
+\texttt{group.tptp} and try 
+
+\Blue{%
+\begin{alltt}
+vampire --thanks TUWien group.tptp
+\end{alltt}}
+}
+
+                  \end{frame}
+
+
+%---------------------------------------------------------------------
+
+\begin{frame}
+  \frametitle{Proof by Vampire (Slightliy Modified)}
+
+\vspace*{-2ex}
+
+\footnotesize
+\begin{alltt}
+\hskip-3em\alert<7>{Refutation found}.\\*[-0.7ex]
+\hskip-3em\alert<6,7>{\alert<9>{270}. \$false [{\color<8>{blue}trivial inequality removal} 269]}\\*[-0.7ex]
+\hskip-3em\alert<6>{\alert<9>{269}. mult(sk0,sk1) != mult (sk0,sk1) [{\alert<8>{superposition}} 14,125]}\\*[-0.7ex]
+\hskip-3em\alert<6>{\alert<9>{125}. mult(X2,X3) = mult(X3,X2) [\alert<8>{superposition} 21,90]}\\*[-0.7ex]
+\hskip-3em\alert<6>{\alert<9>{90}. mult(X4,mult(X3,X4)) = X3  [{\color<8>{blue}forward demodulation} 75,27]}\\*[-0.7ex]
+\hskip-3em\alert<6>{\alert<9>{75}. mult(inverse(X3),e) = mult(X4,mult(X3,X4)) [\alert<8>{superposition} 22,19]}\\*[-0.7ex]
+\hskip-3em\alert<2,6>{\alert<9>{27}. mult(inverse(X2),e) = X2 [\alert<8>{superposition} 21,11]}\\*[-0.7ex]
+\hskip-3em\alert<6>{\alert<9>{22}. mult(inverse(X4),mult(X4,X5)) = X5 [{\color<8>{blue}forward demodulation} 17,10]}\\*[-0.7ex]
+\hskip-3em\alert<2,6>{\alert<9>{21}. mult(X0,mult(X0,X1)) = X1 [{\color<8>{blue}forward demodulation} 15,10]}\\*[-0.7ex]
+\hskip-3em\alert<6>{\alert<9>{19}. e = mult(X0,mult(X1,mult(X0,X1))) [\alert<8>{superposition} 12,13]}\\*[-0.7ex]
+\hskip-3em\alert<6>{\alert<9>{17}. mult(e,X5) = mult(inverse(X4),mult(X4,X5)) [\alert<8>{superposition} 12,11]}\\*[-0.7ex]
+\hskip-3em\alert<6>{\alert<9>{15}. mult(e,X1) = mult(X0,mult(X0,X1)) [\alert<8>{superposition} 12,13]}\\*[-0.7ex]
+\hskip-3em\alert<4>{\alert<9>{14}. mult(sK0,sK1) != mult(sK1,sK0) [cnf transformation 9]}\\*[-0.7ex]
+\hskip-3em\alert<4>{\alert<9>{13}. e = mult(X0,X0) [cnf transformation 4]}\\*[-0.7ex]
+\hskip-3em\alert<4>{\alert<9>{12}. mult(X0,mult(X1,X2)) = mult(mult(X0,X1),X2) [cnf transformation 3]}\\*[-0.7ex]
+\hskip-3em\alert<4>{\alert<9>{11}. e = mult(inverse(X0),X0) [cnf transformation 2]}\\*[-0.7ex]
+\hskip-3em\alert<4>{\alert<9>{10}. mult(e,X0) = X0 [cnf transformation 1]}\\*[-0.7ex]
+\hskip-3em\alert<2,4,5>{\alert<9>{9}. mult(sK0,sK1) != mult(sK1,sK0) [skolemisation 7,8]}\\*[-0.7ex]
+\hskip-3em \alert<4,5>{\alert<9>{8}. ?[X0,X1]: mult(X0,X1) != mult(X1,X0) <=> mult(sK0,sK1) != mult(sK1,sK0) \\
+\hskip33em[choice axiom]}\\*[-0.7ex]
+\hskip-3em\alert<4>{\alert<9>{7}. ?[X0,X1]: mult(X0,X1) != mult(X1,X0) [ennf transformation 6]}\\*[-0.7ex]
+\hskip-3em\alert<4,7>{\alert<9>{6}. \vampNot![X0,X1]: mult(X0,X1) = mult(X1,X0) [negated conjecture 5]}\\*[-0.7ex]
+\hskip-3em\alert<3>{\alert<9>{5}. ![X0,X1]: mult(X0,X1) = mult(X1,X0) [input]}\\*[-0.7ex]
+\hskip-3em\alert<3>{\alert<9>{4}. ![X0]: e = mult(X0,X0)[input]}\\*[-0.7ex]
+\hskip-3em\alert<3>{\alert<9>{3}. ![X0,X1,X2]: mult(X0,mult(X1,X2)) = mult(mult(X0,X1),X2) [input]}\\*[-0.7ex]
+\hskip-3em\alert<3>{\alert<9>{2}. ![X0]: e = mult(inverse(X0),X0) [input]}\\*[-0.7ex]
+\hskip-3em\alert<3>{\alert<9>{1}. ![X0]: mult(e,X0) = X0 [input]}\\*[-0.7ex]
+\end{alltt}
+
+\vspace*{-3ex}
+
+
+\begin{itemize}
+\item \vs<2->{\alert<2>{Each inference derives a formula from zero or more other formulas;}}
+\item \vs<3->{\alert<3>{Input}, \alert<4>{preprocessing},
+    \alert<5>{new symbols introduction}, \alert<6>{superposition 
+  calculus}}
+\item \vs<7->{\alert<7>{Proof by refutation}, \alert<8>{generating}
+    and
+    {\color<8>{blue}simplifying} inferences,
+  \alert<9>{unused formulas} \ldots}
+\end{itemize}
+
+                                \end{frame}
+
+%---------------------------------------------------------------------
+

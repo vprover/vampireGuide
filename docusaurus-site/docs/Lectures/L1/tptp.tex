@@ -1,0 +1,247 @@
+%---------------------------------------------------------------------
+
+\begin{frame}
+\frametitle{First-Order Logic  and TPTP}
+
+\small
+\begin{itemize}
+\item \alert<1>{Language}: variables, function and predicate
+  (relation) symbols. A {constant 
+  symbol} is a special case of a function symbol.\\
+  \vs<2->{\alert<2>{In TPTP}: {Variable names} start with upper-case letters.}
+\item \vs<3->{\alert<3>{Terms}: variables, constants, and expressions
+  $f(t_1,\ldots,t_n)$, where $f$ is a function symbol of arity $n$ and
+  $t_1,\ldots,t_n$ are terms.} \vs<4->{Terms denote {\color<4>{blue}domain
+  elements}.}
+\item \vs<5->{\alert<5->{Atomic formula:} expression
+      $p(t_1,\ldots,t_n)$, where $p$ is a predicate symbol of arity $n$
+      and $t_1,\ldots,t_n$ are terms.} \vs<6->{Formulas denote
+      {\color<6>{blue}properties of domain elements.}}
+\item \vs<6->{All symbols are uninterpreted, apart from equality $=$.}
+\end{itemize}
+ 
+\smallskip
+
+\begin{center}
+\vs<7->{
+\begin{tabular}{c|c}
+FOL & TPTP \\
+\hline
+$\bot$, $\top$ & 
+  \OliveGreen{\texttt{\$false}, \texttt{\$true}} \\ 
+$\notl a$ &
+   \OliveGreen{\texttt{\~{}a}} \\
+$a_1 \andl \ldots \andl\ a_n$ &
+  \OliveGreen{\texttt{a1 \& \ldots\ \& an}} \\
+$a_1 \orl \ldots \orl\ a_n$ &
+    \OliveGreen{\texttt{a1 | \ldots\ | an}} \\
+$a_1 \implies a_2$ &
+    \OliveGreen{\texttt{a1 => a2}} \\
+$(\forall x_1)\ldots(\forall x_n)a$ &
+   \OliveGreen{\texttt{! [X1,\ldots,Xn] : a}} \\
+$(\exists x_1)\ldots(\exists x_n)a$ &
+   \OliveGreen{\texttt{? [X1,\ldots,Xn] : a}}
+\end{tabular}}
+\end{center}
+
+\end{frame}
+
+%---------------------------------------------------------------------
+
+\begin{frame}
+  \frametitle{More on the TPTP Syntax}
+
+\begin{itemize}
+\item \vs<2->{{\color<2->{blue}Comments};}
+\item \vs<3->{{\color<3->{Fuchsia}Input formula names};}
+\item \vs<4->{\alert{Input formula roles} (very important);}
+\item \vs<5->{\OrangeRed{Equality}}
+\end{itemize}
+
+
+\begin{small}
+\begin{alltt}
+{\color<2->{blue}\%----~1~*~x~{\color<5>{OrangeRed}=}~x}\\
+fof({\color<3->{Fuchsia}left\_identity},\alert<4>{axiom},(\\
+~~!~[X]~:~mult(e,X)~{\color<5>{OrangeRed}=}~X~)).\\
+{\color<2->{blue}\%----~i(x)~*~x~{\color<5>{OrangeRed}=}~1}\\
+fof({\color<3->{Fuchsia}left\_inverse},\alert<4>{axiom},(\\
+~~!~[X]~:~mult(inverse(X),X)~{\color<5>{OrangeRed}=}~e~)).\\
+{\color<2->{blue}\%----~(x~*~y)~*~z~{\color<5>{OrangeRed}=}~x~*~(y~*~z)}\\
+fof({\color<3->{Fuchsia}associativity},\alert<4>{axiom},(\\
+~~!~[X,Y,Z]~:\\
+~~~~~~~mult(mult(X,Y),Z)~{\color<5>{OrangeRed}=}~mult(X,mult(Y,Z))~)).\\
+{\color<2->{blue}\%----~x~*~x~{\color<5>{OrangeRed}=}~1}\\
+fof({\color<3->{Fuchsia}group\_of\_order\_2},\alert<4>{hypothesis},\\
+~~!~[X]~:~mult(X,X)~{\color<5>{OrangeRed}=}~e~).\\
+{\color<2->{blue}\%----~prove~x~*~y~{\color<5>{OrangeRed}=}~y~*~x}\\
+fof({\color<3->{Fuchsia}commutativity},\alert<4>{conjecture},\\
+~~!~[X,Y]~:~mult(X,Y)~{\color<5>{OrangeRed}=}~mult(Y,X)~).
+\end{alltt}
+\end{small}
+
+\end{frame}
+
+%---------------------------------------------------------------------
+%---------------------------------------------------------------------
+
+\begin{frame}
+  \frametitle{Proof by Vampire (Slightly Modified)}
+
+\vspace*{-2ex}
+
+\footnotesize
+\begin{alltt}
+\hskip-3em\alert<7>{Refutation found}.\\*[-0.7ex]
+\hskip-3em\alert<6,7>{\alert<9>{270}. \$false [{\color<8>{blue}trivial inequality removal} 269]}\\*[-0.7ex]
+\hskip-3em\alert<6>{\alert<9>{269}. mult(sk0,sk1) != mult (sk0,sk1) [{\alert<8>{superposition}} 14,125]}\\*[-0.7ex]
+\hskip-3em\alert<6>{\alert<9>{125}. mult(X2,X3) = mult(X3,X2) [\alert<8>{superposition} 21,90]}\\*[-0.7ex]
+\hskip-3em\alert<6>{\alert<9>{90}. mult(X4,mult(X3,X4)) = X3  [{\color<8>{blue}forward demodulation} 75,27]}\\*[-0.7ex]
+\hskip-3em\alert<6>{\alert<9>{75}. mult(inverse(X3),e) = mult(X4,mult(X3,X4)) [\alert<8>{superposition} 22,19]}\\*[-0.7ex]
+\hskip-3em\alert<2,6>{\alert<9>{27}. mult(inverse(X2),e) = X2 [\alert<8>{superposition} 21,11]}\\*[-0.7ex]
+\hskip-3em\alert<6>{\alert<9>{22}. mult(inverse(X4),mult(X4,X5)) = X5 [{\color<8>{blue}forward demodulation} 17,10]}\\*[-0.7ex]
+\hskip-3em\alert<2,6>{\alert<9>{21}. mult(X0,mult(X0,X1)) = X1 [{\color<8>{blue}forward demodulation} 15,10]}\\*[-0.7ex]
+\hskip-3em\alert<6>{\alert<9>{19}. e = mult(X0,mult(X1,mult(X0,X1))) [\alert<8>{superposition} 12,13]}\\*[-0.7ex]
+\hskip-3em\alert<6>{\alert<9>{17}. mult(e,X5) = mult(inverse(X4),mult(X4,X5)) [\alert<8>{superposition} 12,11]}\\*[-0.7ex]
+\hskip-3em\alert<6>{\alert<9>{15}. mult(e,X1) = mult(X0,mult(X0,X1)) [\alert<8>{superposition} 12,13]}\\*[-0.7ex]
+\hskip-3em\alert<4>{\alert<9>{14}. mult(sK0,sK1) != mult(sK1,sK0) [cnf transformation 9]}\\*[-0.7ex]
+\hskip-3em\alert<4>{\alert<9>{13}. e = mult(X0,X0) [cnf transformation 4]}\\*[-0.7ex]
+\hskip-3em\alert<4>{\alert<9>{12}. mult(X0,mult(X1,X2)) = mult(mult(X0,X1),X2) [cnf transformation 3]}\\*[-0.7ex]
+\hskip-3em\alert<4>{\alert<9>{11}. e = mult(inverse(X0),X0) [cnf transformation 2]}\\*[-0.7ex]
+\hskip-3em\alert<4>{\alert<9>{10}. mult(e,X0) = X0 [cnf transformation 1]}\\*[-0.7ex]
+\hskip-3em\alert<2,4,5>{\alert<9>{9}. mult(sK0,sK1) != mult(sK1,sK0) [skolemisation 7,8]}\\*[-0.7ex]
+\hskip-3em \alert<4,5>{\alert<9>{8}. ?[X0,X1]: mult(X0,X1) != mult(X1,X0) <=> mult(sK0,sK1) != mult(sK1,sK0) \\
+\hskip33em[choice axiom]}\\*[-0.7ex]
+\hskip-3em\alert<4>{\alert<9>{7}. ?[X0,X1]: mult(X0,X1) != mult(X1,X0) [ennf transformation 6]}\\*[-0.7ex]
+\hskip-3em\alert<4,7>{\alert<9>{6}. \vampNot![X0,X1]: mult(X0,X1) = mult(X1,X0) [negated conjecture 5]}\\*[-0.7ex]
+\hskip-3em\alert<3>{\alert<9>{5}. ![X0,X1]: mult(X0,X1) = mult(X1,X0) [input]}\\*[-0.7ex]
+\hskip-3em\alert<3>{\alert<9>{4}. ![X0]: e = mult(X0,X0)[input]}\\*[-0.7ex]
+\hskip-3em\alert<3>{\alert<9>{3}. ![X0,X1,X2]: mult(X0,mult(X1,X2)) = mult(mult(X0,X1),X2) [input]}\\*[-0.7ex]
+\hskip-3em\alert<3>{\alert<9>{2}. ![X0]: e = mult(inverse(X0),X0) [input]}\\*[-0.7ex]
+\hskip-3em\alert<3>{\alert<9>{1}. ![X0]: mult(e,X0) = X0 [input]}\\*[-0.7ex]
+\end{alltt}
+
+\vspace*{-3ex}
+
+
+\begin{itemize}
+\item \vs<2->{\alert<2>{Each inference derives a formula from zero or more other formulas;}}
+\item \vs<3->{\alert<3>{Input}, \alert<4>{preprocessing},
+    \alert<5>{new symbols introduction}, \alert<6>{superposition 
+  calculus}}
+\item \vs<7->{\alert<7>{Proof by refutation}, \alert<8>{generating}
+    and
+    {\color<8>{blue}simplifying} inferences,
+  \alert<9>{unused formulas} \ldots}
+\end{itemize}
+
+                                \end{frame}
+
+%---------------------------------------------------------------------
+
+
+%---------------------------------------------------------------------
+
+
+
+                      \begin{frame}
+                 \frametitle{Vampire}
+
+
+\begin{itemize}
+\item \alert{Completely automatic:} once you started a proof attempt,
+  it can only be interrupted by terminating the process.\\[1em]
+
+%\item \visible<2->{Chris Weidenbach: \alert{A dark side of theorem proving.}}
+
+%\item \visible<3->{Anonymous referee: \alert{\textsc{Vampire} is not
+%a glass of Tuborg.}}
+\item \visible<2->{\alert{Champion} of the CASC world-cup  in
+    first-order theorem proving: won CASC $>$ 50
+  times. \\[.5em]
+
+\includegraphics[scale=.4]{vampire_trophies.jpg}
+
+
+}
+\end{itemize}
+
+                               \end{frame}
+
+%---------------------------------------------------------------------
+
+                               \begin{frame}
+              \frametitle{What an Automatic Theorem Prover
+                is Expected to Do}
+
+\OliveGreen{Input:}
+
+\begin{itemize}
+  \item a set of \Blue{axioms} (first order formulas) or clauses;
+
+  \item a \Blue{conjecture} (first-order formula or set of clauses).
+\end{itemize}
+
+\OliveGreen{Output:}
+
+\begin{itemize}
+  \item \RedOrange{proof} (hopefully).
+\end{itemize}
+
+                               \end{frame}
+
+%---------------------------------------------------------------------
+
+                         \begin{frame}
+                     \frametitle{Proof by Refutation}
+
+Given a problem with axioms and assumptions $\xone{F}{n}$ and 
+conjecture $G$,
+
+\begin{enumerate}
+\item negate the conjecture;
+\item establish \alert{unsatisfiability} of the set of formulas
+$\xone{F}{n},\notl G$.
+\end{enumerate}
+
+\bigskip
+
+\visible<2->{
+  Thus, we reduce the theorem proving problem to the problem of
+  \alert{checking unsatisfiability}.
+}
+
+\bigskip
+
+\visible<3->{
+  In this formulation the negation of the conjecture $\notl G$ is
+  treated like any other formula. In fact, Vampire (and other provers)
+  \Fuchsia{internally treat conjectures differently, to make proof search more
+  goal-oriented}. 
+}
+
+
+                                \end{frame}
+
+%---------------------------------------------------------------------
+
+                            \begin{frame}
+                              \frametitle{General Scheme (simplified)}
+
+\begin{itemize}
+\item \alert<1>{Read a problem};
+\item Determine \alert<1>{proof-search options} to be used for this problem;
+\item \alert<1>{Preprocess the problem};
+\item \alert<1>{Convert it into CNF};
+\item {\color<2->{blue}Run a \alert{saturation algorithm} on it, try to derive $false$.}
+\item If $false$ is derived, report the \alert<1>{result}, maybe including
+  a refutation. 
+\end{itemize}
+
+\vs<2->{\color{blue}
+  Trying to derive $false$ using a saturation algorithm is the \alert{hardest
+  part}, which in practice may not terminate or run out of memory.
+}
+
+                                \end{frame}
+

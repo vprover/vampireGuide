@@ -1,0 +1,2 @@
+\beamer@sectionintoc {1}{Inference Systems}{2}{0}{1}
+\beamer@sectionintoc {2}{Selection Functions}{27}{0}{2}

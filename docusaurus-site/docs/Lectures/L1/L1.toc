@@ -1,0 +1,3 @@
+\beamer@sectionintoc {1}{First-Order Theorem Proving - An Example}{2}{0}{1}
+\beamer@subsectionintoc {1}{1}{First-Order Logic and TPTP}{5}{0}{1}
+\beamer@subsectionintoc {1}{2}{Running a First--Order Prover}{22}{0}{1}

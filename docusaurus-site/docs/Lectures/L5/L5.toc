@@ -1,0 +1,2 @@
+\beamer@sectionintoc {1}{Equality (Recap)}{2}{0}{1}
+\beamer@sectionintoc {2}{Term Orderings}{13}{0}{2}

@@ -1,0 +1,701 @@
+\renewcommand{\eql}{=}
+
+%---------------------------------------------------------------------
+
+                       \begin{frame}\frametitle{First-order logic with equality}
+
+\begin{itemize}
+  \item \Blue{Equality predicate}: $\M{\eql}$.
+  \item \Blue{Equality}: $\M{l \eql r}$.
+\end{itemize}
+The order of literals in equalities does not matter, that is, we
+consider an equality $\M{l\eql r}$ as a multiset consisting of
+two terms $\M{l,r}$, and so consider $\M{l\eql r}$ and $\M{r\eql l}$
+equal.
+
+                                \end{frame}
+
+%---------------------------------------------------------------------
+
+
+                  \begin{frame}\frametitle{Equality. An Axiomatisation
+                    (Recap)}
+
+
+\begin{itemize}
+\item \DI{reflexivity}{reflexivity axiom} axiom: $\M{x \eql x}$;
+
+\item \DI{symmetry}{symmetry axiom} axiom: $\M{x \eql y \imply y \eql x}$;
+
+\item \DI{transitivity}{transitivity axiom} axiom: $\M{x \eql y \andl y
+  \eql z \imply x \eql z}$;
+
+\item \DI{function substitution (congruence)}{function substitution axioms} axioms:
+  $\M{x_1 \eql y_1 \andl \ldots \andl x_n \eql y_n \imply f(\xone{x}{n}) \eql
+  f(\xone{y}{n})}$, for every function symbol $\M{f}$;
+
+\item \DI{predicate substitution (congruence)}{predicate substitution axioms} axioms:
+  $\M{x_1 \eql y_1 \andl \ldots \andl x_n \eql y_n \andl P(\xone{x}{n}) \imply
+  P(\xone{y}{n})}$ for every predicate symbol $\M{P}$.
+\end{itemize}
+
+                                \end{frame}
+
+
+%---------------------------------------------------------------------
+
+
+      \begin{frame}\frametitle{Inference systems for logic with equality}
+
+We will define a \alert{resolution and superposition inference
+  system}. This 
+system is \Blue{complete}. One can \Blue{eliminate redundancy}. 
+\bigskip
+
+
+\vs<2->{
+  We will first define it only for \Blue{ground clauses}. On the
+  theoretical side,
+
+  \begin{itemize}
+  \item Completeness is first proved for \Blue{ground clauses} only.\\[.5em]
+
+  \item It is then ``lifted'' to \Blue{arbitrary first-order clauses} using a technique
+    called \Blue{lifting}.\\[.5em]
+
+  \item Moreover, this way some notions 
+    (ordering, selection function) can first be defined for ground
+    clauses only and then it is relatively easy to see how to
+    generalise them for non-ground clauses.
+  \end{itemize}
+}
+                           \end{frame}
+
+%---------------------------------------------------------------------
+
+
+      \begin{frame}\frametitle{Simple Ground Superposition Inference System}
+
+\alert{\underline{Superposition:}} (right and left)
+
+  \M{\[
+    \infer[(\ruleSup),]{
+      s[r] \eql t \orl C \orl D
+      }{
+      \WildStrawberry{l \eql r} \orl C
+      &
+      \WildStrawberry{s[l] \eql t} \orl D
+    }
+    ~~~
+    \infer[(\ruleSup),]{
+      s[r] \neql t \orl C \orl D
+      }{
+      \WildStrawberry{l \eql r} \orl C
+      &
+      \WildStrawberry{s[l] \neql t} \orl D
+    }
+  \]}
+
+\vs<2->{
+\alert{\underline{Equality Resolution:}} 
+
+  \M{\[
+    \infer[(\ruleER),]{
+      C
+      }{
+      \WildStrawberry{s \neql s} \orl C
+    }
+  \]}
+}
+
+\vs<3->{
+\alert{\underline{Equality Factoring:}}
+
+  \M{\[
+    \infer[(\ruleEF),]{
+      s \eql t \orl t \neql t' \orl C
+      }{
+      \WildStrawberry{s \eql t} \orl \WildStrawberry{s \eql t'} \orl C
+    }
+  \]}
+}
+                                \end{frame}
+
+%---------------------------------------------------------------------
+
+
+                            \begin{frame}\frametitle{Example}
+
+  \M{\[
+  \begin{array}{l}
+    f(a) \eql a \orl g(a) \eql a \\
+    f(f(a)) \eql a \orl g(g(a)) \neql a \\     
+    f(f(a)) \neql a     
+  \end{array}
+  \]}
+
+                                \end{frame}
+
+%---------------------------------------------------------------------
+
+
+                     \begin{frame}\frametitle{Can this system be used for
+                         efficient theorem proving?}
+
+Not really. It has \alert{too many inferences}. For example, from
+the clause $\M{f(a) \eql a}$ we can derive any clause of the form
+
+\[ \M{f^m(a) \eql f^n(a)} \]
+
+where $\M{m,n \geq 0}$. 
+
+\vs<2->{
+  Worst of all, the derived clauses can be \alert{much larger} than the
+  original clause $\M{f(a) \eql a}$.
+}
+
+\vs<3->{
+  The recipe is to use the previously introduced ingredients:
+
+  \begin{enumerate}
+  \item Ordering;
+  \item Literal selection;
+  \item Redundancy elimination.
+  \end{enumerate}
+}
+
+                                \end{frame}
+\endinput
+
+%---------------------------------------------------------------------
+
+
+           \begin{frame}\frametitle{Atom and literal orderings on equalities}
+
+Equality atom comparison treats an equality $s \eql t$ as the multiset
+$\mssetof{s,t}$.
+
+\begin{itemize}
+\item \alert{$(s' \eql t') \succl (s \eql t)$} if
+      $\M{\mssetof{s',t'} \succ \mssetof{s,t}}$
+\item \alert{$(s' \neql t') \succl (s \neql t)$} if
+      $\M{\mssetof{s',t'} \succ \mssetof{s,t}}$
+\end{itemize}
+
+%Finally, we assert that \OliveGreen{all non-equality literals be greater
+%than all equality literals}.
+
+with $\succl$  being an induced ordering on literals. 
+
+                                \end{frame}
+
+
+%---------------------------------------------------------------------
+
+
+      \begin{frame}\frametitle{Ground Superposition Inference System $\M{\SUPiss}$}
+
+\small Let $\M\sigma$ be a well-behaved literal selection function. 
+
+\alert{\underline{Superposition:}} (right and left)
+  \M{\[
+    \infer[(\ruleSup),]{
+      s[r] \eql t \orl C \orl D
+      }{
+      \WildStrawberry{\underline{l \eql r}} \orl C
+      &
+      \WildStrawberry{\underline{s[l] \eql t}} \orl D
+    }
+    ~~~
+    \infer[(\ruleSup),]{
+      s[r] \neql t \orl C \orl D
+      }{
+      \WildStrawberry{\underline{l \eql r}} \orl C
+      &
+      \WildStrawberry{\underline{s[l] \neql t}} \orl D
+    }
+  \]}%
+where (i) $\M{l \succ r}$, (ii) $\M{s[l] \succ t}$ \vs<2->{, (iii)
+$\M{\M{l \eql r}}$ is strictly greater than any literal in $\M C$,\\
+(iv) (only for the superposition-right rule) $\M{\M{s[l] \eql t}}$ is greater than or equal to
+any literal in $\M D$. }
+
+
+\vs<3->{
+\alert{\underline{Equality Resolution:}} 
+
+  \M{\[
+    \infer[(\ruleER),]{
+      C
+      }{
+      \WildStrawberry{\underline{s \neql s}} \orl C
+    }
+  \]}
+}
+
+\vs<4->{
+\alert{\underline{Equality Factoring:}}
+
+  \M{\[
+    \infer[(\ruleEF),]{
+      s \eql t \orl t \neql t' \orl C
+      }{
+      \WildStrawberry{\underline{s \eql t}} \orl s \eql t' \orl C
+    }
+  \]}
+where (i) $\M{s \succ t \succeq t'}$; (ii) $\M{\M{s \eql t}}$ is greater
+than or equal to any literal in $\M C$.
+}
+
+                                \end{frame}
+
+
+%---------------------------------------------------------------------
+
+         \begin{frame}\frametitle{Extension to arbitrary (non-equality) literals}
+
+\begin{itemize}
+\item Consider a \Blue{two-sorted logic} in which equality is the only predicate
+symbol.
+
+\item Interpret terms as terms of the first sort and \Blue{non-equality atoms
+as terms of the second sort}.
+
+\item Add a \alert{constant $\M\top$ of the second sort}.
+
+\item Replace \Blue{non-equality atoms $\M{p(\xone{t}{n})}$ by
+equalities of the second sort $\M{p(\xone{t}{n}) \eql \top}$}.
+\end{itemize}
+
+\vs<2->{
+For example, the clause
+
+  \[
+    p(a,b) \orl \notl q(a) \orl a \neq b
+  \]
+becomes
+
+  \[
+    p(a,b) \eql \top \orl q(a) \neql \top \orl a \neq b.
+  \]
+}
+
+                     \end{frame}
+
+%---------------------------------------------------------------------
+
+             \begin{frame}\frametitle{Binary resolution inferences can be
+                 represented by inferences in the superposition system}
+
+We ignore selection functions.
+
+  \[\M{
+      \infer[(\BRr)]{C_1 \orl C_2}{A \orl C_1 & \notl A \orl C_2}}
+  \]
+
+  \[\M{
+      \infer[(\ruleER)]{
+        C_1 \orl C_2
+        }{
+        \infer[(\ruleSup)]{
+          \top \neql \top \orl C_1 \orl C_2
+          }{
+          A \eql \top \orl C_1 & A \neql \top \orl C_2
+        }
+      }
+  }\]
+
+                     \end{frame}
+
+%---------------------------------------------------------------------
+
+             \begin{frame}\frametitle{Exercise}
+
+\PineGreen{Positive factoring can also be
+represented by inferences in the superposition system.}
+
+                     \end{frame}
+
+                     \end{document}%end of lecture 14
+
+\section{Term Orderings}
+%---------------------------------------------------------------------
+
+\begin{frame}
+\frametitle{Simplification Ordering}
+
+
+When we deal with equality, we need to work with \alert{term
+  orderings}. 
+
+Consider a strict ordering $\M{\succ}$ on signature symbols, such that
+$\M{\succ}$ is well-founded. 
+
+
+%The only restriction we imposed on term orderings was 
+%\Blue{well-foundedness} and \Blue{stability under substitutions}.
+%When we deal with equality, these two properties are insufficient.
+%We need a third property, called \alert{monotonicity}.
+
+The ordering $\M{\succ}$ on terms is called a \alert{simplification ordering}
+if
+
+\begin{enumerate}
+\item $\M{\succ}$ is \Blue{well-founded};
+\item $\M{\succ}$ is \Blue{monotonic}: 
+if $\M{l \succ r}$, then $\M{s[l] \succ s[r]}$;
+\item $\M{\succ}$ is \Blue{stable under substitutions}: 
+if $\M{l \succ r}$, then $\M{l\theta \succ r\theta}$.
+\end{enumerate}
+
+\vs<2->{
+One can combine the last two properties into one:
+
+\begin{enumerate}
+  \item [2a.] If $\M{l \succ r}$, then
+  $\M{s[l\theta] \succ s[r\theta]}$.
+\end{enumerate}
+}
+                                \end{frame}
+
+%---------------------------------------------------------------------
+
+                     \begin{frame}\frametitle{A General Property of Term Orderings}
+
+If $\M{\succ}$ is a simplification ordering, then for every term $\M{t[s]}$
+and its proper subterm $\M{s}$ we have $\M{s \not \succ t[s]}$. {\Blue{Why?}}
+
+\medskip
+
+\vs<2->{
+Consider an example.
+
+  \[\M{
+    \begin{array}{l}
+      f(a) \eql a \\
+      f(f(a)) \eql a \\
+      f(f(f(a))) \eql a
+    \end{array}}
+  \]
+Then both $\M{f(f(a)) \eql a}$ and $\M{f(f(f(a))) \eql a}$
+are \alert{redundant}. The clause $f(a) \eql a$ is a logical consequence
+of $\M{\setof{f(f(a)) \eql a,f(f(f(a))) \eql a}}$ but is \alert{not
+redundant}.
+}
+
+\bigskip
+
+
+\vs<3->{\Blue{Exercise: Show that $\M{\{ f(a)=a, f(f(f(a)))\neql a\}}$ is
+  unsatisfiable, by using superposition with redundancy elimination}. }
+
+\bigskip
+
+\vs<4->{How to ``come up'' with \alert{simplification orderings}?}
+                                \end{frame}
+
+%---------------------------------------------------------------------
+
+
+
+                           \begin{frame}\frametitle{Term Algebra}
+
+
+\alert{Term algebra $\TA(\Sigma)$} of signature $\M{\Sigma}$:
+
+\begin{itemize}
+\item \Blue{Domain}: the set of all ground terms of $\M\Sigma$.
+\item \Blue{Interpretation of any function symbol $\M f$ or constant
+      $\M c$ is defined as follows:}:
+
+  \[\M{
+    \begin{array}{rcl}
+    f_{\TA(\Sigma)}(\xone{t}{n}) & \bydef & f(\xone{t}{n}); \\
+    c_{\TA(\Sigma)} & \bydef & c.
+    \end{array}
+  }\]
+\end{itemize}
+
+
+
+                               \end{frame}
+
+
+%---------------------------------------------------------------------
+
+                     \begin{frame}\frametitle{Knuth-Bendix Ordering (KBO), Ground Case}
+
+
+\begin{columns}
+\column{0.5\textwidth}
+Let us fix
+
+\begin{itemize}
+  \item Signature $\M{\Sigma}$, it induces the \alert{term algebra} 
+  $\M{\TA(\Sigma)}$.
+
+  \item Total ordering $\M{\gg}$ on $\M{\Sigma}$, called \alert{precedence
+  relation};
+
+  \item \alert{Weight function} $\M{w: \Sigma \rightarrow \nat}$.\\
+\end{itemize}
+
+\vs<2->{\alert{Weight} of a  ground term $t$ is
+
+    \[
+       |g(t_1,\ldots,t_n)| =
+        w(g)+ \sum_{i=1}^n |t_i|.
+   \]
+}
+
+\column{0.5\textwidth}
+\vs<3->{
+\alert{$g(t_1,\ldots,t_n) \KBo h(s_1,\ldots,s_m)$} if
+\begin{enumerate}
+  \item \vs<4->{$\M{|g(t_1,\ldots,t_n)|>|h(s_1,\ldots,s_m)|}$
+
+  \OliveGreen{(by weight)} or}
+
+  \item \vs<5->{$\M{|g(t_1,\ldots,t_n)|=|h(s_1,\ldots,s_m)|}$ and one of the following
+  holds:
+
+  \begin{enumerate}
+     \item $\M{g \gg h}$ \OliveGreen{(by precedence)} or
+     \item  \vs<6->{$\M{g=h}$ and for some $\M{1 \leq i \leq n}$ we have
+     $\M{t_1=s_1,\ldots,t_{i-1}=s_{i-1}}$ and $\M{t_i \KBo s_i}$ 
+     \OliveGreen{(lexicographically)}.}
+   \end{enumerate}}
+\end{enumerate}
+}
+\end{columns}
+
+                                \end{frame}
+
+%---------------------------------------------------------------------
+\begin{frame}
+\frametitle{Example}
+
+\[
+\begin{array}{rcl}
+ w(a) & = & 1 \\
+ w(b) & = & 2 \\
+ w(f) & = & 3 \\
+ w(g) & = & 0 
+\end{array}
+\]
+
+\[
+   |f(g(a),f(a,b))| \vs<2->{= |3(0(1),3(1,2))|} \vs<3->{= 3+0+1+3+1+2} \vs<4->{= 10.}
+\]
+
+%\vs<5->{
+%  There exists also a \Blue{non-ground version} of the Knuth-Bendix ordering
+ % and a (nearly) \alert{linear time algorithm} for term comparison using this
+ % ordering. 
+%}
+
+\vskip1em
+
+\vs<5->{
+  The Knuth-Bendix ordering is the \alert{main ordering} used in Vampire and
+  all other resolution and superposition theorem provers.
+}
+
+\end{frame}
+
+%---------------------------------------------------------------------
+        \begin{frame}\frametitle{Knuth-Bendix Ordering (KBO),
+                         Ground Case\vs<1>{{\small : Summary} }}
+
+
+\begin{columns}
+\column{0.5\textwidth}
+Let us fix
+
+\begin{itemize}
+  \item Signature $\M{\Sigma}$, it induces the \alert{term algebra} 
+  $\M{\TA(\Sigma)}$.
+
+  \item Total ordering $\M{\gg}$ on $\M{\Sigma}$, called \alert{precedence
+  relation};
+
+  \item \alert{Weight function} $\M{w: \Sigma \rightarrow \nat}$.\\
+\end{itemize}
+
+\vs<1->{\alert{Weight} of a  ground term $t$ is
+
+    \[
+       |g(t_1,\ldots,t_n)| =
+        w(g)+ \sum_{i=1}^n |t_i|.
+   \]
+}
+
+\column{0.5\textwidth}
+\vs<1->{
+\alert{$g(t_1,\ldots,t_n) \KBo h(s_1,\ldots,s_m)$} if
+\begin{enumerate}
+  \item \vs<1->{$\M{|g(t_1,\ldots,t_n)|>|h(s_1,\ldots,s_m)|}$
+
+  \OliveGreen{(by weight)} or}
+
+  \item \vs<1->{$\M{|g(t_1,\ldots,t_n)|=|h(s_1,\ldots,s_m)|}$ and one of the following
+  holds:
+
+  \begin{enumerate}
+     \item $\M{g \gg h}$ \OliveGreen{(by precedence)} or
+     \item  \vs<1->{$\M{g=h}$ and for some $\M{1 \leq i \leq n}$ we have
+     $\M{t_1=s_1,\ldots,t_{i-1}=s_{i-1}}$ and $\M{t_i \KBo s_i}$ 
+     \OliveGreen{{\small (lexicographically, i.e. left-to-right)}}.}
+   \end{enumerate}}
+\end{enumerate}
+}
+\end{columns}
+
+\vspace*{1em}
+
+\vs<2->{Note: \alert{Weight functions} $\M{w}$ are \Blue{\bf not arbitrary
+    functions}\\ -- need to be ``compatible'' with $\M{\gg}$.}
+
+\bigskip
+\vs<3->{Why? Compare for example $a$ and $f(a)$ with arbitrary $\gg$
+  and $w$.}
+
+\end{frame}
+
+
+ % ---------------------------------------------------------
+\begin{frame}{Weight Functions, Ground Case}
+
+    A \alert{weight function} $\M{w: \Sigma \rightarrow \nat}$
+    is any function satisfying:
+
+    \begin{itemize}
+    \item $w(a)>0$ for any constant $a\in\Sigma$;\\[.5em]
+      
+    \item if $w(f)=0$ for a unary function $f\in\Sigma$, then $f\gg g$
+      for all functions $g\in\Sigma$ with $f\neq g$.\\
+
+      That is, $f$ is the greatest element of $\Sigma$ wrt $\gg$.
+      
+     \end{itemize}
+
+     \bigskip
+As a consequence, there is at most one unary function $f$ with
+$w(f)=0$.
+
+
+\end{frame}
+
+%-----------------------------------------
+
+%
+
+      \begin{frame}\frametitle{Same Property as for $\BRiss$}
+
+The conclusion is \alert{strictly smaller} than the rightmost premise:
+
+ \M{\[
+    \infer[(\ruleSup),]{
+      s[r] \eql t \orl C \orl D
+      }{
+      \WildStrawberry{\underline{l \eql r}} \orl C
+      &
+      \WildStrawberry{\underline{s[l] \eql t}} \orl D
+    }
+    ~~~
+    \infer[(\ruleSup),]{
+      s[r] \neql t \orl C \orl D
+      }{
+      \WildStrawberry{\underline{l \eql r}} \orl C
+      &
+      \WildStrawberry{\underline{s[l] \neql t}} \orl D
+    }
+  \]}%
+where (i) $\M{l \succ r}$, (ii) $\M{s[l] \succ t}$, (iii)
+$\M{\M{l \eql r}}$ is strictly greater than any literal in $\M C$,
+(iv) $\M{\M{s[l] \eql t}}$ is greater than or equal to
+any literal in $\M D$.
+
+
+                               \end{frame}
+
+%---------------------------------------------------------------------
+
+
+      \begin{frame}\frametitle{New redundancy}
+
+Consider a superposition with a unit left premise:
+
+ \[
+    \infer[(\ruleSup),]{
+      s[r] \eql t \orl D
+      }{
+      \underline{l \eql r}
+      &
+      \underline{s[l] \eql t} \orl D
+    }
+ \]
+
+Note that we have
+
+ \[
+     l \eql r,
+      s[r] \eql t \orl D
+     \alert{\models}
+      s[l] \eql t \orl D
+\]
+
+\vs<2->{
+and we have
+
+ \[
+ s[l] \eql t \orl D
+ \alert{\succ}
+ s[r] \eql t \orl D.
+ \]
+}
+
+\vs<3->{
+If we also have $s[l] \eql t \orl D \succ l\eql r$, then the second
+premise is \alert{redundant} and can be removed.
+}
+
+\medskip
+
+\vs<4->{
+  This rule (superposition plus deletion) is sometimes called
+  \alert{demodulation} (also \alert{rewriting by unit equalities}).
+}
+
+
+                               \end{frame}
+
+
+
+%---------------------------------------------------------------------
+\begin{frame}
+\frametitle{Exercise}
+Consider the KBO ordering $\succ$ generated by:\\[.5em]
+
+-- the precedence $ P\gg Q\gg f\gg a$;\\[.5em]
+
+and\\[.5em]
+
+-- the weight function $w$ with $w(P)=w(Q)=2$, $w(f)=w(a)=1$.\\[1em]
+
+
+Consider the set of clauses $S$ to be: 
+\[\begin{array}{l}
+{Q(a)},\\
+ {\neg Q(a)}\vee f(a)=a, \\ 
+ {\neg P(a)},\\ {P(f(a))}\}.
+\end{array}\] 
+
+Apply saturation on $S$ by using an inferece process with redundancy
+based on the (ground) superposition calculus $\SUPiss$. 
+\end{frame}
+
+
+
+
+

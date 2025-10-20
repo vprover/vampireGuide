@@ -1,0 +1,262 @@
+
+                           
+
+
+%---------------------------------------------------------------------
+
+        	   \begin{frame}\frametitle{Selection Function}
+
+A \alert{literal selection function} selects literals in a clause.
+
+\begin{itemize}
+\item If $C$ is non-empty, then \Blue{at least one literal 
+is selected} in $C$.
+\end{itemize}
+
+\medskip
+
+\vs<2->{
+We denote selected literals by \OliveGreen{\underline{underlining them}}, e.g.,
+
+  \[
+    \underline{p} \orl \notl q
+  \]
+}
+
+\vs<3->{
+\alert{Note:} selection function does not have to be a function. It can be
+any oracle that selects literals.
+}
+
+                           \end{frame}
+
+
+%---------------------------------------------------------------------
+
+              	   \begin{frame}
+           \frametitle{Binary Resolution with Selection}
+
+We introduce a family of inference systems, \OliveGreen{parametrised} by a
+literal selection function $\sel$.
+
+The \DII{binary resolution inference system}{binary 
+resolution!inference system}{inference system!binary resolution},
+denoted by \alert{$\BRis_{\sel}$}, consists of two inference rules:
+
+\begin{itemize}
+\item
+  \Blue{Binary resolution},
+  denoted by \DI{$\BRr$}{BR@$\protect\BRr$}
+
+  \[\M{
+      \infer[(\BRr).]{C_1 \orl C_2}{\underline{p} \orl C_1 & 
+                                    \underline{\notl p} \orl C_2}
+  }\]
+
+\item \vs<2->{
+\Blue{Positive factoring},
+denoted by \DI{$\Fact$}{Fact@$\protect\Fact$}:
+
+  \[\M{
+    \begin{array}[b]{l}
+      \infer[(\Fact).]{p \orl C}{\underline{p} \orl \underline{p} \orl C}
+    \end{array}}
+  \]}
+\end{itemize}
+
+                           \end{frame}
+
+%---------------------------------------------------------------------
+
+\begin{frame}
+\frametitle{Completeness?}
+
+Binary resolution with selection may be \alert{incomplete},
+even when factoring is unrestricted (also applied to negative
+literals). 
+
+\medskip
+
+\begin{columns}
+\column{0.5\textwidth}
+\vs<2->{
+  Consider this set of clauses:
+
+  \[
+  \begin{array}{ll}
+    (1) & \lnot q \lor \underline{r} \\
+    (2) & \lnot p \lor \underline{q} \\
+    (3) & \lnot r \lor \underline{\lnot q} \\
+    (4) & \lnot q \lor \underline{\lnot p} \\
+    (5) & \lnot p \lor \underline{\lnot r} \\
+    (6) & \lnot r \lor \underline{p} \\
+    (7) & r \lor q \lor \underline{p}
+  \end{array}
+  \]
+}
+
+\column{0.5\textwidth}
+\vs<3->{
+  It is unsatisfiable:
+  \[
+  \begin{array}{lll}
+    (8) & q \lor p & (6,7) \\
+    (9) & q  & (2,8) \\
+    (10) & r & (1,9) \\
+    (11) & \lnot q & (3,10) \\
+    (12) & \emptyclause & (9,11)
+  \end{array}
+  \]
+  Note the \Blue{linear representation of derivations} (used by Vampire
+  and many other provers).
+}
+
+\end{columns}
+
+\medskip
+
+\vs<3->{
+  However, any inference with selection applied to this set of clauses
+  give either a clause in this set, or a clause containing a clause in
+  this set.
+}
+
+
+                           \end{frame}
+
+%---------------------------------------------------------------------
+
+
+\begin{frame}
+  \frametitle{Literal Orderings}
+
+  Take any \alert{well-founded ordering} $\succ$ on atoms, that is, an
+  ordering such that there is no infinite decreasing chain of atoms:
+
+  \[
+  A_0 \succ A_1 \succ A_2 \succ \cdots
+  \]
+In the sequel $\succ$ will always denote a well-founded ordering.
+
+\medskip
+
+
+\vs<2->{
+Extend it to an ordering on literals by:
+
+\begin{itemize}
+  \item If $p \succ q$, then $p \succ \notl q$ and $\notl p \succ q$;
+  \item $\notl p \succ p$.
+\end{itemize}
+}
+
+\medskip
+\vs<3->{\Blue{Example:} Given $p_6 \succ p_5 \succ p_4 \succ p_3 \succ
+  p_2 \succ p_1$. What is the extended ordering on literals?}
+
+\medskip
+
+\vs<4->{
+  \PineGreen{\textbf{Exercise:} prove that the induced ordering on literals is
+    well-founded too.}
+}
+
+\end{frame}
+
+%---------------------------------------------------------------------
+
+
+\begin{frame}
+  \frametitle{Orderings and Well-Behaved Selections}
+
+Fix an ordering $\succ$. A literal selection function is
+\alert{well-behaved} if 
+
+\begin{itemize}
+\item either a
+  \Fuchsia{negative literal} is selected, 
+  \\
+  or all
+\PineGreen{maximal literals (w.r.t. $\succ$)} must be selected in $C$.
+\end{itemize}
+
+\medskip
+
+\visible<2->{
+  To be well-behaved, we sometimes must select more than one different
+  literal in a clause. Example: $p \orl p$ or $p(x) \orl p(y)$.
+}
+
+
+                                \end{frame}
+
+%---------------------------------------------------------------------
+
+
+\begin{frame}
+  \frametitle{Completeness of Binary Resolution with Selection}
+
+
+Binary resolution with selection is \alert{complete for every
+  well-behaved selection function}.
+
+\bigskip
+
+\vs<2->{
+\begin{columns}
+\column[t]{0.5\textwidth}
+Consider our previous example:
+
+  \[
+  \begin{array}{ll}
+    (1) & \lnot q \lor \underline{r} \\
+    (2) & \lnot p \lor \underline{q} \\
+    (3) & \lnot r \lor \underline{\lnot q} \\
+    (4) & \lnot q \lor \underline{\lnot p} \\
+    (5) & \lnot p \lor \underline{\lnot r} \\
+    (6) & \lnot r \lor \underline{p} \\
+    (7) & r \lor q \lor \underline{p}
+  \end{array}
+  \]
+
+\column[t]{0.5\textwidth}
+A well-behave selection function must satisfy:
+
+\begin{enumerate}
+\item $r \succ q$, because of $(1)$
+\item $q \succ p$, because of $(2)$
+\item $p \succ r$, because of $(6)$
+\end{enumerate}
+There is no ordering that satisfies these conditions.
+\end{columns}
+}
+
+\end{frame}
+
+%---------------------------------------------------------------------
+
+\begin{frame}
+  \frametitle{Example}
+
+  Let $p,q$ be boolean atoms and let $S$ be the following set of
+  ground formulas:
+
+  \[ \{\lnot p \lor \lnot q, \quad \lnot p \lor q, \quad p\lor \lnot
+    q, \quad p\lor q     \} \]
+
+  Take any ordering such that $p\succ q$ and any selection function
+  $\sigma$ over $S$ such that
+
+    \[ \{\lnot p \lor \underline{\lnot q}, \quad \underline{\lnot p} \lor q, \quad p\lor \underline{\lnot
+        q}, \quad \underline{p}\lor q     \} \]
+
+    \begin{itemize}
+      \item[(a)] Is $\sigma$ a well-behaved selection function over
+        $S$?
+
+        \item<2->[(b)] How many inferences of $\BRis_{\sel}$ are
+          applicable to $S$? 
+     \end{itemize}
+  
+   \end{frame}
+

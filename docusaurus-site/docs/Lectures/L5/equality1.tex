@@ -1,0 +1,241 @@
+\renewcommand{\eql}{=}
+
+
+      \begin{frame}\frametitle{Simple Ground Superposition Inference System}
+
+\alert{\underline{Superposition:}} (right and left)
+
+  \M{\[
+    \infer[(\ruleSup),]{
+      s[r] \eql t \orl C \orl D
+      }{
+      \WildStrawberry{l \eql r} \orl C
+      &
+      \WildStrawberry{s[l] \eql t} \orl D
+    }
+    ~~~
+    \infer[(\ruleSup),]{
+      s[r] \neql t \orl C \orl D
+      }{
+      \WildStrawberry{l \eql r} \orl C
+      &
+      \WildStrawberry{s[l] \neql t} \orl D
+    }
+  \]}
+
+\vs<1->{
+\alert{\underline{Equality Resolution:}} 
+
+  \M{\[
+    \infer[(\ruleER),]{
+      C
+      }{
+      \WildStrawberry{s \neql s} \orl C
+    }
+  \]}
+}
+
+\vs<2->{
+\alert{\underline{Equality Factoring:}}
+
+  \M{\[
+    \infer[(\ruleEF),]{
+      s \eql t \orl t \neql t' \orl C
+      }{
+      \WildStrawberry{s \eql t} \orl \WildStrawberry{s \eql t'} \orl C
+    }
+  \]}
+}
+                                \end{frame}
+
+%---------------------------------------------------------------------
+
+
+                     \begin{frame}\frametitle{Can this system be used for
+                         efficient theorem proving?}
+
+Not really. It has \alert{too many inferences}. For example, from
+the clause $\M{f(a) \eql a}$ we can derive any clause of the form
+
+\[ \M{f^m(a) \eql f^n(a)} \]
+
+where $\M{m,n \geq 0}$.
+
+\bigskip
+
+\vs<1->{
+  Worst of all, the derived clauses can be \alert{much larger} than the
+  original clause $\M{f(a) \eql a}$.
+}
+
+\bigskip
+
+\vs<2->{
+  The recipe is to use the previously introduced ingredients:
+
+  \begin{enumerate}
+  \item Ordering;
+  \item Literal selection;
+  \item Redundancy elimination.
+  \end{enumerate}
+}
+
+                                \end{frame}
+
+
+%---------------------------------------------------------------------
+
+
+           \begin{frame}\frametitle{Atom and literal orderings on equalities}
+
+Equality atom comparison treats an equality $s \eql t$ as the multiset
+$\mssetof{s,t}$.
+
+\begin{itemize}
+\item \alert{$(s' \eql t') \succl (s \eql t)$} if
+      $\M{\mssetof{s',t'} \succ \mssetof{s,t}}$
+\item \alert{$(s' \neql t') \succl (s \neql t)$} if
+      $\M{\mssetof{s',t'} \succ \mssetof{s,t}}$
+\end{itemize}
+
+%Finally, we assert that \OliveGreen{all non-equality literals be greater
+%than all equality literals}.
+
+with $\succl$  being an induced ordering on literals. 
+
+                                \end{frame}
+
+
+%---------------------------------------------------------------------
+
+
+      \begin{frame}\frametitle{Ground Superposition Inference System $\M{\SUPiss}$}
+
+\small Let $\M\sigma$ be a well-behaved literal selection function. 
+
+\alert{\underline{Superposition:}} (right and left)
+  \M{\[
+    \infer[(\ruleSup),]{
+      s[r] \eql t \orl C \orl D
+      }{
+      \WildStrawberry{\underline{l \eql r}} \orl C
+      &
+      \WildStrawberry{\underline{s[l] \eql t}} \orl D
+    }
+    ~~~
+    \infer[(\ruleSup),]{
+      s[r] \neql t \orl C \orl D
+      }{
+      \WildStrawberry{\underline{l \eql r}} \orl C
+      &
+      \WildStrawberry{\underline{s[l] \neql t}} \orl D
+    }
+  \]}%
+where (i) $\M{l \succ r}$, (ii) $\M{s[l] \succ t}$ \vs<1->{, (iii)
+$\M{\M{l \eql r}}$ is strictly greater than any literal in $\M C$,\\
+(iv) (only for the superposition-right rule) $\M{\M{s[l] \eql t}}$ is greater than or equal to
+any literal in $\M D$. }
+
+\smallskip
+
+\vs<1->{
+\alert{\underline{Equality Resolution:}} 
+
+  \M{\[
+    \infer[(\ruleER),]{
+      C
+      }{
+      \WildStrawberry{\underline{s \neql s}} \orl C
+    }
+  \]}
+}
+
+\smallskip
+
+\vs<1->{
+\alert{\underline{Equality Factoring:}}
+
+  \M{\[
+    \infer[(\ruleEF),]{
+      s \eql t \orl t \neql t' \orl C
+      }{
+      \WildStrawberry{\underline{s \eql t}} \orl s \eql t' \orl C
+    }
+  \]}
+where (i) $\M{s \succ t \succeq t'}$; (ii) $\M{\M{s \eql t}}$ is greater
+than or equal to any literal in $\M C$.
+}
+
+                                \end{frame}
+
+
+                                
+
+%---------------------------------------------------------------------
+
+         \begin{frame}\frametitle{Extension to arbitrary (non-equality) literals}
+
+\begin{itemize}
+\item Consider a \Blue{two-sorted logic} in which equality is the only predicate
+symbol.
+
+\item Interpret terms as terms of the first sort and \Blue{non-equality atoms
+as terms of the second sort}.
+
+\item Add a \alert{constant $\M\top$ of the second sort}.
+
+\item Replace \Blue{non-equality atoms $\M{p(\xone{t}{n})}$ by
+equalities of the second sort $\M{p(\xone{t}{n}) \eql \top}$}.
+\end{itemize}
+
+\vs<2->{
+For example, the clause
+
+  \[
+    p(a,b) \orl \notl q(a) \orl a \neq b
+  \]
+becomes
+
+  \[
+    p(a,b) \eql \top \orl q(a) \neql \top \orl a \neq b.
+  \]
+}
+
+                     \end{frame}
+
+%---------------------------------------------------------------------
+
+             \begin{frame}\frametitle{Binary resolution inferences can be
+                 represented by inferences in the superposition system}
+
+We ignore selection functions.
+
+  \[\M{
+      \infer[(\BRr)]{C_1 \orl C_2}{A \orl C_1 & \notl A \orl C_2}}
+  \]
+
+  \[\M{
+      \infer[(\ruleER)]{
+        C_1 \orl C_2
+        }{
+        \infer[(\ruleSup)]{
+          \top \neql \top \orl C_1 \orl C_2
+          }{
+          A \eql \top \orl C_1 & A \neql \top \orl C_2
+        }
+      }
+  }\]
+
+                     \end{frame}
+
+%---------------------------------------------------------------------
+
+             \begin{frame}\frametitle{Exercise}
+
+\PineGreen{Positive factoring can also be
+represented by inferences in the superposition system.}
+
+                     \end{frame}
+
+    
+

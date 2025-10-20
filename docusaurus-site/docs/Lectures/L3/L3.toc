@@ -1,0 +1,3 @@
+\beamer@sectionintoc {1}{Inference Systems with Selection (Recap)}{2}{0}{1}
+\beamer@sectionintoc {2}{Saturation Algorithms}{10}{0}{2}
+\beamer@sectionintoc {3}{Redundancy Elimination}{48}{0}{3}

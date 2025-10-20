@@ -1,0 +1,346 @@
+%---------------------------------------------------------------------
+\renewcommand{\eql}{=}
+                       \begin{frame}\frametitle{Subsumption and Tautology Deletion}
+
+A clause is a propositional tautology if it is of the
+form $\M{p \orl \notl p \orl C}$, that is, it contains a pair of
+complementary literals.
+
+There are also \Blue{equational tautologies}, for example
+$\M{a \neql b \orl b \neql c \orl f(c,c) \eql f(a,a)}$. 
+
+\medskip
+
+\vs<2->{
+  A clause $\M{C}$ \alert{subsumes} any clause $\M{C \orl D}$, where
+  $D$ is non-empty.
+}
+
+\medskip
+
+\vs<3->{
+  It was known since 1965 that \RawSienna{subsumed clauses and propositional
+    tautologies can be removed from the search space.} 
+}
+
+
+                                \end{frame}
+
+%---------------------------------------------------------------------
+
+                       \begin{frame}\frametitle{Problem}
+
+How can we \alert{prove} that \Blue{completeness is preserved} if we 
+\Fuchsia{remove subsumed clauses and tautologies} from the
+\OliveGreen{search space}? 
+
+\bigskip
+
+\vs<2->{
+  Solution: general \alert{theory of redundancy}.
+}
+
+
+                                \end{frame}
+\endinput
+%---------------------------------------------------------------------
+
+
+                        \begin{frame}
+\frametitle{Bag Extension of an Ordering}
+
+\alert{Bag = finite multiset}.
+
+Let $\M{>}$ be any (strict) ordering on a set $\M{X}$. 
+The \alert{bag extension of $>$} is a binary relation \alert{$\mextension{>}$}, 
+on bags over $\M{X}$, defined as the smallest transitive relation on 
+bags such that
+  \[
+  \begin{array}{l}
+    \setof{x,\xone{y}{n}} \mextension{>}
+    \setof{\xone{x}{m},\xone{y}{n}} \\
+    \qquad \text{if } x > x_i \text{ for all } i\in\{1\ldots m\},
+    \end{array}
+  \]
+where $\M{m \geq 0}$. 
+
+\vs<2->{
+  \alert{Idea:} a bag becomes smaller if we replace
+  an element by \Blue{any finite number} of smaller elements.
+}
+
+\vs<3->{
+The following \alert{results are known} about the bag extensions 
+of orderings:
+
+  \begin{enumerate}
+  \item $\M{\mextension{>}}$ is an \OliveGreen{ordering};
+  \item If $\M{>}$ is \OliveGreen{total}, then so is $\M{\mextension{>}}$;
+  \item If $\M{>}$ is \OliveGreen{well-founded}, then so is $\M{\mextension{>}}$.
+  \end{enumerate}
+}
+
+                                \end{frame}
+
+%---------------------------------------------------------------------
+
+                        \begin{frame}\frametitle{Clause Orderings}
+
+From now on consider clauses also as \alert{bags of literals}. Note:
+
+\begin{itemize}
+\item we have an ordering $\succ$ for comparing literals;
+\item a clause is a bag of literals.
+\end{itemize}
+
+\vs<2->{
+Hence
+
+\begin{itemize}
+\item we can compare clauses using the \alert{bag extension $\succm$} of
+      $\M{\succ}$.
+\end{itemize}
+}
+
+\vs<3->{
+  For simpicity we denote the multiset ordering also by
+  $\alert{\succ}$.
+}
+
+                                \end{frame}
+
+%---------------------------------------------------------------------
+\begin{frame}\frametitle{Example}
+
+  Let $\succ$ be a total well-founded ordering on the ground atoms
+$p_1, \ldots, p_6$ such that $p_6\succ p_5\succ p_4\succ p_3 \succ p_2
+\succ p_1$. Consider
+the bag extension of $\succ$; for simplicity, denote the bag extension 
+of $\succ$ also by $\succ$. 
+
+\bigskip
+
+
+Using $\succ$, compare and order the following three clauses: 
+\[p_6\vee \neg p_6,\qquad \neg p_2\vee
+  p_4\vee p_5, \qquad p_2\vee p_3.\]
+
+ \end{frame} 
+                                
+% ---------------------------------------------------------------------
+                                
+                     \begin{frame}\frametitle{Redundancy}
+
+A clause $C \in S$ is called \alert{redundant in $S$} if it is a
+logical consequence of clauses in $S$ strictly smaller than $C$.
+
+                              \end{frame}
+
+
+%---------------------------------------------------------------------
+
+              	   \begin{frame}
+           \frametitle{Examples}
+
+A \alert{tautology} $p \orl \notl p \orl C$ is a logical consequence of the
+empty set of formulas:
+
+\[
+\models p \orl \notl p \orl C,
+\]
+therefore it is \OliveGreen{redundant}.
+
+\vs<2->{
+We know that \alert{$C$ subsumes $C \orl D$}. Note
+
+\[
+  \begin{array}{l}
+    C \orl D \succ C\\
+    C \models C \orl D
+ \end{array}
+\]
+therefore subsumed clauses are \OliveGreen{redundant}. 
+}
+
+\medskip
+
+\vs<3>{
+  If $\emptyclause \in S$, then all non-empty other clauses in $S$ are
+  \OliveGreen{redundant}. 
+}
+
+                           \end{frame}
+
+                
+%---------------------------------------------------------------------
+\begin{frame}
+  \frametitle{Redundant Clauses Can be Removed}
+
+
+  In $\BRiss$ (and in all calculi we will consider later) 
+  \Blue{\alert<2>{redundant clauses can be removed from the search space}}.
+
+\end{frame}
+%---------------------------------------------------------------------
+\end{document}
+
+                \begin{frame}\frametitle{Inference Process with Redundancy}
+
+Let $\M{\isI}$ be an inference system. Consider an inference process with
+two kinds of step $\M{S_i \RR S_{i+1}}$:
+
+\begin{enumerate}
+\item \Blue{Adding the conclusion} of an $\M{\isI}$-inference with
+  premises in $S_i$.
+
+\item \Blue{Deletion of a clause redundant} in $\M{S_i}$, that is 
+
+  \[\M{S_{i+1} = S_i - \setof{C}},\]
+where $\M{C}$ is redundant in $\M{S_i}$.
+\end{enumerate}
+
+                                \end{frame}
+
+%---------------------------------------------------------------------
+
+
+                 \begin{frame}\frametitle{Fairness: Persistent Clauses and Limit}
+
+Consider an inference process
+
+\[\M{
+  S_0 \RR S_1 \RR S_2 \RR \ldots
+}\]
+
+A clause $\M{C}$ is called \alert{persistent} if
+
+\[\M{
+    \exists i \forall j \geq i (C \in S_j).
+}\]
+The \alert{limit $S_{\omega}$} of the inference process is
+the set of all persistent clauses:
+
+\[\M{
+  S_\omega = \bigcup_{i=0,1,\ldots}\bigcap_{j \geq i} S_j.
+}\]
+
+                                \end{frame}
+
+%---------------------------------------------------------------------
+
+
+                            \begin{frame}\frametitle{Fairness}
+
+The process is called \alert{$\isI$-fair} if every inference with persistent
+premises in $\M{S_\omega}$ has been applied, that is, if 
+
+    \[\M{
+      \infer{C}{C_1 & \ldots & C_n}}
+    \]
+is an inference in $\M{\isI}$ 
+and $\M{\setof{\xone{C}{n}} \subseteq S_\omega}$,
+then $\M{C \in S_i}$ for some $\M{i}$.
+
+
+                                \end{frame}
+
+%---------------------------------------------------------------------
+
+                    \begin{frame}\frametitle{Completeness of $\BRiss$}
+
+
+\textbf{\OliveGreen{Completeness Theorem.}}
+Let $\M{\succ}$ be a well-founded ordering and $\M{\sel}$ a
+well-behaved selection function. Let also 
+
+\begin{enumerate}
+\item $\M{S_0}$ be a set of clauses;
+\item $\M{S_0 \RR S_1 \RR S_2 \RR \ldots}$ be a fair 
+$\M{\BRiss}$-inference process.
+\end{enumerate}
+Then $\M{S_0}$ is unsatisfiable if and only if $\M{\emptyclause \in S_i}$
+for some $\M{i}$.
+
+                                \end{frame}
+
+%---------------------------------------------------------------------
+
+
+                      \begin{frame}\frametitle{Saturation up to Redundancy}
+
+A set $\M{S}$ of clauses is called \alert{saturated up to redundancy} if
+for every $\M{\isI}$-inference 
+
+    \[\M{
+      \infer{C}{C_1 & \ldots & C_n}}
+    \]
+with premises in $\M{S}$, either
+
+\begin{enumerate}
+\item $\M{C \in S}$; or
+\item $\M{C}$ is redundant w.r.t.\ $\M{S}$, that is, 
+$\M{S_{\prec C} \models C}$.
+\end{enumerate}
+
+                                \end{frame}
+
+%---------------------------------------------------------------------
+
+\begin{frame}
+\frametitle{Saturation up to Redundancy and Satisfiability Checking}
+
+\textbf{\OliveGreen{Lemma.}} A set $\M S$ of clauses saturated up to redundancy
+is unsatisfiable if and only if $\M{\emptyclause \in S}$.
+
+\bigskip
+
+\vs<2->{
+  Therefore, if we built a set saturated up to redundancy,
+  then the initial set $S_0$ is \alert{satisfiable}. This is a powerful
+  way of checking redundancy: one can even check satisfiability of
+  formulas having only \Blue{infinite models}.
+}
+
+\bigskip
+
+\vs<3->{
+  The only problem with this characterisation is that there is \Purple{no obvious way
+  to build a model of $S_0$} out of a saturated set.
+}
+
+
+                                \end{frame}
+
+
+%---------------------------------------------------------------------
+
+              	   \begin{frame}
+           \frametitle{Binary Resolution with Selection}
+
+One of the \alert{key properties} to satisfy this lemma is the following:
+\Purple{the conclusion of every rule is strictly smaller that the
+rightmost premise of this rule.}
+
+\begin{itemize}
+\item
+  \Blue{Binary resolution},
+
+  \[
+      \infer[(\BRr).]{C_1 \orl C_2}{\underline{p} \orl C_1 & 
+                                    \underline{\notl p} \orl C_2}
+  \]
+
+\item
+\Blue{Positive factoring},
+
+  \[
+    \begin{array}[b]{l}
+      \infer[(\Fact).]{p \orl C}{\underline{p} \orl \underline{p} \orl C}
+    \end{array}
+  \]
+\end{itemize}
+
+
+                                \end{frame}
+
+%---------------------------------------------------------------------

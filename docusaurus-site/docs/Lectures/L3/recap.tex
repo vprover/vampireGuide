@@ -1,0 +1,76 @@
+	   \begin{frame}\frametitle{Inference Systems - Soundness (Recap)}
+
+\begin{itemize}
+\item
+  \alert{An inference is sound} if 
+  the conclusion of this inference is a logical 
+  consequence of its premises.
+
+\item
+  \alert{An inference system
+  is sound} if every inference rule in this system is sound.
+\end{itemize}
+
+\bigskip
+
+\vs<2->{
+\Blue{$\M{\BRis}$ is sound.}
+
+\bigskip
+
+Consequence of soundness: let $S$ be a set of clauses. If
+$\emptyclause$ can be derived from $S$ in $\BRis$, then
+$S$ is \alert{unsatisfiable}.
+
+\bigskip\medskip
+
+\Blue{Lecture 2 - Exercise recap : infinite number of $\BRis$
+  derivations of~$\emptyclause$}
+}
+
+
+                           \end{frame}
+
+%---------------------------------------------------------------------
+
+	   \begin{frame}
+\frametitle{Can this be used for checking (un)satisfiability (Recap)}
+
+
+\begin{enumerate}
+  \item What happens when the empty clause \alert{cannot be derived}
+  from $\M{S}$?
+  \item \alert{How} can one search for possible derivations of the empty clause?
+\end{enumerate}
+
+                           \end{frame}
+
+%---------------------------------------------------------------------
+
+	   \begin{frame}
+\frametitle{Can this be used for checking (un)satisfiability (Recap)}
+
+\begin{enumerate}\item
+\alert{Completeness.}
+
+\begin{quotation}\noindent\Blue{%
+Let $\M{S}$ be an unsatisfiable set of clauses. Then there exists a 
+derivation of $\M{\emptyclause}$ from $\M{S}$ in $\M{\BRis}$.}
+\end{quotation}
+
+\item \vs<2->{
+We have to formalize \alert{search for derivations.}}
+\end{enumerate}
+
+\bigskip 
+\vs<3->{
+  We introduced \alert{well-behaved selection functions} for selecting
+  literals in clauses and applying inferences only over selected literals.}
+
+
+\bigskip
+
+\vs<4->{Binary resolution $\BRis$ with selection is \alert{complete for every
+  well-behaved selection function}}.
+
+                           \end{frame}

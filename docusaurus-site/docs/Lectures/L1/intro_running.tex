@@ -1,0 +1,139 @@
+%-----------------------------------------------------
+                                
+
+\begin{frame}
+\frametitle{Running Vampire on a TPTP file}
+
+is easy: simply use
+
+\Blue{%
+\begin{alltt}
+vampire <filename>
+\end{alltt}}
+
+\bigskip
+
+\vs<2->{
+One can also run Vampire with various options, some of them will be
+explained later. For example, save the group theory problem in a file
+\texttt{group.tptp} and try 
+
+\Blue{%
+\begin{alltt}
+vampire --thanks ADuct25 group.tptp
+\end{alltt}}
+}
+
+                  \end{frame}
+
+
+%---------------------------------------------------------------------
+
+\begin{frame}
+  \frametitle{Proof by Vampire (Slightly Modified)}
+
+\vspace*{-2ex}
+
+\footnotesize
+\begin{alltt}
+\hskip-3em\alert<7>{Refutation found}.\\*[-0.7ex]
+\hskip-3em\alert<6,7>{\alert<9>{251}. \$false [{\color<8>{blue}trivial inequality removal} 250]}\\*[-0.7ex]
+\hskip-3em\alert<6>{\alert<9>{250}. mult(sk0,sk1) != mult (sk0,sk1) [{\alert<8>{superposition}} 14,159]}\\*[-0.7ex]
+\hskip-3em\alert<6>{\alert<9>{159}. mult(X0,X1) = mult(X1,X0) [\alert<8>{superposition} 23,87]}\\*[-0.7ex]
+\hskip-3em\alert<6>{\alert<9>{87}. mult(X1,mult(X0,X1)) = X0
+  [{\color<8>{blue}forward demodulation} 79,25]}\\*[-0.7ex]
+\hskip-3em\alert<6>{\alert<9>{79}. mult(X1,mult(X0,X1)) = mult(X0,e) [\alert<8>{superposition} 23,20]}\\*[-0.7ex]
+\hskip-3em\alert<2,6>{\alert<9>{25}. mult(X0,e) = X0 [\alert<8>{superposition} 23,13]}\\*[-0.7ex]
+\hskip-3em\alert<2,6>{\alert<9>{23}. mult(X0,mult(X0,X1)) = X1 [{\color<8>{blue}forward demodulation} 15,10]}\\*[-0.7ex]
+\hskip-3em\alert<6>{\alert<9>{20}. e = mult(X0,mult(X1,mult(X0,X1)))  [\alert<8>{superposition} 13,12]}\\*[-0.7ex]
+\hskip-3em\alert<6>{\alert<9>{15}. mult(X0,mult(X0,X1))=mult(e,X1)  [\alert<8>{superposition} 12,13]}\\*[-0.7ex]
+\hskip-3em\alert<4>{\alert<9>{14}. mult(sK0,sK1) != mult(sK1,sK0) [cnf transformation 9]}\\*[-0.7ex]
+\hskip-3em\alert<4>{\alert<9>{13}. e = mult(X0,X0) [cnf transformation 4]}\\*[-0.7ex]
+\hskip-3em\alert<4>{\alert<9>{12}. mult(X0,mult(X1,X2)) = mult(mult(X0,X1),X2) [cnf transformation 3]}\\*[-0.7ex]
+\hskip-3em\alert<4>{\alert<9>{10}. mult(e,X0) = X0 [cnf transformation 1]}\\*[-0.7ex]
+\hskip-3em\alert<2,4,5>{\alert<9>{9}. mult(sK0,sK1) != mult(sK1,sK0) [skolemisation 7,8]}\\*[-0.7ex]
+\hskip-3em \alert<4,5>{\alert<9>{8}. ?[X0,X1]: mult(X0,X1) != mult(X1,X0) <=> mult(sK0,sK1) != mult(sK1,sK0) \\
+\hskip33em[choice axiom]}\\*[-0.7ex]
+\hskip-3em\alert<4>{\alert<9>{7}. ?[X0,X1]: mult(X0,X1) != mult(X1,X0) [ennf transformation 6]}\\*[-0.7ex]
+\hskip-3em\alert<4,7>{\alert<9>{6}. \vampNot![X0,X1]: mult(X0,X1) = mult(X1,X0) [negated conjecture 5]}\\*[-0.7ex]
+\hskip-3em\alert<3>{\alert<9>{5}. ![X0,X1]: mult(X0,X1) = mult(X1,X0) [input(conjecture)]}\\*[-0.7ex]
+\hskip-3em\alert<3>{\alert<9>{4}. ![X0]: e = mult(X0,X0)[input(assumption)]}\\*[-0.7ex]
+\hskip-3em\alert<3>{\alert<9>{3}. ![X0,X1,X2]: mult(X0,mult(X1,X2)) = mult(mult(X0,X1),X2) [input(axiom)]}\\*[-0.7ex]
+%\hskip-3em\alert<3>{\alert<9>{2}. ![X0]: e = mult(inverse(X0),X0) [input]}\\*[-0.7ex]
+\hskip-3em\alert<3>{\alert<9>{1}. ![X0]: mult(e,X0) = X0 [input(axiom)]}\\*[-0.7ex]
+\end{alltt}
+
+%\vspace*{-3ex}
+
+
+\begin{itemize}
+\item \vs<2->{\alert<2>{Each inference derives a formula from zero or more other formulas;}}
+\item \vs<3->{\alert<3>{Input}, \alert<4>{preprocessing},
+    \alert<5>{new symbols introduction}, \alert<6>{superposition 
+  calculus}}
+\item \vs<7->{\alert<7>{Proof by refutation}, \alert<8>{generating}
+    and
+    {\color<8>{blue}simplifying} inferences,
+  \alert<9>{unused formulas} \ldots}
+\end{itemize}
+
+                                \end{frame}
+
+%---------------------------------------------------------------------
+
+
+
+                                
+                      \begin{frame}
+                 \frametitle{Vampire}
+
+
+\begin{itemize}
+\item \alert{Completely automatic:} once you started a proof attempt,
+  it can only be interrupted by terminating the process.\\[1em]
+
+
+\item \visible<2->{\alert{Champion} of the CASC world-cup  in
+    first-order theorem proving: won CASC $>$ 70
+  times. \\[.5em]
+
+
+  \begin{center}\includegraphics[scale=.07]{Vampire5_CASC.jpg}\end{center}
+
+
+}
+\end{itemize}
+
+                               \end{frame}
+
+                               
+%---------------------------------------------------------------------
+                                
+                      \begin{frame}
+                 \frametitle{Vampire - The Team at CASC 2025}
+\begin{center}
+\includegraphics[scale=.5]{casc25.jpg}
+\end{center}
+
+\end{frame}
+                 
+%---------------------------------------------------------------------
+
+
+
+                               
+                                
+                      \begin{frame}
+                        \frametitle{Vampire - The Team at CAV 2025}
+
+                        \begin{center}
+                          \includegraphics[scale=.35]{Vampire_CAV25.jpg}
+                          \end{center}
+
+                        
+                        \end{frame}
+
+
+        %---------------------------------------------------------------------
+
+                             

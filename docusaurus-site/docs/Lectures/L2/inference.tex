@@ -1,0 +1,415 @@
+%---------------------------------------------------------------------
+
+                        \begin{frame}\frametitle{Inference System}
+
+\begin{itemize}
+\item \alert{inference} has the form
+
+  \M{\[
+     \infer[,]{G}{F_1 & \ldots & F_n}
+  \]}
+where $\M{n \geq 0}$ and $\M{\xone{F}{n},G}$ are formulas. 
+\item
+The formula $\M{G}$ is called the \alert{conclusion} of the inference;
+\item
+The formulas $\M{\xone{F}{n}}$ are called its \DI{premises}{premise}.
+\item
+An \DII{inference rule}{inference rule}{rule!inference} $\M{R}$ is a set of
+inferences. 
+\item
+Every inference $\M{I \in R}$ is called an 
+\DI{instance of $\M{R}$}{instance!of inference rule}.
+\item
+An \DII{Inference system}{inference system}{system!inference} $\M{\isI}$
+is a set of inference rules. 
+\item \alert{Axiom:} inference rule with no premises.
+\end{itemize}
+
+                                \end{frame}
+
+%---------------------------------------------------------------------
+
+                        \begin{frame}\frametitle{Inference System: Example}
+
+Represent the natural number $n$ by the string $\underbrace{| \ldots
+  |}_{n~\mathrm{times}}\varepsilon$.
+
+The following inference system contains 6 inference rules for deriving
+equalities between expressions containing natural numbers, addition
+$+$ and multiplication $\cdot$.
+
+  \[
+    \infer[(\varepsilon)]{\varepsilon = \varepsilon}{}
+    ~~~~~~~~~~
+    \infer[(|)]{|x = |y}{x = y}
+ \]
+
+  \[
+    \infer[(+_1)]{\varepsilon + x = x}{}
+    ~~~~~~~~~~
+    \infer[(+_2)]{|x + y = |z}{x + y = z}
+  \]
+
+  \[
+    \infer[(\cdot_1)]{\varepsilon \cdot x = \varepsilon}{}
+    ~~~~~~~~~~
+    \infer[(\cdot_2)]{|x \cdot y = z}{x \cdot y = u & y + u = z}
+  \]
+
+
+                               \end{frame}
+
+%---------------------------------------------------------------------
+
+                        \begin{frame}\frametitle{Derivation, Proof}
+
+
+\begin{itemize}
+\item \DI{Derivation}{derivation} in an inference system $\M{\isI}$: a tree
+built from inferences in $\M{\isI}$.
+
+\item
+If the root of this derivation is $\M{E}$, then we say it is a
+\alert{derivation of $\M{E}$}.
+
+\item \DI{Proof}{proof} of $\M{E}$: a finite derivation whose leaves 
+are axioms.
+
+\item \alert{Derivation of $\M{E}$ from $\M{\xone{E}{m}}$:}
+a finite derivation of $\M{E}$ whose every leaf is either
+an axiom or one of the expressions $\M{\xone{E}{m}}$.
+\end{itemize}
+
+                               \end{frame}
+
+%---------------------------------------------------------------------
+
+                        \begin{frame}\frametitle{Examples}
+
+For example,
+ \[
+  \infer[(+_2)]{|||\varepsilon + |\varepsilon = ||||\varepsilon}{
+    ||\varepsilon + |\varepsilon = |||\varepsilon}
+  \]
+
+is an \Blue{inference} that is an instance (special case) of the
+\Blue{inference rule}
+
+  \[
+  \infer[(+_2)]{|x + y = |z}{x + y = z}
+  \]
+
+\vs<2->{
+  It has one \Blue{premise} $||\varepsilon + |\varepsilon = |||\varepsilon$
+  and the \Blue{conclusion} $|||\varepsilon + |\varepsilon = ||||\varepsilon$.
+}
+
+\medskip
+
+\vs<3->{
+  The \Blue{axiom}
+
+  \[
+  \infer[(+_1)]{\varepsilon + |||\varepsilon = |||\varepsilon}{}
+  \]
+
+  is an instance of the rule
+
+  \[
+  \infer[(+_1)]{\varepsilon + x = x}{}
+  \]
+}
+
+                               \end{frame}
+
+%---------------------------------------------------------------------
+
+                    \begin{frame}\frametitle{Proof, \vs<2->{Derivation} in this Inference System}
+
+Proof of $\alert<1>{||\varepsilon \cdot ||\varepsilon = ||||\varepsilon}$
+(that is, $2 \cdot 2 = 4$).\\[1em]
+
+\vs<2->{Derivation of $\alert{|\varepsilon \cdot ||\varepsilon =
+    ||\varepsilon}$ from $\varepsilon \cdot ||\varepsilon = \varepsilon$
+  and $|\varepsilon + \varepsilon = |\varepsilon$. }
+
+\bigskip
+
+  \[\M{
+    \infer[(\cdot_2).]{\alert<1>{||\varepsilon \cdot ||\varepsilon = ||||\varepsilon}}{
+      \infer[(\cdot_2)]{\alert<2->{|\varepsilon \cdot ||\varepsilon = ||\varepsilon}}{
+        \infer[(\cdot_1)]{\alert<2->{\varepsilon \cdot ||\varepsilon = \varepsilon}}{}
+        &
+        \infer[(+_2)]{\alert<2->{||\varepsilon + \varepsilon = ||\varepsilon}}{
+          \infer[(+_2)]{\alert<2->{|\varepsilon + \varepsilon = |\varepsilon}}{
+            \infer[(+_1)]{\varepsilon + \varepsilon = \varepsilon}{}
+          }
+        }
+      }
+      & 
+      \infer[(+_2)]{||\varepsilon + ||\varepsilon = ||||\varepsilon}{
+        \infer[(+_2)]{|\varepsilon + ||\varepsilon = |||\varepsilon}{
+          \infer[(+_1)]{\varepsilon + ||\varepsilon = ||\varepsilon}{}
+        }
+      }
+    }
+  }\]
+
+
+                           \end{frame}
+
+%---------------------------------------------------------------------
+
+                      \begin{frame}
+            \frametitle{Arbitrary First-Order Formulas}
+
+\begin{itemize}
+\item A \alert{first-order signature (vocabulary)}: function symbols (including 
+  constants), predicate symbols. \alert{Equality} is part of the
+  language.
+
+\item A set of \alert{variables}.
+
+\item \alert{Terms} are buit using variables and function symbols. For
+  example, $f(x) + g(x)$.
+
+\item \alert{Atoms}, or \alert{atomic formulas} are obtained by
+  applying a predicate symbol to a sequence of terms. For example,
+  $p(a,x)$ or $f(x) + g(x) \geq 2$.
+
+\item \alert{Formulas:} built from atoms using logical
+    connectives $\notl$, $\andl$, $\orl$, $\implies$, $\iffl$ and
+    quantifiers $\forall$, $\exists$. For example,
+  $(\forall x)x = 0 \orl (\exists y)y > x$.
+\end{itemize}
+
+
+                                \end{frame}
+%---------------------------------------------------------------------
+
+                      \begin{frame}
+            \frametitle{Clauses}
+
+\begin{itemize}
+\item \alert{Literal:} either an atom $A$ or its
+    negation $\notl A$.
+
+\item \alert{Clause:} a disjunction $L_1 \orl \ldots \orl L_n$ of
+literals, where $n \geq 0$.
+
+\item \visible<2->{\alert{Empty clause}, denoted by $\alert{\emptyclause}$: clause
+with 0 literals, that is, when $n = 0$.}
+
+\item \visible<3->{A formula in \alert{Clausal Normal Form (CNF)}: a
+    conjunction of clauses.}
+
+\item \visible<4->{From now on: A clause is \alert{ground} if it contains no variables.}
+
+\item \visible<4->{If a clause contains variables, we assume that it \alert{implicitly
+  universally quantified}. That is, we treat $p(x) \orl q(x)$ as
+$\forall x(p(x) \orl q(x))$.}  
+\end{itemize}
+
+
+                                \end{frame}
+
+%---------------------------------------------------------------------
+
+              	   \begin{frame}
+           \frametitle{Binary Resolution Inference System}
+
+The \DII{binary resolution inference system}{binary 
+resolution!inference system}{inference system!binary resolution},
+denoted by \alert{$\BRis$} is an inference system on \Blue{propositional}
+clauses (or \Blue{ground} clauses).
+
+It consists of two inference rules:
+
+\begin{itemize}
+\item
+  \alert{Binary resolution}, denoted by $\alert{\BRr}$:
+
+  \[
+      \infer[(\BRr).]{C_1 \orl C_2}{p \orl C_1 & \notl p \orl C_2}
+  \]
+
+\item
+  \alert{Factoring}, denoted by $\alert{\Fact}$:
+
+  \[
+     \infer[(\Fact).]{L \orl C}{L \orl L \orl C}
+ \]
+\end{itemize}
+
+
+
+                           \end{frame}
+
+%---------------------------------------------------------------------
+
+	   \begin{frame}\frametitle{Soundness}
+
+\begin{itemize}
+\item
+  \alert{An inference is sound} if 
+  the conclusion of this inference is a logical 
+  consequence of its premises.
+
+\item
+  \alert{An inference system
+  is sound} if every inference rule in this system is sound.
+\end{itemize}
+
+\bigskip
+
+\vs<2->{
+\Blue{$\M{\BRis}$ is sound.}
+
+\bigskip
+
+\vs<3->{
+Consequence of soundness: let $S$ be a set of clauses. If
+$\emptyclause$ can be derived from $S$ in $\BRis$, then
+$S$ is \alert{unsatisfiable}.}
+
+}
+
+
+                           \end{frame}
+
+%---------------------------------------------------------------------
+
+	   \begin{frame}\frametitle{Example}
+
+Consider the following set $S$ of clauses
+
+    \[\M{
+      \setof{\notl p \orl \notl q,~\notl p \orl q,~p \orl \notl q,~p \orl q}.
+    }\]
+
+
+  Is $S$ unsatisfiable?
+
+  \bigskip
+
+\only<2->{
+
+The following derivation derives
+the empty clause from this set:
+
+    \[\M{
+      \infer[(\BRr)]{\emptyclause}{
+        \infer[(\Fact)]{p}{
+          \infer[(\BRr)]{p \orl p}{
+            p \orl q &
+	    p \orl \notl q
+          }
+        }
+        &
+        \infer[(\Fact)]{\notl p}{
+          \infer[(\BRr)]{\notl p \orl \notl p}{
+            \notl p \orl q &
+	    \notl p \orl \notl q
+          }
+        }
+      }
+    }\]
+  Hence, this set $S$  of clauses is \alert{unsatisfiable}.
+  }
+
+                           \end{frame}
+
+
+%---------------------------------------------------------------------
+
+	   \begin{frame}\frametitle{Exercise}
+
+Consider the following set $S$ of clauses
+
+    \[\M{
+      \setof{\notl p \orl \notl q,~\notl p \orl q,~p \orl \notl q,~p \orl q}.
+    }\]
+
+
+Show that there exists an infinite number of different $\M{\BRis}$
+derivations of  the empty clause $\emptyclause$ from the clauses of
+$S$. 
+
+\end{frame}
+
+% ---------------------------------------------------------------------
+\begin{frame}\frametitle{Soundness - Summarized}
+
+
+\begin{itemize}
+\item
+  \alert{An inference is sound} if 
+  the conclusion of this inference is a logical 
+  consequence of its premises.
+
+\item
+  \alert{An inference system
+  is sound} if every inference rule in this system is sound.
+\end{itemize}
+
+\bigskip
+
+\vs<1->{
+\Blue{$\M{\BRis}$ is sound.}
+
+\bigskip
+
+\vs<1->{
+Consequence of soundness: let $S$ be a set of clauses. If
+$\emptyclause$ can be derived from $S$ in $\BRis$, then
+$S$ is \alert{unsatisfiable}.}
+
+}
+
+
+                           \end{frame}
+%---------------------------------------------------------------------
+
+                           
+	   \begin{frame}
+\frametitle{Can this be used for checking (un)satisfiability?}
+
+
+\begin{enumerate}
+  \item What happens when the empty clause \alert{cannot be derived}
+    from $\M{S}$?
+
+    \bigskip
+    
+  \item \alert{How} can one search for possible derivations of the empty clause?
+\end{enumerate}
+
+                           \end{frame}
+
+%---------------------------------------------------------------------
+
+	   \begin{frame}
+\frametitle{Can this be used for checking (un)satisfiability?}
+
+\begin{enumerate}\item
+\alert{Completeness.}
+
+\begin{quotation}\noindent\Blue{%
+Let $\M{S}$ be an unsatisfiable set of clauses. Then there exists a 
+derivation of $\M{\emptyclause}$ from $\M{S}$ in $\M{\BRis}$.}
+\end{quotation}
+
+\bigskip
+
+\item \vs<2->{
+We have to formalize \alert{search for derivations.}}
+\end{enumerate}
+\medskip 
+\vs<2->{
+  However, before doing this we will introduce a slightly more refined
+  inference system.
+}
+
+                           \end{frame}
+
+

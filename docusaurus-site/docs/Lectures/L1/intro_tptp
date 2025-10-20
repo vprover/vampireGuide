@@ -1,0 +1,175 @@
+
+
+                     \begin{frame}\frametitle{First-Order Theorem
+                         Proving. An Example}
+
+\alert{Group theory theorem:} if a group
+satisfies the identity $x^2 = 1$, then it is commutative. 
+
+\visible<2->{
+  \alert{More formally:}
+  in a group ``\RedViolet{assuming} that $x^2=1$ for all $x$ 
+  \RedViolet{prove} that $x \cdot y = y \cdot x$ 
+  holds for all $x,y$.'' 
+}
+
+\visible<3->{
+  \alert{What is implicit:} axioms of the group theory. 
+  \[
+  \begin{array}{ll}
+          & \forall x(1 \cdot x = x) \\
+          & \forall x(x^{-1} \cdot x = 1) \\
+          & \forall x \forall y \forall z((x \cdot y) \cdot z = x \cdot (y \cdot z))
+  \end{array}
+  \]
+}
+
+                                \end{frame}
+
+%---------------------------------------------------------------------
+
+
+                     \begin{frame}\frametitle{Formulation in First-Order Logic}
+
+
+\[
+  \begin{array}{ll}
+          & \forall x(1 \cdot x = x) \\
+    \Mulberry{\text{Axioms (of group theory):}}
+          & \forall x(x^{-1} \cdot x = 1) \\
+          & \forall x \forall y \forall z((x \cdot y) \cdot z = x \cdot (y \cdot z))\\[2ex]
+    \Mulberry{\text{Assumptions:}}
+          & \forall x(x \cdot x = 1) \\
+    \hline
+    \Mulberry{\text{Conjecture:}}
+          & \forall x \forall y(x \cdot y = y \cdot x)
+  \end{array}
+\]
+
+
+                                \end{frame}
+
+%---------------------------------------------------------------------
+
+
+                            \begin{frame}
+                   \frametitle{In the TPTP Syntax}
+
+
+\small
+The \alert{TPTP} library (\alert{T}housands 
+of \alert{P}roblems for \alert{T}heorem \alert{P}rovers), 
+\RoyalBlue{\url{http://www.tptp.org}} contains a large collection of
+first-order problems.
+
+For representing these problems it uses the \alert{TPTP syntax}, which
+is understood by all modern theorem provers, including Vampire.
+
+\vs<2->{
+In the TPTP syntax this group theory problem can be written down as
+follows: 
+
+\begin{alltt}
+\alert{\%---- 1 * x = x}\\
+\RoyalBlue{fof(left\_identity,axiom,\\
+~~~~\MidnightBlue{\textbf{! [X] : mult(e,X) = X}}).}\\
+\alert{\%---- i(x) * x = 1}\\
+\RoyalBlue{fof(left\_inverse,axiom,\\
+~~~~\MidnightBlue{\textbf{! [X] : mult(inverse(X),X) = e}}).}\\
+\alert{\%---- (x * y) * z = x * (y * z)}\\
+\RoyalBlue{fof(associativity,axiom,\\
+~~~~\MidnightBlue{\textbf{! [X,Y,Z] : mult(mult(X,Y),Z) = mult(X,mult(Y,Z))}}).}\\
+\alert{\%---- x * x = 1}\\
+\RoyalBlue{fof(group\_of\_order\_2,hypothesis,\\
+~~~~\MidnightBlue{\textbf{! [X] :  mult(X,X) = e}}).}\\
+\alert{\%---- prove x * y = y * x}\\
+\RoyalBlue{fof(commutativity,\Fuchsia{\textbf{conjecture}},\\
+~~~~\MidnightBlue{\textbf{! [X] : mult(X,Y) = mult(Y,X)}}).}
+\end{alltt}
+}
+
+                                \end{frame}
+
+                                % ---------------------------------------------------------------------
+
+\begin{frame}
+  \frametitle{More on the TPTP Syntax}
+
+\begin{itemize}
+\item \vs<2->{{\color<2->{blue}Comments};}
+\item \vs<3->{{\color<3->{Fuchsia}Input formula names};}
+\item \vs<4->{\alert{Input formula roles} (very important);}
+\item \vs<5->{\OrangeRed{Equality}}
+\end{itemize}
+
+
+\begin{small}
+\begin{alltt}
+{\color<2->{blue}\%----~1~*~x~{\color<5>{OrangeRed}=}~x}\\
+fof({\color<3->{Fuchsia}left\_identity},\alert<4>{axiom},(\\
+~~!~[X]~:~mult(e,X)~{\color<5>{OrangeRed}=}~X~)).\\
+{\color<2->{blue}\%----~i(x)~*~x~{\color<5>{OrangeRed}=}~1}\\
+fof({\color<3->{Fuchsia}left\_inverse},\alert<4>{axiom},(\\
+~~!~[X]~:~mult(inverse(X),X)~{\color<5>{OrangeRed}=}~e~)).\\
+{\color<2->{blue}\%----~(x~*~y)~*~z~{\color<5>{OrangeRed}=}~x~*~(y~*~z)}\\
+fof({\color<3->{Fuchsia}associativity},\alert<4>{axiom},(\\
+~~!~[X,Y,Z]~:\\
+~~~~~~~mult(mult(X,Y),Z)~{\color<5>{OrangeRed}=}~mult(X,mult(Y,Z))~)).\\
+{\color<2->{blue}\%----~x~*~x~{\color<5>{OrangeRed}=}~1}\\
+fof({\color<3->{Fuchsia}group\_of\_order\_2},\alert<4>{hypothesis},\\
+~~!~[X]~:~mult(X,X)~{\color<5>{OrangeRed}=}~e~).\\
+{\color<2->{blue}\%----~prove~x~*~y~{\color<5>{OrangeRed}=}~y~*~x}\\
+fof({\color<3->{Fuchsia}commutativity},\alert<4>{conjecture},\\
+~~!~[X,Y]~:~mult(X,Y)~{\color<5>{OrangeRed}=}~mult(Y,X)~).
+\end{alltt}
+\end{small}
+
+\end{frame}
+
+%--------------------------------------------------------------------
+
+
+\begin{frame}
+\frametitle{First-Order Logic and TPTP}
+
+\small
+\begin{itemize}
+\item \alert<1>{Language}: variables, function and predicate
+  (relation) symbols. A {constant 
+  symbol} is a special case of a function symbol.\\
+  \vs<2->{\alert<2>{In TPTP}: {Variable names} start with upper-case letters.}
+\item \vs<3->{\alert<3>{Terms}: variables, constants, and expressions
+  $f(t_1,\ldots,t_n)$, where $f$ is a function symbol of arity $n$ and
+  $t_1,\ldots,t_n$ are terms.} 
+\item \vs<4->{\alert<4->{Atomic formula:} expression
+      $p(t_1,\ldots,t_n)$, where $p$ is a predicate symbol of arity $n$
+      and $t_1,\ldots,t_n$ are terms.} 
+\item \vs<5->{All symbols are uninterpreted, apart from equality $=$.}
+\end{itemize}
+ 
+\smallskip
+
+\begin{center}
+\vs<6->{
+\begin{tabular}{c|c}
+FOL & TPTP \\
+\hline
+$\bot$, $\top$ & 
+  \OliveGreen{\texttt{\$false}, \texttt{\$true}} \\ 
+$\notl a$ &
+   \OliveGreen{\texttt{\~{}a}} \\
+$a_1 \andl \ldots \andl\ a_n$ &
+  \OliveGreen{\texttt{a1 \& \ldots\ \& an}} \\
+$a_1 \orl \ldots \orl\ a_n$ &
+    \OliveGreen{\texttt{a1 | \ldots\ | an}} \\
+$a_1 \implies a_2$ &
+    \OliveGreen{\texttt{a1 => a2}} \\
+$(\forall x_1)\ldots(\forall x_n)a$ &
+   \OliveGreen{\texttt{! [X1,\ldots,Xn] : a}} \\
+$(\exists x_1)\ldots(\exists x_n)a$ &
+   \OliveGreen{\texttt{? [X1,\ldots,Xn] : a}}
+\end{tabular}}
+\end{center}
+
+\end{frame}
+
