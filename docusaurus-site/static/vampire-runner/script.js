@@ -162,7 +162,8 @@ export async function runVampireRaw({ tptp, args }) {
     onExit: (code) => {
       resolveRun({
         stdout: stdoutBuf.join('\n'),
-        stderr: stderrBuf.join('\n'),
+        stderr: '',
+        // stderr: stderrBuf.join('\n'), // <-- stderr is hidden...this hides errors about webassembly that aren't really errors from vampire.
         code
       });
     },
