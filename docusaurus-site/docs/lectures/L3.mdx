@@ -1,0 +1,214 @@
+---
+id: l3
+title: "Lecture 3: Recap, Saturation, and Redundancy Elimination"
+sidebar_label: "Lecture 3: Recap, Saturation, and Redundancy Elimination"
+---
+
+Laura Kovács
+
+## Inference Systems - Soundness (Recap)
+- An <span class="redbold">inference is sound</span> if the conclusion of this inference is a logical consequence of its premises.
+- An <span class="redbold">inference system is sound</span> if every inference rule in this system is sound. 
+- <span class="bluebold">$\mathbb{BR}$ is sound</span>. 
+- Consequence of soundness: 
+    - let $S$ be a set of clauses.
+    - If $\square$ can be derived from $S$ in $\mathbb{BR}$, then $S$ is <span class="redbold">unsatisfiable</span>.
+
+<span class="bluebold">Lecture 2 - Exercise recap : infinite number of $\mathbb{BR}$ derivations of $\square$</span>
+
+## Can this be used for checking (un)satisfiability (Recap)
+1. What happens when the empty clause <span class="redbold">cannot be derived</span> from $S$?
+2. <span class="redbold">How</span> can one search for possible derivations of the empty clause?
+---
+1. <span class="redbold">Completeness</span>. 
+    - Let $S$ be an unsatisfiable set of clauses. 
+        - Then there exists a derivation of $\square$ from $S$ in $\mathbb{BR}$. 
+2. We have to formalize <span class="redbold">search for derivations</span>. 
+
+We introduced <span class="bluebold">well-behaved selection functions</span> for selecting literals in clauses and applying inferences only over selected literals. 
+
+Binary resolution $\mathbb{BR}$ with selection is <span class="redbold">complete for every well-behaved selection function</span>.
+
+
+## How to Establish Unsatisfiability?
+Completeness is formulated in terms of <span class="redbold">derivability</span> of the empty clause $\square$ from a set $S_0$ of clauses in an inference system $\mathbb{I}$. However, this formulations gives <span class="bluebold">no hint on <span class="redbold">how</span> to search</span> for such a derivation. 
+
+Idea:
+- Take a set of clauses $S$ <span class="greenbold">(the search space)</span>, initially $S = S_0$. 
+<span class="bluebold">Repeatedly apply inferences</span> in $\mathbb{I}$ to clauses in $S$ and add their conclusions to $S$, unless these conclusions are already in $S$.
+- If, at any stage, we obtain $\square$, we terminate and <span class="bluebold">report unsatisfiability</span> of $S_0$.
+
+
+
+
+
+
+
+## How to Establish Satisfiability?
+When can we report <span class="redbold">satisfiability</span>? 
+When we build a set $S$ such that any inference applied to clauses in $S$ is already a member of $S$. 
+Any such set of clauses is called <span class="redbold">saturated</span> (with respect to $\mathbb{I}$). 
+
+In first-order logic it is often the case that all saturated sets are infinite (due to undecidability), 
+so in practice we can never build a saturated set. 
+
+The process of trying to build one is referred to as <span class="redbold">saturation</span>.
+
+
+
+
+
+## Saturated Set of Clauses
+Let $\mathbb{I}$ be an inference system on formulas and $S$ be a set of formulas.
+- $S$ is called <span class="redbold">saturated with respect to</span> $\mathbb{I}$, or simply $\mathbb{I}$<span class="redbold">-saturated</span>, if for every inference of $\mathbb{I}$ with premises in $S$, the conclusion of this inference also belongs to $S$.
+- The <span class="redbold">closure of $S$ with respect to</span> $\mathbb{I}$, or simply $\mathbb{I}$<span class="redbold">-closure</span>, is the smallest set $S'$ containing $S$ and saturated with respect to $\mathbb{I}$.
+
+
+
+
+
+
+## Inference Process
+<span class="redbold">Inference process</span>: sequence of sets of formulas $S_0, S_1 , \ldots$, denoted
+
+$$
+S_0 \Rightarrow S_1 \Rightarrow S_2 \Rightarrow \ldots 
+$$
+
+$(S_i \Rightarrow S_{i+1})$ is a <span class="redbold">step</span> of this process. 
+ 
+We say that this step is an $\mathbb{I}$<span class="redbold">-step</span> if:
+1. there exists an inference
+$$
+\displaystyle \frac{F_1\;\; \ldots \;\; F_n}{F}
+$$
+in $\mathbb{I}$ such that $\{F_1, \ldots, F_n\}\subseteq S_i$
+
+2. $S_{i+1} = S_i \cup \{F\}$. 
+
+An $\mathbb{I}$<span class="redbold">-inference process</span> is an inference process whose every step is an $\mathbb{I}$-step.
+
+
+
+
+
+
+## Property
+- Let $S_0 \Rightarrow S_1 \Rightarrow S_2 \Rightarrow \ldots$ be an $\mathbb{I}$-inference process and a formula $F$ belongs to some $S_i$. 
+    - Then $S_i$ is derivable in $\mathbb{I}$ from $S_0$.
+    - In particular, every $S_i$ is a subset of the $\mathbb{I}$-closure of $S_0$.
+
+## Limit of a Process
+The <span class="redbold">limit</span> of $S$ an inference process $S_0 \Rightarrow S_1 \Rightarrow S_2 \Rightarrow \ldots$ 
+is the set of formulas $\bigcup_i S_i$.
+
+In other words, the limit is the set of all derived formulas. 
+We denote the limit by $S_\infty$.
+
+Suppose that we have an infinite inference process 
+such that $S_0$ is <span class="bluebold">unsatisfiable</span> and we use the <span class="bluebold">binary resolution inference system</span>. 
+
+<span class="redbold">Question</span>: does completeness imply that the limit of the process 
+contains the empty clause?
+
+
+
+## Fairness
+Let $S_0 \Rightarrow S_1 \Rightarrow S_2 \Rightarrow \ldots$ be an inference process with the limit $S_\infty$. 
+The process is called <span class="redbold">fair</span> if for every $\mathbb{I}$-inference
+
+$$
+\displaystyle \frac{F_1\;\; \ldots \;\; F_n}{F},
+$$
+
+if $\{F_1, \ldots, F_n\}\subseteq S_\infty$, then there exists $i$ such that $F\in S_i$.
+
+
+
+
+
+## Limit of a Fair Inference Process
+Let $S_0 \Rightarrow S_1 \Rightarrow S_2 \Rightarrow \ldots$ be an fair inference process using a sound inference system $\mathbb{I}$. 
+
+<span class="bluebold">Exercise</span>: Show that the limit of $S_\infty$ is the $\mathbb{I}$-closure of $S_0$.
+
+
+
+
+
+
+## Completeness, reformulated
+<span class="greenbold">Theorem</span> Let $\mathbb{I}$ be an inference system. 
+The following conditions are equivalent. 
+1. $\mathbb{I}$ is complete.
+2. For every unsatisfiable set of formulas $S_0$ and any fair $\mathbb{I}$-inference process with the initial set $S_0$, 
+    - the limit $S_\infty$ of this inference process contains $\square$.
+
+## Fair Saturation Algorithms: Inference Selection by Clause Selection
+(Given-Clause Algorithm)
+children
+given clause
+candidate clauses search space
+
+## Saturation Algorithm
+A <span class="redbold">saturation algorithm</span> is an algorithm that tries to <span class="purpbold">saturate</span> a set of clauses with respect to a given inference system. 
+
+<span class="bluebold">In theory</span> there are three possible scenarios: 
+
+1. At some moment the empty clause $\square$ is generated, in this case the input set of clauses is unsatisfiable. 
+2. Saturation will terminate without ever generating $\square$, in this case the input set of clauses in satisfiable. 
+3. Saturation will run <span class="redbold underline">forever</span>, but without generating $\square$. In this case the input set of clauses is <span class="bluebold underline">satisfiable</span>.
+
+
+
+
+
+## Saturation Algorithm in Practice
+<span class="bluebold">In practice</span> there are three possible scenarios: 
+
+1. At some moment the empty clause $\square$ is generated, in this case the input set of clauses is unsatisfiable. 
+2. Saturation will terminate without ever generating $\square$, in this case the input set of clauses in satisfiable. 
+3. Saturation will run <span class="redbold underline">until we run out of resources</span>, but without generating $\square$. 
+In this case it is <span class="bluebold underline">unknown</span> whether the input set is unsatisfiable.
+
+
+
+
+## Saturation Algorithm
+Even when we implement inference selection by clause selection, there are <span class="brownbold">too many inferences</span>, 
+especially when the search space grows. 
+
+<span class="bluebold">Solution</span>: only apply inferences to the <span class="purpbold">selected clause and the previously selected clauses</span>. 
+
+Thus, the search space is divided in two parts:
+- <span class="redbold">active clauses</span>, that participate in inferences;
+- <span class="redbold">passive clauses</span>, that do not participate in inferences. 
+
+<span class="greenbold">Observation</span>: the set of passive clauses is usually considerably larger than the set of active clauses, often by 2-4 orders of magnitude (depending on the saturation algorithm and the problem).
+
+
+
+
+## Subsumption and Tautology Deletion
+A clause is a propositional tautology if it is of the form $p \lor \neg p \lor C$, 
+that is, it contains a pair of complementary literals.
+
+There are also <span class="bluebold">equational tautologies</span>, 
+for example: 
+
+$$
+a\neq b \;\;\lor\;\; b \neq c \;\;\lor\;\; f(c,c)=f(a,a)
+$$
+
+A clause $C$ <span class="redbold">subsumes</span> any clause $C \lor D$, where $D$ is non-empty. 
+
+It was known since 1965 that <span class="brownbold">subsumed clauses and propositional tautologies 
+can be removed from the search space</span>
+
+## Problem
+- How can we <span class="redbold">prove</span> that 
+<span class="bluebold">completeness is preserved</span> 
+if we <span class="purpbold">remove subsumed clauses and tautologies</span> 
+from the <span class="greenbold">search space</span>? 
+- Solution: general <span class='redbold'>theory of redundancy</span>.
+

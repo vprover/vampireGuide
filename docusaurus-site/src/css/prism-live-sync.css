@@ -1,0 +1,103 @@
+/* Make PrismJS / Prism-Live match Docusaurus theme and follow the toggle */
+
+/* Base: apply PrismJS styling only to Prism blocks */
+code[class*="language-"], pre[class*="language-"] {
+  text-shadow: none; /* neutral default */
+}
+
+/* ---- LIGHT: GitHub-like (to match prismThemes.github) ---- */
+html[data-theme="light"] pre[class*="language-"],
+html[data-theme="light"] code[class*="language-"] {
+  background: #fff;
+  color: #24292e;
+}
+
+/* token colors (GitHub-ish) */
+html[data-theme="light"] .token.comment,
+html[data-theme="light"] .token.prolog,
+html[data-theme="light"] .token.doctype,
+html[data-theme="light"] .token.cdata { color: #6a737d; }
+
+html[data-theme="light"] .token.variable { color: rgb(54, 172, 170); }
+html[data-theme="light"] .token.punctuation { color: #24292e; }
+
+html[data-theme="light"] .token.property,
+html[data-theme="light"] .token.tag,
+html[data-theme="light"] .token.boolean,
+html[data-theme="light"] .token.number,
+html[data-theme="light"] .token.constant,
+html[data-theme="light"] .token.symbol { color: #005cc5; }
+
+html[data-theme="light"] .token.attr-name,
+html[data-theme="light"] .token.string,
+html[data-theme="light"] .token.char,
+html[data-theme="light"] .token.builtin { color: #032f62; }
+
+html[data-theme="light"] .token.operator,
+html[data-theme="light"] .token.entity,
+html[data-theme="light"] .token.url { color: rgb(57, 58, 52); }
+
+html[data-theme="light"] .token.function,
+html[data-theme="light"] .token.class-name { color: rgb(215, 58, 73); }
+
+html[data-theme="light"] .token.keyword { color: rgb(0, 0, 159); }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* ---- DARK: Dracula-like (to match prismThemes.dracula) ---- */
+html[data-theme="dark"] pre[class*="language-"],
+html[data-theme="dark"] code[class*="language-"] {
+  background: #282a36;
+  color: #f8f8f2;
+}
+
+html[data-theme="dark"] .token.comment,
+html[data-theme="dark"] .token.prolog,
+html[data-theme="dark"] .token.doctype,
+html[data-theme="dark"] .token.cdata { color: #6272a4; }
+
+html[data-theme="dark"] .token.punctuation { color: #f8f8f2; }
+
+html[data-theme="dark"] .token.property,
+html[data-theme="dark"] .token.tag,
+html[data-theme="dark"] .token.constant,
+html[data-theme="dark"] .token.symbol,
+html[data-theme="dark"] .token.deleted { color: #ff79c6; }
+
+html[data-theme="dark"] .token.boolean,
+html[data-theme="dark"] .token.number { color: #bd93f9; }
+
+html[data-theme="dark"] .token.selector,
+html[data-theme="dark"] .token.attr-name,
+html[data-theme="dark"] .token.string,
+html[data-theme="dark"] .token.char,
+html[data-theme="dark"] .token.builtin,
+html[data-theme="dark"] .token.inserted { color: #f1fa8c; }
+
+html[data-theme="dark"] .token.operator,
+html[data-theme="dark"] .token.entity,
+html[data-theme="dark"] .token.url { color: #8be9fd; }
+
+html[data-theme="dark"] .token.function,
+html[data-theme="dark"] .token.class-name { color: #50fa7b; }
+
+html[data-theme="dark"] .token.keyword { color: rgb(189, 147, 249); }
+
+/* Optional: nicer selection */
+pre[class*="language-"] ::selection,
+code[class*="language-"] ::selection { background: rgba(180, 213, 255, 0.35); }
+html[data-theme="dark"] pre[class*="language-"] ::selection,
+html[data-theme="dark"] code[class*="language-"] ::selection { background: rgba(255, 255, 255, 0.15); }

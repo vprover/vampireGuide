@@ -1,0 +1,270 @@
+---
+id: l2
+title: "Lecture 2: Inference Systems and Selection Functions"
+sidebar_label: "Lecture 2: Inference Systems and Selection Functions"
+---
+
+Laura Kovács
+
+## Inference Systems
+- <span class="redbold">Inference</span> has the form $\displaystyle\frac{F_1 \; \ldots \; F_n}{G}$, where $n\geq 0$ and $F_1, \ldots, F_n, G$ are formulas.
+- The formula $G$ is called the <span class="redbold">conclusion</span> of the inference;
+- The formulas $F_1, \ldots, F_n$ are called its <span class="redbold">premises</span>.
+- An <span class="redbold">inference rule</span> $R$ is a set of inferences.
+- Every inference $I \in R$ is called an instance of $R$.
+- An <span class="redbold">Inference system</span> $\mathbb{I}$ is a set of inference rules.
+- <span class="redbold">Axiom:</span> inference rule with no premises.
+
+## Inference System: Example
+- Represent the natural number $n$ by the string $\underbrace{|\ldots|}_{n\; \text{times}}\varepsilon$
+- The following inference system contains 6 inference rules for deriving equalities between expressions containing natural numbers, addition ($+$) and multiplication ($\cdot$).
+
+- $\displaystyle\frac{}{\varepsilon=\varepsilon}$ <span class="greenbold">$(\varepsilon)$</span>
+- $\displaystyle\frac{x=y}{|x=|y}$ <span class="greenbold">$(|)$</span>
+- $\displaystyle\frac{}{\varepsilon+x=x}$ <span class="greenbold">$(+_1)$</span>
+- $\displaystyle\frac{x+y=z}{|x+y=|z}$ <span class="greenbold">$(+_2)$</span>
+- $\displaystyle\frac{}{\varepsilon \cdot x = \varepsilon}$ <span class="greenbold">$(\cdot_1)$</span>
+- $\displaystyle\frac{x\cdot y = u \;\;\;\;\; y+u=z}{|x\cdot y = z}$ <span class="greenbold">$(\cdot_2)$</span>
+
+## Derivation, Proof
+- <span class="redbold">Derivation</span> in an inference system $\mathbb{I}$: a tree built from inferences in $\mathbb{I}$.
+- If the root of this derivation is $E$, then we say it is a <span class="redbold">derivation of</span> $E$.
+- <span class="redbold">Proof</span> of $E$: a finite derivation whose leaves are axioms.
+- <span class="redbold">Derivation of</span> $E$ <span class="redbold">from</span> $E_1 , \ldots , E_m$ : a finite derivation of $E$ whose every leaf is either an axiom or one of the expressions $E_1 , \ldots , E_m$.
+
+## Examples
+For example,
+
+$\displaystyle\frac{||\varepsilon + |\varepsilon = |||\varepsilon}{|||\varepsilon + |\varepsilon = ||||\varepsilon}$ <span class="greenbold">$(+_2)$</span>
+
+is an <span class="bluebold">inference</span> that is an instance (special case) of the <span class="bluebold">inference rule</span>:
+
+$\displaystyle\frac{x+y=z}{|x+y=|z}$ <span class="greenbold">$(+_2)$</span>.
+
+It has one premise, $||\varepsilon + |\varepsilon = |||\varepsilon$, and the conclusion $|||\varepsilon + |\varepsilon = ||||\varepsilon$.
+
+The <span class="bluebold">axiom</span> 
+
+$\displaystyle\frac{}{\varepsilon + |||\varepsilon = |||\varepsilon}$ <span class="greenbold">$(+_1)$</span> 
+
+is an instance of the rule
+
+$\displaystyle\frac{}{\varepsilon + x = x}$ <span class="greenbold">$(+_1)$</span>
+
+
+
+
+## Proof, Derivation in this Inference System
+<img src="/vampireGuide/img/lectures/L2/L2_proof.png" width="400" />
+
+
+
+
+
+
+
+
+## Arbitrary First-Order Formulas
+- <span class="redbold">A first-order signature (vocabulary)</span>: function symbols (including constants), predicate symbols. Equality is part of the language.
+- A set of <span class="redbold">variables</span>.
+- <span class="redbold">Terms</span> are built using variables and function symbols. For example, $f(x) + g(x)$.
+- <span class="redbold">Atoms</span>, or <span class="redbold">atomic formulas</span> are obtained by applying a predicate symbol to a sequence of terms. For example, $p(a, x)$ or $f(x) + g(x) \geq 2$.
+- <span class="redbold">Formulas</span>: built from atoms using logical connectives $\neg, \land, \lor , \to, \leftrightarrow$ and quantifiers $\forall, \exists$. For example, $(\forall x)x=0 \lor (\exists y) y>x$
+
+## Clauses
+- <span class="redbold">Literal</span>: either an atom $A$ or its negation $\neg A$.
+- <span class="redbold">Clause</span>: a disjunction $L_1 \lor \ldots \lor L_n$ of literals, where $n \geq 0$.
+- <span class="redbold">Empty clause</span>, denoted by <span class="redbold">$\square$</span>: clause with 0 literals, that is, when $n = 0$.
+- A formula in <span class="redbold">Clausal Normal Form (CNF)</span>: a conjunction of clauses.
+- From now on: A clause is <span class="redbold">ground</span> if it contains no variables.
+- If a clause contains variables, we assume that it implicitly universally quantified. That is, we treat $p(x) \lor q(x)$ as $\forall x(p(x) \lor q(x))$.
+
+## Binary Resolution Inference System
+The <span class="redbold">binary resolution inference system</span>, denoted by $\mathbb{BR}$ is an inference system on propositional clauses (or ground clauses).
+
+It consists of two inference rules:
+- <span class="redbold">Binary resolution</span>, denoted by <span class="redbold">BR</span>: 
+    - $\displaystyle\frac{p\lor C_1 \;\;\;\; \neg p \lor C_2}{C_1 \lor C_2}$ $(BR)$
+- <span class="redbold">Factoring</span>, denoted by <span class="redbold">Fact</span>: 
+    - $\displaystyle\frac{L \lor L \lor C}{L \lor C}$ $(Fact)$
+
+## Soundness
+- An <span class="redbold">inference is sound</span> if the conclusion of this inference is a logical consequence of its premises.
+- An <span class="redbold">inference system is sound</span> if every inference rule in this system is sound. 
+- $\mathbb{BR}$ is sound. 
+- Consequence of soundness: 
+    - let $S$ be a set of clauses.
+    - If $\square$ can be derived from $S$ in $\mathbb{BR}$, then $S$ is <span class="redbold">unsatisfiable</span>.
+
+## Example
+Consider the following set $S$ of clauses:
+- $\{\neg p \lor \neg q,\;\; \neg p \lor q,\;\; p \lor \neg q,\;\; p \lor q\}$
+
+Is S unsatisfiable? 
+
+The following derivation derives the empty clause from this set: 
+
+<img src="/vampireGuide/img/lectures/L2/L2_proof2.png" width="400" />
+
+Hence, this set $S$ of clauses is <span class="redbold">unsatisfiable</span>.
+
+## Exercise
+Consider the following set $S$ of clauses:
+- $\{\neg p \lor \neg q,\;\; \neg p \lor q,\;\; p \lor \neg q,\;\; p \lor q\}$
+
+Show that there exists an infinite number of different $\mathbb{BR}$ derivations of the empty clause $\square$ from the clauses of $S$.
+
+## Can this be used for checking (un)satisfiability?
+1. What happens when the empty clause <span class="redbold">cannot be derived</span> from $S$?
+2. <span class="redbold">How</span> can one search for possible derivations of the empty clause?
+---
+1. <span class="redbold">Completeness</span>. 
+    - Let $S$ be an unsatisfiable set of clauses. 
+        - Then there exists a derivation of $\square$ from $S$ in $\mathbb{BR}$. 
+2. We have to formalize <span class="redbold">search for derivations</span>. 
+
+However, before doing this we will introduce a slightly more refined inference system.
+
+
+## Selection Functions
+A <span class="redbold">literal selection function</span> is a function that selects literals in a clause.
+- If $C$ is non-empty, then <span class="bluebold">at least one literal is selected</span> in $C$. 
+
+We denote selected literals by underlining them, e.g.,
+  $$
+    \underline{p} \lor \neg q
+  $$
+
+- <span class="redbold">Note</span>: selection function does not have to be a function. 
+    - It can be any oracle that selects literals.
+
+## Binary Resolution with Selection
+We introduce a family of inference systems, <span class="greenbold">parameterised</span> by a literal selection function $\sigma$. 
+
+The <span class='redbold'>binary resolution inference system</span>, denoted by $\mathbb{BR}\sigma$, consists of two inference rules:
+- <span class="bluebold">Binary resolution</span>, denoted by $BR$
+    - $\displaystyle\frac{\underline{p}\lor C_1 \;\;\;\; \underline{\neg p} \lor C_2}{C_1 \lor C_2}$ $(BR)$
+- <span class="bluebold">Positive factoring</span>, denoted by $Fact$: 
+    - $\displaystyle\frac{\underline{p} \lor \underline{p} \lor C}{p \lor C}$ $(Fact)$
+
+## Completeness?
+Binary resolution with selection may be <span class="redbold">incomplete</span>, even when factoring is unrestricted (also applied to negative literals). 
+
+Consider this set of clauses:
+
+  $$
+    \begin{array}{ll}
+      (1) & \neg q \lor \underline{r}\\
+      (2) & \neg p \lor \underline{q}\\
+      (3) & \neg r \lor \underline{\neg q}\\
+      (4) & \neg q \lor \underline{\neg p}\\
+      (5) & \neg p \lor \underline{\neg r}\\
+      (6) & \neg r \lor \underline{p}\\
+      (7) & r \lor q \lor \underline{p}\\
+    \end{array}
+  $$
+
+It is unsatisfiable:
+
+  $$
+    \begin{array}{ll}
+      (8) & q \lor p & (6,7)\\
+      (9) & q & (2,8)\\
+      (10) & r & (1,9)\\
+      (11) & \neg q & (3,10)\\
+      (12) & \square & (9,11)
+    \end{array}
+  $$
+
+Note the <span class="bluebold">linear representation of derivations</span> (used by Vampire and many other provers).
+
+However, any inference with selection applied to this set of clauses give either a clause in this set, or a clause containing a clause in this set.
+
+
+
+
+
+
+## Literal Orderings
+Take any <span class="redbold">well-founded ordering</span> $\succ$ on atoms, that is, an ordering such that there is no infinite decreasing chain of atoms:
+
+$$
+A_0 ≻ A_1 ≻ A_2 \succ \cdots
+$$
+
+In the sequel $\succ$ will always denote a well-founded ordering. 
+
+Extend it to an ordering on literals by:
+- If $p \succ q$, then $p \succ \neg q$ and $\neg p \succ q$;
+- $\neg p \succ p$. 
+
+<span class="bluebold">Example</span>: Given $p_6 \succ p_5 \succ p_4 \succ p_3 \succ p_2 \succ p_1$. 
+What is the extended ordering on literals? 
+
+<span class="greenbold">Exercise: prove that the induced ordering on literals is well-founded too.</span>
+
+
+
+
+
+
+## Orderings and Well-Behaved Selections
+Fix an ordering $\succ$. A literal selection function is <span class="redbold">well-behaved</span> if either
+- a <span class="purpbold">negative literal</span> is selected,
+$$
+\text{OR}
+$$
+- all <span class="greenbold">maximal literals (w.r.t $\succ$)</span> must be selected in C.
+
+To be well-behaved, we sometimes must select more than one different literal in a clause.
+Example: $p \lor p$ or $p(x) \lor p(y)$.
+
+
+
+
+
+## Completeness of Binary Resolution with Selection
+Binary resolution with selection is <span class="redbold">complete for every well-behaved selection function</span>. 
+
+Consider our previous example: 
+
+$$
+\begin{array}{ll}
+    (1) & \neg q \lor \underline{r}\\
+    (2) & \neg p \lor \underline{q}\\
+    (3) & \neg r \lor \underline{\neg q}\\
+    (4) & \neg q \lor \underline{\neg p}\\
+    (5) & \neg p \lor \underline{\neg r}\\
+    (6) & \neg r \lor \underline{p}\\
+    (7) & r \lor q \lor \underline{p}\\
+\end{array}
+$$
+
+A well-behave selection function must satisfy:
+<div style={{display: "flex", flexDirection: "column", alignItems: "center"}}>
+    1. $r \succ q$, because of $(1)$
+    2. $q \succ p$, because of $(2)$
+    3. $p \succ r$ , because of $(6)$ 
+</div>
+ 
+There is no ordering that satisfies these conditions.
+
+
+
+
+## Example
+Let $p, q$ be boolean atoms and let $S$ be the following set of ground formulas:
+
+$$
+\{\neg p \lor \neg q,\;\; \neg p \lor q,\;\; p \lor \neg q,\;\; p \lor q\}
+$$
+
+Take any ordering such that p ≻ q and any selection function $\sigma$ over $S$ such that
+
+$$
+\{\neg p \lor \underline{\neg q},\;\; \underline{\neg p} \lor q,\;\; p \lor \underline{\neg q},\;\; \underline{p} \lor q\}
+$$
+
+
+<span class="bluebold">(a)</span> Is $\sigma$ a well-behaved selection function over $S$? $\\$
+<span class="bluebold">(b)</span> How many inferences of $\mathbb{BR}σ$ are applicable to $S$?

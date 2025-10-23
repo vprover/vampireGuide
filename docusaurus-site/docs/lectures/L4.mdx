@@ -1,0 +1,363 @@
+---
+id: l4
+title: "Lecture 4: Redundancy Elimination and Equality"
+sidebar_label: "Lecture 4: Redundancy Elimination and Equality"
+---
+
+Laura Kovács
+
+## Subsumption and Tautology Deletion
+A clause is a propositional tautology if it is of the form $p \lor \neg p \lor C$, 
+that is, it contains a pair of complementary literals.
+
+There are also <span class="bluebold">equational tautologies</span>, 
+for example: 
+
+$$
+a\neq b \;\;\lor\;\; b \neq c \;\;\lor\;\; f(c,c)=f(a,a)
+$$
+
+A clause $C$ <span class="redbold">subsumes</span> any clause $C \lor D$, where $D$ is non-empty. 
+
+It was known since 1965 that <span class="brownbold">subsumed clauses and propositional tautologies 
+can be removed from the search space</span>
+
+
+
+
+
+
+
+## Problem
+- How can we <span class="redbold">prove</span> that 
+<span class="bluebold">completeness is preserved</span> 
+if we <span class="purpbold">remove subsumed clauses and tautologies</span> 
+from the <span class="greenbold">search space</span>? 
+- Solution: general <span class='redbold'>theory of redundancy</span>.
+
+
+
+
+
+
+## Bag Extension of an Ordering
+<span class="redbold">Bag = finite multiset</span>. 
+Let $\gt$ be any (strict) ordering on a set $X$. 
+The <span class="redbold">bag extension of</span> $\gt$ is a binary relation $\gt^\text{bag}$, on bags over $X$, 
+defined as the smallest transitive relation on bags such that 
+
+$$
+\{x,y_1,\ldots,y_n\} \gt^\text{bag}\{x_1,\ldots,x_m,y_1,\ldots,y_n\}\\
+\text{if} \; x>x_i \text{ for all } i\in\{1\ldots m\}
+$$
+
+where $m \geq 0$. 
+
+<span class="redbold">Idea</span>: a bag becomes smaller if we replace an element by 
+<span class="bluebold">any finite number</span> of smaller elements. 
+
+The following <span class="redbold">results are known</span> about the bag extensions of orderings: 
+
+1. $\gt^\text{bag}$ is an <span class="greenbold">ordering</span>;
+2. If $\gt$ is <span class="greenbold">total</span>, then so is $\gt^\text{bag}$; 
+3. If $\gt$ is <span class="greenbold">well-founded</span>, then so is $\gt^\text{bag}$.
+
+
+
+
+
+
+
+
+
+
+## Clause Orderings
+From now on consider clauses also as <span class="redbold">bags of literals</span>. Note:
+- we have an ordering $\succ$ for comparing literals;
+- a clause is a bag of literals. 
+
+Hence
+- we can compare clauses using the <span class="redbold">bag extension</span> $\succ^\text{bag}$ of $\succ$. 
+
+For simpicity we often denote the multiset ordering also by $\succ$.
+
+
+
+
+
+
+
+### Example
+Let $\succ$ be a total well-founded ordering on the ground atoms $p_1, \ldots, p_6$ 
+such that $p_6 \succ p_5 \succ p_4 \succ p_3 \succ p_2 \succ p_1$.
+
+Consider the bag extension of $\succ$; 
+for simplicity, denote the bag extension of $\succ$ also by $\succ$. 
+
+Using $\succ$, compare and order the following three clauses: 
+
+$$
+\begin{aligned}
+p_6 \lor \neg p_6\\
+\neg p_2 \lor p_4 \lor p_5\\
+p_2 \lor p_3
+\end{aligned}
+$$
+
+
+
+
+
+
+
+## Redundancy
+A clause $C\in S$ is called <span class="redbold">redundant in</span> $S$ if it is a logical consequence of 
+clauses in $S$ strictly smaller than $C$.
+
+
+
+
+### Examples
+A <span class="redbold">tautology</span> $p \lor \neg p \lor C$ is a logical consequence of the empty set of formulas: 
+
+$$
+\models p \lor \neg p \lor C, 
+$$
+
+therefore it is <span class="greenbold">redundant</span>. 
+
+We know that $C$ <span class="redbold">subsumes</span> $C \lor D$. Note 
+
+$$
+\begin{aligned}
+C \lor D \succ C\\
+C \models C \lor D
+\end{aligned}
+$$
+therefore subsumed clauses are redundant. 
+
+If $\square \in S$, then all non-empty other clauses in $S$ are <span class="greenbold">redundant</span>.
+
+
+
+
+
+
+
+## Redundant Clauses Can be Removed
+In $\mathbb{BR}\sigma$ (and in all calculi we will consider later) 
+<span class="bluebold">redundant clauses can be removed from the search space</span>.
+
+
+
+
+
+
+
+## Inference Process with Redundancy
+Let $\mathbb{I}$ be an inference system. 
+Consider an inference process with two kinds of step $S_i \Rightarrow S_{i+1}$: 
+1. <span class="bluebold">Adding the conclusion</span> of an $\mathbb{I}$-inference with premises in $S_i$. 
+2. <span class="bluebold">Deletion of a clause redundant</span> in $S_i$, that is
+
+$$
+S_{i+1} = S_i - \{C\},
+$$
+
+where $C$ is redundant in $S_i$.
+
+
+
+
+
+
+
+
+
+## Fairness: Persistent Clauses and Limit
+Consider an inference process 
+
+$$
+S_0 \Rightarrow S_1 \Rightarrow S_2 \Rightarrow \ldots
+$$
+
+A clause $C$ is called <span class="redbold">persistent</span> if 
+
+$$
+\exists i \forall j \geq i(C\in S_j).
+$$
+
+The <span class="redbold">limit</span> $S_\infty$ of the inference process is the set of all persistent clauses: 
+
+$$
+S_\infty = \bigcup_{i=0,1,\ldots}\;\;\;\bigcap_{j\geq i}S_j.
+$$
+
+
+
+
+
+
+
+
+
+## Fairness
+The process is called $\mathbb{I}$<span class="redbold">-fair</span> if every inference with persistent premises 
+in $S_\infty$ has been applied, that is, if 
+
+$$
+\displaystyle\frac{C_1\;\; \ldots \;\; C_n}{C}
+$$
+
+is an inference in $\mathbb{I}$ and $\{C_1,\ldots,C_n\}\subseteq S_\infty$, 
+then $C \in S_i$ for some $i$.
+
+
+
+
+
+
+
+
+
+
+
+
+
+## Completeness of $\mathbb{BR}\sigma$
+<span class="greenbold">Completeness Theorem.</span> Let $\succ$ be a well-founded ordering and $\sigma$ a well-behaved selection function. Let also 
+
+1. $S_0$ be a set of clauses; 
+2. $S_0 \Rightarrow S_1 \Rightarrow S_2 \Rightarrow \ldots$ be a fair $\mathbb{BR}\sigma$-inference process. 
+
+Then $S_0$ is unsatisfiable if and only if $\square \in S_i$ for some $i$.
+
+
+
+
+## Saturation up to Redundancy
+A set $S$ of clauses is called <span class="redbold">saturated up to redundancy</span> if for every $\mathbb{I}$-inference
+
+$$
+\displaystyle\frac{C_1 \;\;\; \ldots \;\;\; C_n}{C}
+$$
+
+with premises in $S$, either 
+1. $C \in S$; or 
+2. $C$ is redundant w.r.t. $S$, that is, $S_{\prec C} \models C$.
+
+
+
+
+
+
+## Saturation up to Redundancy and Satisfiability Checking
+<span class="greenbold">Lemma</span>. A set $S$ of clauses saturated up to redundancy is
+unsatisfiable if and only if $\square \in S$. 
+
+Therefore, if we built a set saturated up to redundancy, 
+then the initial set $S_0$ is <span class="redbold">satisfiable</span>. 
+This is a powerful way of checking redundancy: 
+one can even check satisfiability of formulas having only <span class="bluebold">infinite models</span>. 
+
+The only problem with this characterisation is that there is <span class="purpbold">no obvious way 
+to build a model of</span> $S_0$ out of a saturated set.
+
+
+
+## Binary Resolution with Selection
+- One of the <span class="redbold">key properties</span> to satisfy this lemma is the following: 
+    - <span class="purpbold">the conclusion of every rule is strictly smaller that the rightmost premise of this rule</span>.
+- <span class="bluebold">Binary resolution</span>,
+    $$
+    \displaystyle\frac{\underline{p}\lor C_1 \;\;\; \underline{\neg p} \lor C_2}{C_1 \lor C_2} (BR)
+    $$
+- <span class="bluebold">Positive factoring</span>,
+$$
+\displaystyle\frac{\underline{p} \lor \underline{p} \lor C}{p \lor C}{} (Fact)
+$$
+
+
+
+## First-order logic with equality
+- <span class="bluebold">Equality predicate</span>: $=$.
+- <span class="bluebold">Equality</span>: $l = r$ . 
+
+The order of literals in equalities does not matter, 
+that is, we consider an equality $l = r$ as a multiset consisting of two terms $l, r$,
+and so consider $l = r$ and $r = l$ equal.
+
+
+
+## Equality. An Axiomatisation (Recap)
+- <span class="redbold">reflexivity</span> axiom: $x = x$;
+- <span class="redbold">symmetry</span> axiom: $x = y \rightarrow y = x$;
+- <span class="redbold">transitivity</span> axiom: $x = y \land y = z \rightarrow x = z$;
+- <span class="redbold">function substitution (congruence)</span> axioms: $\\$
+$x_1 = y_1 \land \ldots \land x_n = y_n \rightarrow f(x_1, \ldots, x_n ) = f(y_1, \ldots, y_n)$, 
+for every function symbol $f$;
+
+- <span class="redbold">predicate substitution (congruence)</span> axioms: $\\$
+$x_1 = y_1 \land \ldots \land x_n = y_n \land P(x_1, \ldots, x_n ) \rightarrow P(y_1, \ldots, y_n)$,
+for every predicate symbol $P$.
+
+
+
+## Inference systems for logic with equality
+We will define a <span class="redbold">resolution and superposition inference system</span>. 
+This system is <span class="bluebold">complete</span>. One can <span class="bluebold">eliminate redundancy</span>. 
+
+We will first define it only for <span class="bluebold">ground clauses</span>. On the theoretical side,
+- Completeness is first proved for <span class="bluebold">ground clauses</span> only.
+- It is then “lifted” to <span class="bluebold">arbitrary first-order clauses</span> using a technique called <span class="bluebold">lifting</span>.
+- Moreover, this way some notions (ordering, selection function) can first be defined for ground clauses only and then it is relatively easy to see how to generalise them for non-ground clauses.
+
+
+
+
+## Simple Ground Superposition Inference System
+<span class="redbold underline">Superposition</span>: (right and left)
+$$
+\displaystyle \frac{\color{red}l=r\color{black}\lor C \;\;\; \color{red}s[l] = t\color{black}\lor D}{s[r]=t \lor C \lor D}(Sup),\;\;\;\;\;\;
+\frac{\color{red}l=r\color{black}\lor C \;\;\; \color{red}s[l]\neq t\color{black}\lor D}{s[r] \neq t \lor C \lor D}(Sup),
+$$
+
+<span class="redbold underline">Equality Resolution</span>:
+$$
+\displaystyle \frac{\color{red}s\neq s\color{black}\lor C}{C}(ER),
+$$
+
+<span class="redbold underline">Equality Factoring</span>:
+$$
+\displaystyle \frac{\color{red} s=t \color{black} \lor \color{red} s=t' \color{black} \lor C}{s=t \lor t \neq t' \lor C}(EF),
+$$
+
+
+
+## Example
+$$
+\begin{array}{ll}
+f(a)=a \lor g(a)=a \\
+f(f(a))=a \lor g(g(a))\neq a\\
+f(f(a)) \neq a 
+\end{array}
+$$
+
+
+
+
+## Can this system be used for efficient theorem proving?
+Not really. It has <span class="redbold">too many inferences</span>.
+For example, from the clause $f(a) = a$ we can derive any clause of the form 
+
+$$
+f^m(a) = f^n(a)
+$$ 
+where $m, n \geq 0$. 
+Worst of all, the derived clauses can be <span class="redbold">much larger</span> than the original clause $f(a) = a$. 
+
+The recipe is to use the previously introduced ingredients: 
+1. Ordering; 
+2. Literal selection; 
+3. Redundancy elimination.
+

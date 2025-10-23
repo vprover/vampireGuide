@@ -4,6 +4,9 @@
  * work well for content-centric websites.
  */
 
+/* src/css/custom.css */
+@import './prism-live-sync.css';
+
 
 img, div, span, p, h1, h2, h3, h4, h5, h6, a {
   transition: 0.25s all;
@@ -58,4 +61,33 @@ img, div, span, p, h1, h2, h3, h4, h5, h6, a {
   opacity: 0.8;
   scale: 1.03;
   transform: rotate(5deg);
+}
+
+.redbold {
+  color: red;
+  font-weight: bold;
+}
+
+.purpbold {
+  color: purple;
+  font-weight: bold;
+}
+
+.greenbold {
+  color: green;
+  font-weight: bold;
+}
+
+.bluebold {
+  color: rgb(80,130,255);
+  font-weight: bold;
+}
+
+.brownbold {
+  color: brown;
+  font-weight: bold;
+}
+
+.underline {
+  text-decoration: underline;
 }

@@ -1,0 +1,441 @@
+---
+id: l5
+title: "Lecture 5: Term Orderings"
+sidebar_label: "Lecture 5: Term Orderings"
+---
+
+Laura Kovács
+
+## Simple Ground Superposition Inference System
+<span class="redbold underline">Superposition</span>: (right and left)
+$$
+\displaystyle \frac{\color{red}l=r\color{black}\lor C \;\;\; \color{red}s[l] = t\color{black}\lor D}{s[r]=t \lor C \lor D}(Sup),\;\;\;\;\;\;
+\frac{\color{red}l=r\color{black}\lor C \;\;\; \color{red}s[l]\neq t\color{black}\lor D}{s[r] \neq t \lor C \lor D}(Sup),
+$$
+
+<span class="redbold underline">Equality Resolution</span>:
+$$
+\displaystyle \frac{\color{red}s\neq s\color{black}\lor C}{C}(ER),
+$$
+
+<span class="redbold underline">Equality Factoring</span>:
+$$
+\displaystyle \frac{\color{red} s=t \color{black} \lor \color{red} s=t' \color{black} \lor C}{s=t \lor t \neq t' \lor C}(EF),
+$$
+
+## Can this system be used for efficient theorem proving?
+Not really. It has <span class="redbold">too many inferences</span>.
+For example, from the clause $f(a) = a$ we can derive any clause of the form 
+
+$$
+f^m(a) = f^n(a)
+$$ 
+where $m, n \geq 0$. 
+Worst of all, the derived clauses can be <span class="redbold">much larger</span> than the original clause $f(a) = a$. 
+
+The recipe is to use the previously introduced ingredients: 
+1. Ordering; 
+2. Literal selection; 
+3. Redundancy elimination.
+
+
+
+
+
+## Atom and literal orderings on equalities
+
+Equality atom comparison treats an equality $s = t$ as the multiset $\dot{\{}s, t\dot{\}}$.
+- $(s'=t')\succ_\text{lit} (s=t)$ if $\dot{\{} s',t' \dot{\}} \succ \dot{\{} s,t \dot{\}}$
+- $(s'\neq t')\succ_\text{lit} (s\neq t)$ if $\dot{\{} s',t' \dot{\}} \succ \dot{\{} s,t \dot{\}} \\$
+with $\succ_\text{lit}$ being an induced ordering on literals.
+
+
+
+
+
+## Ground Superposition Inference System $\mathbb{S}up_{\succ,\sigma}$
+Let $\sigma$ be a well-behaved literal selection function. 
+
+<span class="redbold underline">Superposition</span>: (right and left)
+$$
+\displaystyle \frac{\color{red}\underline{l=r}\color{black}\lor C \;\;\; \color{red}\underline{s[l] = t}\color{black}\lor D}{s[r]=t \lor C \lor D}(Sup),\;\;\;\;\;\;
+\frac{\color{red}\underline{l=r}\color{black}\lor C \;\;\; \color{red}\underline{s[l]\neq t}\color{black}\lor D}{s[r] \neq t \lor C \lor D}(Sup),
+$$
+
+where 
+$$
+\begin{array}{ll}
+    1 & l\succ r \\
+    2 & s[l]\succ t \\
+    3 & l=r \text{ is strictly greater than any literal in } C,\\
+    4 & \text{(only for the superposition-right rule) } s[l]=t \text{ is greater than or equal to any literal in} D.
+\end{array}
+$$
+
+<span class="redbold underline">Equality Resolution</span>:
+$$
+\displaystyle \frac{\color{red}\underline{s\neq s}\color{black}\lor C}{C}(ER),
+$$
+
+<span class="redbold underline">Equality Factoring</span>:
+$$
+\displaystyle \frac{\color{red} \underline{s=t} \color{black} \lor \color{red} s=t' \color{black} \lor C}{s=t \lor t \neq t' \lor C}(EF),
+$$
+
+where 
+
+$$
+\begin{array}{ll}
+    1 & s\succ t \succeq t' \\
+    2 & s=t \text{ is strictly greater than any literal in } C.
+\end{array}
+$$
+
+
+
+
+
+
+
+## Extension to arbitrary (non-equality) literals
+- Consider a <span class="bluebold">two-sorted logic</span> in which equality is the only predicate symbol.
+- Interpret terms as terms of the first sort and <span class="bluebold">non-equality atoms as terms of the second sort</span>.
+- Add a <span class="redbold">constant $\top$ of the second sort</span>.
+- Replace <span class="bluebold">non-equality atoms</span> $p(t_1 , \ldots , t_n)$ <span class="bluebold">by equalities of the second sort</span> $p(t_1, \ldots, t_n) = \top$. 
+
+For example, the clause 
+
+$$
+p(a,b) \lor \neg q(a) \lor a\neq b
+$$
+
+becomes 
+
+$$
+p(a,b) = \top \lor q(a) \neq \top \lor a\neq b
+$$
+
+
+
+
+
+
+## Binary resolution inferences can be represented by inferences in the superposition system
+We ignore selection functions. 
+
+$$
+\displaystyle\frac{A\lor C_1 \;\;\; \neg A \lor C_2}{C_1 \lor C_2}(BR)
+$$
+
+$$
+\displaystyle\frac
+{
+    A=\top\lor C_1 \;\;\; A\neq \top \lor C_2
+}
+{
+    \displaystyle\frac{\top \neq \top \lor C_1 \lor C_2}
+    {C_1 \lor C_2} (ER)
+} (Sup)
+$$
+
+
+
+
+
+## Exercise
+<span class="greenbold">Positive factoring can also be represented by inferences in the superposition system.</span>
+
+
+
+
+
+
+## Simplification Ordering
+When we deal with equality, we need to work with <span class="redbold">term orderings</span>.
+
+Consider a strict ordering $\succ$ on signature symbols, such that $\succ$ is well-founded. 
+
+The ordering $\succ$ on terms is called a <span class="redbold">simplification ordering</span> if 
+1. $\succ$ is <span class="bluebold">well-founded</span>; 
+2. $\succ$ is <span class="bluebold">monotonic</span>: if $l \succ r$ , then $s[l] \succ s[r]$; 
+3. $\succ$ is <span class="bluebold">stable under substitutions</span>: if $l\succ r$ , then $l\theta \succ r\theta$. 
+
+One can combine the last two properties into one: 
+
+2a. If $l \succ r$ , then $s[l\theta] \succ s[r\theta]$.
+
+
+
+
+
+
+## A General Property of Term Orderings
+If $\succ$ is a simplification ordering, then for every term $t[s]$ and its proper subterm $s$ we have $s \nsucc t[s]$. <span class="bluebold">Why?</span> 
+
+Consider an example. 
+
+$$
+\begin{array}{ll}
+f(a)=a\\
+f(f(a))=a\\
+f(f(f(a)))=a
+\end{array}
+$$
+
+Then both $f(f(a))=a$ and $f(f(f(a)))=a$ are <span class="redbold">redundant</span>. $\\$ 
+The clause $f(a)=a$ is a logical consequence of $\{f(f(a))=a,\; f(f(f(a)))=a\}$; but is <span class="redbold">not redundant</span>. 
+
+
+<span class="bluebold">Exercise: Show that </span>$\{f(a)=a,\;\; f(f(f(a)))\neq a\}$ <span class="bluebold">is unsatisfiable, by using superposition with redundancy elimination.</span>
+
+How to “come up” with <span class="redbold">simplification orderings</span>?
+
+
+
+
+
+
+## Term Algebra
+<span class="redbold">Term algebra</span> $TA(\Sigma)$ of signature $\Sigma$ :
+- <span class="bluebold">Domain</span>: the set of all ground terms of $\Sigma$ .
+- <span class="bluebold">Interpretation of any function symbol $f$ or constant $c$ is defined as</span>: 
+
+$$
+\begin{array}{rcl}
+
+f_{TA(\Sigma)}(t_1,\ldots,t_n) & \overset{\text{def}}{\Leftrightarrow} & f(t_1,\ldots,t_n);\\
+C_{TA(\Sigma)} & \overset{\text{def}}{\Leftrightarrow} & C.
+
+\end{array}
+$$
+
+
+
+## Knuth-Bendix Ordering (KBO), Ground Case
+Let us fix
+- Signature $\Sigma$ , it induces the term algebra $TA(\Sigma)$.
+- Total ordering $\gg$ on $\Sigma$, called precedence relation;
+- Weight function $w : \Sigma  \rightarrow \mathbb{N}$. 
+
+Weight of a ground term $t$ is 
+
+$$
+|g(t_1, \ldots, t_n)| = w(g) + \sum_{i=1}^n |t_i|
+$$
+
+$g(t_1, \ldots, t_n) \succ_\text{KB} h(s_1, \ldots, s_m)$ if 
+
+1. $|g(t_1, \ldots, t_n)| \gt |h(s_1, \ldots, s_m)|$ <span class="greenbold">(by weight)</span> or 
+
+2. $|g(t_1, \ldots, t_n)| = |h(s_1, \ldots, s_m)|$ 
+and one of the following holds:
+    - 2.1 $g \gg h$ <span class="greenbold">(by precedence)</span> or
+    - 2.2 $g = h$ and for some $1 \leq i \leq n$ we have $t_1 = s_1, \ldots, t_{i−1} = s_{i−1}$ and 
+    $t_i \succ_\text{KB} s_i$ <span class="greenbold">(lexicographically)</span>.
+
+
+
+
+
+## Example
+
+$$
+\begin{array}{ll}
+    w(a) = 1\\
+    w(b) = 2\\
+    w(f) = 3\\
+    w(g) = 0
+\end{array}
+$$
+
+$$
+|f(g(a), f(a, b))| = |3(0(1), 3(1, 2))| = 3 + 0 + 1 + 3 + 1 + 2 = 10
+$$
+
+
+The Knuth-Bendix ordering is the <span class="redbold">main ordering</span> used in Vampire and all other resolution and superposition theorem provers.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+## Knuth-Bendix Ordering (KBO), Ground Case: Summary
+
+
+<div style={{opacity: 0.9, backgroundColor: "rgba(150,100,100,0.4)", padding: "10px", borderRadius: "8px"}}>
+Let us fix
+- Signature $\Sigma$ , it induces the term algebra $TA(\Sigma)$.
+- Total ordering $\gg$ on $\Sigma$, called precedence relation;
+- Weight function $w : \Sigma  \rightarrow \mathbb{N}$. 
+
+Weight of a ground term $t$ is 
+
+$$
+|g(t_1, \ldots, t_n)| = w(g) + \sum_{i=1}^n |t_i|
+$$
+
+$g(t_1, \ldots, t_n) \succ_\text{KB} h(s_1, \ldots, s_m)$ if 
+
+1. $|g(t_1, \ldots, t_n)| \gt |h(s_1, \ldots, s_m)|$ <span class="greenbold">(by weight)</span> or 
+
+2. $|g(t_1, \ldots, t_n)| = |h(s_1, \ldots, s_m)|$ 
+and one of the following holds:
+    - 2.1 $g \gg h$ <span class="greenbold">(by precedence)</span> or
+    - 2.2 $g = h$ and for some $1 \leq i \leq n$ we have $t_1 = s_1, \ldots, t_{i−1} = s_{i−1}$ and 
+    $t_i \succ_\text{KB} s_i$ <span class="greenbold">(lexicographically)</span>.
+</div>
+
+- Note: <span class="redbold">Weight functions</span> $w$ are <span class="bluebold">not arbitrary functions</span>.
+    - need to be "compatible" with $\gg$.
+
+- Why? Compare for example $a$ with $f(a)$ with arbitrary $\gg$ and $w$.
+
+
+
+
+## Weight Functions, Ground Case
+A <span class="redbold">weight function</span> $w : \Sigma  \rightarrow \mathbb{N}$ is any function satisfying:
+- $w(a) \gt 0$ for any constant $a \in \Sigma$;
+- if $w(f) = 0$ for a unary function $f \in \Sigma$, then $f \gg g$ for all functions $g \in \Sigma$ with $f \neq g$. $\\$
+That is, $f$ is the greatest element of $\Sigma$ wrt $\gg$. 
+
+As a consequence, there is at most one unary function $f$ with $w(f) = 0$.
+
+
+
+
+
+## Exercise
+Consider a KBO ordering $\succ$ such that $inverse \gg times$ by precedence. 
+Consider the literal: 
+
+$$
+inverse(times(x, y)) = times(inverse(y), inverse(x)). 
+$$
+
+Compare, w.r.t $\succ$, the left- and right-hand side terms of the equality when:
+- $weight(inverse) = weight(times) = 1$;
+- $weight(inverse) = 0$ and $weight(times) = 1$.
+
+
+
+
+
+## Same Property as for $\mathbb{BR}\sigma$ 
+The conclusion is <span class="redbold">strictly smaller</span> than the rightmost premise:
+
+$$
+\displaystyle\frac{\color{red}\underline{l=r}\color{black} \lor C \;\;\; \color{red}\underline{s[l]=t}\color{black} \lor D}{s[r]=t\lor C \lor D}(Sup),\;\;\;\;\;\;
+\displaystyle\frac{\color{red}\underline{l=r}\color{black} \lor C \;\;\; \color{red}\underline{s[l]\neq t}\color{black} \lor D}{s[r]\neq t\lor C \lor D}(Sup),
+$$
+
+
+where 
+1. $l \succ r$
+2. $s[l] \succ t$,
+3. $l = r$ is strictly greater than any literal in $C$, 
+4. $s[l] = t$ is greater than or equal to any literal in $D$.
+
+
+
+
+
+## New redundancy
+Consider a superposition with a unit left premise: 
+
+$$
+\displaystyle\frac{\underline{l=r}\;\;\;\;\; \underline{s[l]=t} \lor D}{s[r]=t\lor D}(Sup),
+$$
+
+Note that we have 
+
+$$
+l=r,\;\; s[r]=t\lor D \color{red}\models\color{black} s[l]=t\lor D
+$$
+
+and we have
+
+$$
+s[l]=t\lor D \color{red}\succ\color{black} s[r]=t \lor D 
+$$
+
+If we also have $s[l] = t \lor D \succ l = r$, 
+then the second premise is <span class="redbold">redundant</span> and can be removed.
+
+This rule (superposition plus deletion) is sometimes called <span class="redbold">demodulation</span> (also <span class="redbold">rewriting by unit equalities</span>).
+
+
+
+
+
+## Exercise
+Consider the KBO ordering ≻ generated by: 
+- the precedence $f \gg a \gg b \gg c$ $\\$
+and 
+- the weight function $w$ with $w(f) = w(a) = w(b) = w(c) = 1$. 
+
+Consider the set $S$ of ground formulas: 
+
+$$
+\begin{array}{l}
+a=b\lor a=c\\
+f(a) \neq f(b)\\
+b=c
+\end{array}
+$$
+
+Apply saturation on $S$ using an inference process based on the ground superposition calculus $\mathbb{S}up_{\succ,\sigma}$ (including the inference rules of ground binary resolution with selection). 
+
+Show that $S$ is unsatisfiable. 
+
+<span class="redbold">Challenge</span>: Show that $S$ is unsatisfiable such that during saturation <span class="redbold">only 4 new clauses</span> are generated.
+
