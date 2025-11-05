@@ -98,6 +98,12 @@ const config = {
             label: 'Lectures',
           },
           {
+            type: 'docSidebar',
+            sidebarId: 'exercisesSidebar',
+            position: 'left',
+            label: 'Exercises',
+          },
+          {
             href: 'https://github.com/vprover/vampireGuide',
             label: 'GitHub',
             position: 'right',

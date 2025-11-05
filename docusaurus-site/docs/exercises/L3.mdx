@@ -1,0 +1,105 @@
+---
+id: ex-l3
+title: "Lecture 3 Exercises"
+sidebar_label: L3
+---
+
+Laura Kovács
+
+## Problem 3.1
+
+Let $\mathbb{I}$ be a sound inference system on clauses and let $S_0$ be a non-empty set of clauses. Consider a fair $\mathbb{I}$-inference process
+
+$$
+S_0 \Rightarrow S_1 \Rightarrow S_2 \Rightarrow \cdots
+$$
+
+and let $S_\infty$ denote its limit. Show that $S_\infty$ is the $\mathbb{I}$-closure of $S_0$.
+
+**Note.** Prove that $S_\infty$ is the smallest $\mathbb{I}$-saturated set containing $S_0$. Recall the property from the lecture that every $S_i$ is a subset of the $\mathbb{I}$-closure of $S_0$.
+
+<details>
+<summary>Solution</summary>
+
+We prove three statements.
+
+1. **$S_\infty$ is saturated.** Suppose not. Then there are $C_1,\dots,C_n \in S_\infty$ and an inference
+   $$
+   \frac{C_1 \;\; \cdots \;\; C_n}{C}
+   $$
+   with $C \notin S_\infty$. Because each $C_i$ is persistent, all appear from some index onward. Fairness ensures $C$ is eventually derived, hence $C \in S_j \subseteq S_\infty$, a contradiction.
+
+2. **Every $\mathbb{I}$-saturated superset of $S_0$ contains $S_\infty$.** Let $X$ be saturated with $S_0 \subseteq X$. We show by induction on $i$ that $S_i \subseteq X$.
+   - Base: $S_0 \subseteq X$ holds by assumption.
+   - Step: assume $S_i \subseteq X$. If $S_{i+1} = S_i$ we are done. Otherwise the new clause $C$ in $S_{i+1}$ is inferred from premises in $S_i$. By the induction hypothesis the premises lie in $X$, and saturation of $X$ implies $C \in X$. Thus $S_{i+1} \subseteq X$.
+   As $S_\infty = \bigcup_{i \ge 0} S_i$, we conclude $S_\infty \subseteq X$.
+
+3. Combining (1) and (2), $S_\infty$ is saturated, contains $S_0$, and is contained in every saturated set containing $S_0$. Therefore it is the smallest such set, i.e., the $\mathbb{I}$-closure of $S_0$.
+
+</details>
+
+
+## Problem 3.2
+
+Let $\succ$ be a total well-founded ordering on ground non-equality atoms, and use the same symbol for the induced literal ordering. Let $C$ and $D$ be ground clauses without equality literals. Denote by $A$ and $B$ the maximal atoms of $C$ and $D$ (with respect to $\succ$). Assume $A$ and $B$ are the same atom syntactically, that $A$ occurs negatively in $C$, and that $A$ occurs only positively in $D$. Show that $C \succ_{\text{bag}} D$.
+
+<details>
+<summary>Solution</summary>
+
+Since $A$ and $B$ are the same atom, $A$ is also maximal in $D$. Because $A$ occurs only positively in $D$, every other literal $L$ in $D$ satisfies $\neg A \succ A \succ \neg L \succ L$ under the literal ordering. Hence the multiset extension yields $\neg A \succ_{\text{bag}} D$.
+
+By assumption $A$ occurs only negatively in $C$, so $\neg A$ is a literal of $C$ and is maximal there: for every other atom $C_i$ we have $\neg A \succ \neg C_i \succ C_i$. Thus $\neg A$ is the top literal of $C$. Since $\neg A \succ_{\text{bag}} D$ and $\neg A$ is the maximal literal in $C$, the bag extension ordering gives $C \succ_{\text{bag}} D$.
+
+</details>
+
+
+## Problem 3.3
+
+Let $\succ_1$ and $\succ_2$ be strict well-founded orderings on sets $M_1$ and $M_2$. Define an ordering $\succ^*$ on $M_1 \times M_2$ by
+
+$$
+(a_1,a_2) \succ^* (b_1,b_2) \quad \Longleftrightarrow \quad \big(a_1 \succ_1 b_1 \;\;\text{or}\;\; (a_1 = b_1 \text{ and } a_2 \succ_2 b_2)\big).
+$$
+
+Show that $\succ^*$ is well-founded.
+
+<details>
+<summary>Solution</summary>
+
+Assume for contradiction that $\succ^*$ admits an infinite descending chain
+
+$$
+(x_0,y_0) \succ^* (x_1,y_1) \succ^* (x_2,y_2) \succ^* \cdots.
+$$
+
+Examining the first components, each transition either decreases strictly in $\succ_1$ or keeps the first component equal. Because $\succ_1$ is well-founded, the sequence $\{x_i\}$ has a minimal element: there is $n$ such that $x_n \preceq_1 x_i$ for all $i \ge n$. Hence for $i \ge n$ we must have $x_i = x_{i+1}$, and the definition of $\succ^*$ forces $y_i \succ_2 y_{i+1}$. That yields an infinite descending $\succ_2$-chain, contradicting well-foundedness of $\succ_2$. Therefore $\succ^*$ is well-founded.
+
+</details>
+
+
+## Problem 3.4
+
+Let $\succ$ be a total well-founded ordering on the ground atoms $p_1,\dots,p_6$ with $p_6 \succ p_5 \succ p_4 \succ p_3 \succ p_2 \succ p_1$. Consider the bag extension of $\succ$ (denoted again by $\succ$). Using this ordering, compare and order the clauses
+
+$$
+p_6 \vee \neg p_6, \qquad \neg p_2 \vee p_4 \vee p_5, \qquad p_2 \vee p_3.
+$$
+
+<details>
+<summary>Solution</summary>
+
+Since $\succ$ is total, for $i > j$ we have $p_i \succ p_j$ and $p_i \succ \neg p_j$. In particular $p_6 \succ \neg p_2$, $p_6 \succ p_4$, $p_6 \succ p_5$, and $p_5 \succ p_2$, $p_5 \succ p_3$.
+
+For multisets, if $B \supset B'$ then $B \succ B'$, so $p_6 \vee \neg p_6 \succ p_6$ and $\neg p_2 \vee p_4 \vee p_5 \succ p_5$. Combining the comparisons yields
+
+$$
+p_6 \vee \neg p_6 \succ p_6 \succ \neg p_2 \vee p_4 \vee p_5 \succ p_5 \succ p_2 \vee p_3.
+$$
+
+By transitivity,
+
+$$
+p_6 \vee \neg p_6 \succ \neg p_2 \vee p_4 \vee p_5 \succ p_2 \vee p_3.
+$$
+
+</details>

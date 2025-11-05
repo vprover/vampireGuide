@@ -9,18 +9,18 @@ Laura Kovács
 ## Simple Ground Superposition Inference System
 <span class="redbold underline">Superposition</span>: (right and left)
 $$
-\displaystyle \frac{\color{red}l=r\color{black}\lor C \;\;\; \color{red}s[l] = t\color{black}\lor D}{s[r]=t \lor C \lor D}(Sup),\;\;\;\;\;\;
-\frac{\color{red}l=r\color{black}\lor C \;\;\; \color{red}s[l]\neq t\color{black}\lor D}{s[r] \neq t \lor C \lor D}(Sup),
+\displaystyle \frac{{\color{red}l=r} \lor C \;\;\; {\color{red}s[l] = t} \lor D}{s[r]=t \lor C \lor D}(Sup),\;\;\;\;\;\;
+\frac{{\color{red}l=r} \lor C \;\;\; {\color{red}s[l]\neq t} \lor D}{s[r] \neq t \lor C \lor D}(Sup),
 $$
 
 <span class="redbold underline">Equality Resolution</span>:
 $$
-\displaystyle \frac{\color{red}s\neq s\color{black}\lor C}{C}(ER),
+\displaystyle \frac{{\color{red}s\neq s} \lor C}{C}(ER),
 $$
 
 <span class="redbold underline">Equality Factoring</span>:
 $$
-\displaystyle \frac{\color{red} s=t \color{black} \lor \color{red} s=t' \color{black} \lor C}{s=t \lor t \neq t' \lor C}(EF),
+\displaystyle \frac{{\color{red}s=t} \lor {\color{red}s=t'} \lor C}{s=t \lor t \neq t' \lor C}(EF),
 $$
 
 ## Can this system be used for efficient theorem proving?
@@ -58,8 +58,8 @@ Let $\sigma$ be a well-behaved literal selection function.
 
 <span class="redbold underline">Superposition</span>: (right and left)
 $$
-\displaystyle \frac{\color{red}\underline{l=r}\color{black}\lor C \;\;\; \color{red}\underline{s[l] = t}\color{black}\lor D}{s[r]=t \lor C \lor D}(Sup),\;\;\;\;\;\;
-\frac{\color{red}\underline{l=r}\color{black}\lor C \;\;\; \color{red}\underline{s[l]\neq t}\color{black}\lor D}{s[r] \neq t \lor C \lor D}(Sup),
+\displaystyle \frac{{\color{red}{\underline{l=r}}} \lor C \;\;\; {\color{red}{\underline{s[l] = t}}} \lor D}{s[r]=t \lor C \lor D}(Sup),\;\;\;\;\;\;
+\frac{{\color{red}{\underline{l=r}}} \lor C \;\;\; {\color{red}{\underline{s[l]\neq t}}} \lor D}{s[r] \neq t \lor C \lor D}(Sup),
 $$
 
 where 
@@ -74,12 +74,12 @@ $$
 
 <span class="redbold underline">Equality Resolution</span>:
 $$
-\displaystyle \frac{\color{red}\underline{s\neq s}\color{black}\lor C}{C}(ER),
+\displaystyle \frac{{\color{red}{\underline{s\neq s}}} \lor C}{C}(ER),
 $$
 
 <span class="redbold underline">Equality Factoring</span>:
 $$
-\displaystyle \frac{\color{red} \underline{s=t} \color{black} \lor \color{red} s=t' \color{black} \lor C}{s=t \lor t \neq t' \lor C}(EF),
+\displaystyle \frac{{\color{red}{\underline{s=t}}} \lor {\color{red}s=t'} \lor C}{s=t \lor t \neq t' \lor C}(EF),
 $$
 
 where 
@@ -374,8 +374,8 @@ Compare, w.r.t $\succ$, the left- and right-hand side terms of the equality when
 The conclusion is <span class="redbold">strictly smaller</span> than the rightmost premise:
 
 $$
-\displaystyle\frac{\color{red}\underline{l=r}\color{black} \lor C \;\;\; \color{red}\underline{s[l]=t}\color{black} \lor D}{s[r]=t\lor C \lor D}(Sup),\;\;\;\;\;\;
-\displaystyle\frac{\color{red}\underline{l=r}\color{black} \lor C \;\;\; \color{red}\underline{s[l]\neq t}\color{black} \lor D}{s[r]\neq t\lor C \lor D}(Sup),
+\displaystyle\frac{{\color{red}{\underline{l=r}}} \lor C \;\;\; {\color{red}{\underline{s[l]=t}}} \lor D}{s[r]=t\lor C \lor D}(Sup),\;\;\;\;\;\;
+\displaystyle\frac{{\color{red}{\underline{l=r}}} \lor C \;\;\; {\color{red}{\underline{s[l]\neq t}}} \lor D}{s[r]\neq t\lor C \lor D}(Sup),
 $$
 
 
@@ -399,13 +399,13 @@ $$
 Note that we have 
 
 $$
-l=r,\;\; s[r]=t\lor D \color{red}\models\color{black} s[l]=t\lor D
+l=r,\;\; s[r]=t\lor D {\color{red}{\models}} s[l]=t\lor D
 $$
 
 and we have
 
 $$
-s[l]=t\lor D \color{red}\succ\color{black} s[r]=t \lor D 
+s[l]=t\lor D {\color{red}{\succ}} s[r]=t \lor D 
 $$
 
 If we also have $s[l] = t \lor D \succ l = r$, 
@@ -438,4 +438,3 @@ Apply saturation on $S$ using an inference process based on the ground superposi
 Show that $S$ is unsatisfiable. 
 
 <span class="redbold">Challenge</span>: Show that $S$ is unsatisfiable such that during saturation <span class="redbold">only 4 new clauses</span> are generated.
-

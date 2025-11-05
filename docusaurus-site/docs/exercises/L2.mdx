@@ -1,0 +1,91 @@
+---
+id: ex-l2
+title: "Lecture 2 Exercises"
+sidebar_label: L2
+---
+
+Laura Kovács
+
+## Problem 2.1
+
+Let $S$ be the following set of clauses:
+
+$$
+S = \{\neg p \vee \neg q,\; \neg p \vee q,\; p \vee \neg q,\; p \vee q\}.
+$$
+
+Consider the binary resolution inference system $\mathbb{BR}$. Show that there exists an infinite number of different $\mathbb{BR}$ derivations of the empty clause $\square$ from the clauses of $S$.
+
+<details>
+<summary>Solution</summary>
+
+One concrete derivation of $\square$ from $S$ is obtained by resolving the clauses in the following sequence (numbers refer to the clauses as they appear in $S$):
+
+1. From $(\neg p \vee \neg q)$ and $(p \vee \neg q)$ derive $(\neg q \vee \neg q)$.
+2. From $(\neg p \vee q)$ and $(p \vee q)$ derive $(q \vee q)$.
+3. Factor $(q \vee q)$ to obtain $q$.
+4. Resolve $(\neg q \vee \neg q)$ with $q$ to get $\neg q$.
+5. Resolve the second copy of $(q \vee q)$ with $\neg q$ to obtain $\square$.
+
+To build infinitely many different derivations, insert the following detour any number of times just before the last resolution step:
+
+- Use $q$ (derived in step 3) together with $(\neg p \vee \neg q)$ to obtain $\neg p$.
+- Resolve $\neg p$ with $(p \vee q)$ to derive $q$ again.
+
+Repeating this detour an arbitrary number of times yields infinitely many distinct resolution derivations that still end in $\square$.
+
+</details>
+
+
+## Problem 2.2
+
+Consider a well-founded strict ordering $\succ$ on atoms. Prove that the induced ordering on literals, as defined in the lecture, is also well-founded.
+
+<details>
+<summary>Solution</summary>
+
+Let $L$ be a literal and define $\operatorname{atom}(L)$ to be $p$ if $L$ is either $p$ or $\neg p$. By construction of the induced ordering, whenever $L_i \succ L_j$ we also have $\operatorname{atom}(L_i) \succ \operatorname{atom}(L_j)$.
+
+Suppose, for contradiction, that the literal ordering is not well-founded. Then there is an infinite descending chain $L_0 \succ L_1 \succ L_2 \succ \cdots$. Applying the observation above yields an infinite descending chain on atoms:
+
+$$
+\operatorname{atom}(L_0) \succ \operatorname{atom}(L_1) \succ \operatorname{atom}(L_2) \succ \cdots,
+$$
+
+contradicting the assumption that the atom ordering is well-founded. Hence the induced literal ordering is well-founded.
+
+</details>
+
+
+## Problem 2.3
+
+Let $p, q$ be boolean atoms and let $S$ be the following set of ground formulas:
+
+$$
+S = \{\neg p \vee \neg q,\; \neg p \vee q,\; p \vee \neg q,\; p \vee q\}.
+$$
+
+Take any ordering such that $p \succ q$ and any selection function $\sigma$ over $S$ such that
+
+$$
+\{\neg p \vee \underline{\neg q},\; \underline{\neg p} \vee q,\; p \vee \underline{\neg q},\; \underline{p} \vee q\}.
+$$
+
+a.) Is $\sigma$ a well-behaved selection function over $S$? Justify your answer.
+
+b.) How many inferences of $\mathbb{BR}_{\sigma}$ are applicable to $S$? Justify your answer.
+
+<details>
+<summary>Solution</summary>
+
+**a.)** A selection function is well-behaved if, for every clause, either a negative literal is selected or all maximally ordered literals are selected. In the first three clauses of $S$, $\sigma$ selects a negative literal, so the condition holds. In the last clause, $\sigma$ selects $p$, which is the unique maximal literal because $p \succ q$. Therefore, $\sigma$ is well-behaved on $S$.
+
+**b.)** No factoring inference applies, since no clause contains the same positive literal twice. A binary resolution step in $\mathbb{BR}_\sigma$ must resolve on selected literals of opposite polarity. The only such pair is $\underline{\neg p} \vee q$ and $\underline{p} \vee q$, yielding
+
+$$
+\displaystyle\frac{\underline{\neg p} \vee q \;\;\; \underline{p} \vee q}{q \vee q}(BR).
+$$
+
+Thus exactly one inference is applicable.
+
+</details>

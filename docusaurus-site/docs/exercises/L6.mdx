@@ -1,0 +1,22 @@
+---
+id: ex-l6
+title: "Lecture 6 Exercises"
+sidebar_label: L6
+---
+
+Laura Kovács
+
+## Problem 6.1
+
+Apply the unification algorithm to the following atom pairs. Provide the most general unifier (MGU) when it exists, or explain why unification fails.
+
+1. $p(a,f(y),y)$ and $p(a,x,f(x))$
+2. $p(f(x,y), f(y,z))$ and $p(z, f(w, f(y,w)))$
+
+<details>
+<summary>Solution</summary>
+
+1. Solving $p(a,f(y),y) = p(a,x,f(x))$ yields $x = f(y)$ and $y = f(x)$, which leads to $y = f(f(y))$. The occurs-check fails, so there is no MGU.
+2. Unification produces the substitution $\{x \mapsto w,\ y \mapsto w,\ z \mapsto f(w,w)\}$, which is the MGU.
+
+</details>

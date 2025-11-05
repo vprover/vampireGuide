@@ -318,18 +318,18 @@ We will first define it only for <span class="bluebold">ground clauses</span>. O
 ## Simple Ground Superposition Inference System
 <span class="redbold underline">Superposition</span>: (right and left)
 $$
-\displaystyle \frac{\color{red}l=r\color{black}\lor C \;\;\; \color{red}s[l] = t\color{black}\lor D}{s[r]=t \lor C \lor D}(Sup),\;\;\;\;\;\;
-\frac{\color{red}l=r\color{black}\lor C \;\;\; \color{red}s[l]\neq t\color{black}\lor D}{s[r] \neq t \lor C \lor D}(Sup),
+\displaystyle \frac{{\color{red}l=r} \lor C \;\;\; {\color{red}s[l] = t} \lor D}{s[r]=t \lor C \lor D}(Sup),\;\;\;\;\;\;
+\frac{{\color{red}l=r} \lor C \;\;\; {\color{red}s[l]\neq t} \lor D}{s[r] \neq t \lor C \lor D}(Sup),
 $$
 
 <span class="redbold underline">Equality Resolution</span>:
 $$
-\displaystyle \frac{\color{red}s\neq s\color{black}\lor C}{C}(ER),
+\displaystyle \frac{{\color{red}s\neq s} \lor C}{C}(ER),
 $$
 
 <span class="redbold underline">Equality Factoring</span>:
 $$
-\displaystyle \frac{\color{red} s=t \color{black} \lor \color{red} s=t' \color{black} \lor C}{s=t \lor t \neq t' \lor C}(EF),
+\displaystyle \frac{{\color{red}s=t} \lor {\color{red}s=t'} \lor C}{s=t \lor t \neq t' \lor C}(EF),
 $$
 
 
@@ -360,4 +360,3 @@ The recipe is to use the previously introduced ingredients:
 1. Ordering; 
 2. Literal selection; 
 3. Redundancy elimination.
-

@@ -1,0 +1,102 @@
+---
+id: ex-l4
+title: "Lecture 4 Exercises"
+sidebar_label: L4
+---
+
+Laura Kovács
+
+## Problem 4.1
+
+Consider a total well-founded ordering $\succ$ on ground non-equality atoms, and use the same symbol for the induced literal ordering. Let $C$ and $D$ be ground clauses without equality literals, and let $A$ and $B$ denote the maximal atoms of $C$ and $D$, respectively. Assume $A$ and $B$ are syntactically identical, that $A$ occurs negatively in $C$, and that $A$ occurs only positively in $D$. Show that $C \succ_{\text{bag}} D$.
+
+<details>
+<summary>Solution</summary>
+
+Because $A$ and $B$ coincide, $A$ is the maximal atom of $D$. Since $A$ occurs only positively in $D$, every other literal $L$ in $D$ satisfies $\neg A \succ A \succ \neg L \succ L$ in the induced literal ordering. By properties of the multiset (bag) extension, this implies $\neg A \succ_{\text{bag}} D$.
+
+In $C$, $A$ appears only negatively, so $\neg A$ is a literal of $C$. Moreover $\neg A \succ A$, and for every other atom $C_i$ in $C$ we have $\neg A \succ \neg C_i \succ C_i$, meaning $\neg A$ is the maximal literal of $C$. Since the bag extension is monotone with respect to replacing the maximal element, the facts that $\neg A \succ_{\text{bag}} D$ and that $\neg A$ is the maximal literal of $C$ together yield $C \succ_{\text{bag}} D$.
+
+</details>
+
+
+## Problem 4.2
+
+Let $\succ_1$ and $\succ_2$ be strict well-founded orderings over $M_1$ and $M_2$, respectively. Define an ordering $\succ^*$ on $M_1 \times M_2$ by
+
+$$
+(a_1,a_2) \succ^* (b_1,b_2) \Longleftrightarrow \big(a_1 \succ_1 b_1 \text{ or } (a_1 = b_1 \text{ and } a_2 \succ_2 b_2)\big).
+$$
+
+Show that $\succ^*$ is well-founded.
+
+<details>
+<summary>Solution</summary>
+
+Assume for contradiction that $\succ^*$ admits an infinite descending chain
+
+$$
+(x_0, y_0) \succ^* (x_1, y_1) \succ^* (x_2, y_2) \succ^* \cdots.
+$$
+
+For each step either the first component strictly decreases in $\succ_1$ or stays equal. Because $\succ_1$ is well-founded, the sequence $\{x_i\}$ has a minimal element $x_n$, so $x_i = x_{i+1}$ for all $i \ge n$. The definition of $\succ^*$ then forces $y_i \succ_2 y_{i+1}$ for every $i \ge n$, contradicting well-foundedness of $\succ_2$. Hence $\succ^*$ is well-founded.
+
+</details>
+
+
+## Problem 4.3
+
+Let $\succ$ be a total well-founded ordering on ground atoms $p_1, \dots, p_6$ with $p_6 \succ p_5 \succ p_4 \succ p_3 \succ p_2 \succ p_1$. Consider the bag extension of $\succ$, still denoted by $\succ$. Compare the clauses
+
+$$
+p_6 \vee \neg p_6,\qquad \neg p_2 \vee p_4 \vee p_5,\qquad p_2 \vee p_3
+$$
+
+under this ordering.
+
+<details>
+<summary>Solution</summary>
+
+Totality implies $p_i \succ p_j$ and $p_i \succ \neg p_j$ whenever $i > j$, so in particular $p_6 \succ \neg p_2$, $p_6 \succ p_4$, $p_6 \succ p_5$, and $p_5 \succ p_2, p_3$. The bag ordering respects strict inclusion: if bag $B$ properly contains $B'$, then $B \succ B'$, hence $p_6 \vee \neg p_6 \succ p_6$ and $\neg p_2 \vee p_4 \vee p_5 \succ p_5$. Combining these comparisons yields
+
+$$
+p_6 \vee \neg p_6 \succ p_6 \succ \neg p_2 \vee p_4 \vee p_5 \succ p_5 \succ p_2 \vee p_3,
+$$
+
+and therefore
+
+$$
+p_6 \vee \neg p_6 \succ \neg p_2 \vee p_4 \vee p_5 \succ p_2 \vee p_3.
+$$
+
+</details>
+
+
+## Problem 4.4
+
+Show that positive factoring in binary resolution $\mathbb{BR}$ can be represented using inference steps of the superposition calculus.
+
+<details>
+<summary>Solution</summary>
+
+Ignore selection functions. The positive factoring rule is
+
+$$
+\frac{p \lor p \lor C}{p \lor C}(BR).
+$$
+
+Encode non-equality literals as equalities to a dedicated constant $\top$. Then factoring corresponds to the superposition steps
+
+$$
+\frac{p = \top \lor p = \top \lor C}{p = \top \lor \top \neq \top \lor C}(EF),
+$$
+
+followed by equality resolution
+
+$$
+\frac{p = \top \lor \top \neq \top \lor C}{p = \top \lor C}(ER),
+$$
+
+which recover the factored clause via superposition rules alone.
+
+</details>
