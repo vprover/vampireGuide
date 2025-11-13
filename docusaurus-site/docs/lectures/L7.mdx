@@ -1,0 +1,220 @@
+---
+id: l7
+title: "Lecture 7: Non-Ground Superposition"
+sidebar_label: "Lecture 7: Non-Ground Superposition"
+---
+
+Laura Kovács
+
+## Unification and Lifting (Recap)
+<span class="bluebold">Idea.</span> Represent an <span class="redbold">infinite number of ground inferences</span> with a <span class="redbold">single non-ground inference</span>.
+
+- For $\mathbb{BR}$ we reason about <span class="redbold">non-ground clauses</span>.
+- We generalize “same ground atom” to <span class="redbold">unifiability</span> of non-ground atoms.
+- We only compute <span class="redbold">most general unifiers (mgus)</span>.
+
+<span class="greenbold">Lifting Lemma for $\mathbb{BR}$.</span> Let $C$ and $D$ be clauses without shared variables. If there is a ground binary-resolution inference
+$$
+\frac{C\sigma_1 \qquad D\sigma_2}{C'}(\text{ground BR}),
+$$
+then there exists a substitution $\sigma$ such that
+$$
+\frac{C \qquad D}{C''}(\text{non-ground BR})
+$$
+and $C' = C''\sigma$. Similar lemmas hold for every inference in $\mathbb{BR}$ and $\mathbb{S}\mathrm{up}$.
+
+### What Should We Lift?
+- The ordering $\succ$.
+- The selection function $\sigma$.
+- The calculus $\mathbb{S}\mathrm{up}^{\mathrm{sat}}$.
+
+Most importantly, lifting requires solving equations $s = t$ between terms and atoms, which we do via <span class="redbold">mgus</span>.
+
+## Knuth-Bendix Ordering (Ground Case Recap)
+Fix a signature $\Sigma$, inducing the term algebra $\operatorname{TA}(\Sigma)$, together with:
+
+- A total precedence $\gg$ on $\Sigma$.
+- A <span class="redbold">weight function</span> $w : \Sigma \to \mathbb{N}$.
+
+For a ground term $t = g(t_1,\ldots,t_n)$ we define the weight
+$$
+|t| = w(g) + \sum_{i=1}^n |t_i|.
+$$
+
+The Knuth-Bendix ordering (KBO) compares ground terms as follows: $g(t_1,\ldots,t_n) \succ_\text{KB} h(s_1,\ldots,s_m)$ iff
+
+1. $|g(t_1,\ldots,t_n)| > |h(s_1,\ldots,s_m)|$ (comparison by weight), or
+2. $|g(t_1,\ldots,t_n)| = |h(s_1,\ldots,s_m)|$ and one of the following holds:
+   - $g \gg h$ (comparison by precedence);
+   - $g = h$ and, for some $i$, we have $t_1 = s_1,\ldots,t_{i-1} = s_{i-1}$ and $t_i \succ_\text{KB} s_i$ (lexicographic comparison).
+
+<span class="greenbold">Note.</span> Weight functions must be compatible with the precedence.
+
+## Weight Functions: Ground Case
+A weight function $w : \Sigma \to \mathbb{N}$ satisfies:
+
+- $w(a) > 0$ for every constant $a \in \Sigma$.
+- If $w(f) = 0$ for a unary function $f \in \Sigma$, then $f \gg g$ for every $g \in \Sigma$ with $f \neq g$ (so $f$ is the greatest symbol in the precedence).
+
+## Weight Functions: Non-Ground Case
+For non-ground terms we extend the weight function to variables: $w : \Sigma \cup \mathrm{Vars} \to \mathbb{N}$. It must satisfy:
+
+- $w(x) = v_0$ for all variables $x$, where $v_0 > 0$.
+- $w(a) \geq v_0$ for every constant $a$.
+- If $w(f) = 0$ for a unary function symbol $f$, then $f \gg g$ for all $g \neq f$.
+
+Consequently, at most one unary function can have weight $0$.  
+For a term $s$ and variable $x$, we write $\#(x,s)$ for the number of occurrences of $x$ in $s$.
+
+## Knuth-Bendix Ordering (Non-Ground Case)
+Let $w : \Sigma \cup \mathrm{Vars} \to \mathbb{N}$ be as above. For $s$ and $t$ terms, define $s \succ_\text{KB} t$ if:
+
+1. $\#(x,s) \geq \#(x,t)$ for all variables $x$ and $|s| > |t|$, or
+2. $\#(x,s) \geq \#(x,t)$ for all variables $x$, $|s| = |t|$, and one of the following holds:
+   - $t = x$ and $s = f^n(x)$ for some $n \geq 1$;
+   - $s = g(t_1,\ldots,t_n)$, $t = h(s_1,\ldots,s_m)$, and $g \gg h$;
+   - $s = g(t_1,\ldots,t_n)$, $t = g(s_1,\ldots,s_n)$, and for some $i$ we have $t_1 = s_1,\ldots,t_{i-1} = s_{i-1}$ and $t_i \succ_\text{KB} s_i$ (lexicographic comparison).
+
+## Selection Functions and Lifting
+If a grounding substitution $\theta$ makes $L\theta$ selected in $L\theta \lor C\theta$, then $L$ must already be selected in $L \lor C$.  
+Therefore, when we lift a well-behaved ground selection function in this manner, the resulting non-ground selection function remains well-behaved.
+
+## Non-Ground Superposition
+<span class="redbold underline">Superposition (left/right):</span>
+$$
+\frac{\underline{l = r} \lor C \qquad \underline{s[l'] = t} \lor D}{(s[r] = t \lor C \lor D)\theta}(\text{Sup}), \qquad
+\frac{\underline{l = r} \lor C \qquad \underline{s[l'] \neq t} \lor D}{(s[r] \neq t \lor C \lor D)\theta}(\text{Sup}),
+$$
+where
+
+1. $\theta$ is an mgu of $l$ and $l'$;
+2. $l'$ is not a variable;
+3. $r\theta \not\succeq l\theta$;
+4. $t\theta \not\succeq s[l']\theta$.
+
+<span class="greenbold">Observations.</span>
+- The ordering is partial, hence conditions like $r\theta \not\succeq l\theta$.
+- These conditions must be checked a posteriori (after the rule fires), although knowing $l \succ r$ lets us reject some inferences a priori.
+
+## Equality Resolution and Equality Factoring
+<span class="redbold underline">Equality Resolution:</span>
+$$
+\frac{\underline{s \neq s'} \lor C}{C\theta}(\text{ER}),
+$$
+where $\theta$ is an mgu of $s$ and $s'$.
+
+<span class="redbold underline">Equality Factoring:</span>
+$$
+\frac{\underline{l = r} \lor l' = r' \lor C}{(l = r \lor r \neq r' \lor C)\theta}(\text{EF}),
+$$
+where $\theta$ is an mgu of $l$ and $l'$, $r\theta \not\succeq l\theta$, $r'\theta \not\succeq l\theta$, and $r'\theta \not\succeq r\theta$.
+
+## Non-Ground Binary Resolution
+- <span class="bluebold">Binary resolution:</span>
+  $$
+  \frac{\underline{P} \lor C_1 \qquad \underline{\neg P'} \lor C_2}{(C_1 \lor C_2)\theta}(\text{BR}),
+  $$
+  where $\theta$ is an mgu of $P$ and $P'$.
+- <span class="bluebold">Positive factoring:</span>
+  $$
+  \frac{\underline{P} \lor \underline{P'} \lor C}{(P \lor C)\theta}(\text{Fact}),
+  $$
+  where $\theta$ is an mgu of $P$ and $P'$.
+- <span class="bluebold">Negative factoring:</span>
+  $$
+  \frac{\underline{\neg P} \lor \underline{\neg P'} \lor C}{(\neg P \lor C)\theta}(\text{Fact}),
+  $$
+  where $\theta$ is an mgu of $P$ and $P'$.
+
+## Exercise
+Consider the clause set
+$$
+\begin{aligned}
+&\neg p(z,a) \lor \neg p(z,x) \lor \neg p(x,z),\\
+&p(y,a) \lor p\big(y,f(y)\big),\\
+&p(w,a) \lor p\big(f(w),w\big),
+\end{aligned}
+$$
+where $p$ is a predicate, $f$ a function, $x,y,z,w$ variables, and $a$ a constant.
+
+Give a refutation in the non-ground binary resolution system $\mathbb{BR}$. For every derived clause, specify the premises, the inference rule, and the mgu used.
+
+## Checking Redundancy
+Assume the current search space $S$ contains <span class="bluebold">no redundant clauses</span>. A redundant clause can only appear when a <span class="redbold">new child</span> (the conclusion of an inference) is added.
+
+We perform two kinds of redundancy checks once a child is produced:
+- The child itself is redundant.
+- The child makes a clause already in the search space redundant.
+
+These checks are performed after every inference that generates a new clause, ideally under a fair strategy.
+
+## Subsumption (Non-Ground)
+A clause $C$ <span class="redbold">subsumes</span> a clause $D$ if $C\theta \subseteq D$ for some substitution $\theta$.  
+If $S$ contains different clauses $C$ and $D$ such that $C$ subsumes $D$, then $D$ is redundant in $S$ and may be removed.
+
+## Exercise
+Let $p$ be a unary predicate, $f$ a unary function, $x,y$ variables, and $c$ a constant.  
+Consider the clauses $C_1 = p(x) \lor p(y)$, $C_2 = p(x)$, and $D = p(f(c))$.
+
+1. Does $C_1$ subsume $D$?
+2. Does $C_2$ subsume $D$?
+
+## Demodulation (Non-Ground)
+Demodulation replaces instances of equalities by simpler terms:
+$$
+\frac{l = r \qquad L[l'] \lor D}{L[r\theta] \lor D}(\text{Dem}),
+$$
+where $l\theta = l'$, $l\theta \succ r\theta$, and $(L[l'] \lor D) \succ (l\theta = r\theta)$.  
+Equivalently, we often write
+$$
+\frac{l = r \qquad L[l\theta] \lor D}{L[r\theta] \lor D}(\text{Dem}),
+$$
+with the same ordering constraints.
+
+## General Redundancy (Non-Ground)
+A clause $D$ is redundant with respect to $C$ if every ground instance of $D$ is redundant with respect to the ground instances of $C$. Concretely, it suffices to find a substitution $\theta$ such that, for any ground instance $D^*$ of $D$,
+
+1. $D^* \succ C\theta$, and
+2. $D^*$ is a logical consequence of $C\theta$.
+
+## Generating vs. Simplifying Inferences
+An inference
+$$
+\frac{C_1 \quad \ldots \quad C_n}{C}
+$$
+is <span class="redbold">simplifying</span> if at least one premise $C_i$ becomes redundant after $C$ is added; we say $C_i$ is <span class="redbold">simplified into</span> $C$. Otherwise the inference is <span class="redbold">generating</span>.
+
+<span class="greenbold">Key principles.</span>
+
+1. Apply simplifying inferences eagerly; apply generating inferences lazily.
+2. Simplification checks must be cheap enough to pay off.
+
+## Redundancy Checking Workflow
+Whenever a new clause $C$ is added:
+
+- <span class="redbold">Retention test:</span> Is $C$ redundant?
+- <span class="redbold">Forward simplification:</span> Can $C$ be simplified using existing clauses?
+- <span class="redbold">Backward simplification:</span> Does $C$ simplify or eliminate older clauses?
+
+## Examples of Redundancy Tests
+- <span class="bluebold">Retention:</span>
+  - Tautology checking.
+  - Subsumption.
+- <span class="bluebold">Simplification:</span>
+  - Demodulation (forward/backward).
+  - Subsumption resolution, e.g.
+    $$
+    \frac{A \lor C \qquad \neg B \lor D}{D}(\text{SubsRes}), \qquad
+    \frac{\neg A \lor C \qquad B \lor D}{D}(\text{SubsRes}),
+    $$
+    whenever some substitution $\theta$ satisfies $A\theta \lor C\theta \subseteq B \lor D$.
+
+## Cost of Redundancy Criteria
+- Tautology checking is based on <span class="greenbold">congruence closure</span>.
+- Subsumption and subsumption resolution are <span class="greenbold">NP-complete</span>.
+
+## Observations
+- There may be chains (repeated applications) of forward simplifications; after such a chain, run another retention test.
+- Backward simplification is often expensive.
+- In practice, retention tests may include additional heuristics (e.g., discarding overly heavy clauses), which can sacrifice completeness.
+

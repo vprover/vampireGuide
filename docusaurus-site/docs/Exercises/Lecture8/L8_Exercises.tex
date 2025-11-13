@@ -1,0 +1,558 @@
+\documentclass[11pt]{article}
+\usepackage{exercise}
+
+\usepackage{amsmath,times,color,url}
+\usepackage{amsfonts,bussproofs}
+
+\usepackage{alltt}
+\usepackage{proof}
+\usepackage{tikz}
+\usepackage{cancel}
+\usepackage{mathtools}
+
+
+
+\def\set#1{\{#1\}}
+\def\Set#1{\{#1\}}
+\def\z{{\tt 0}}
+\def\o{{\tt 1}}
+\def\t{{\tt 2}}
+\def\a{{\tt a}}
+\def\b{{\tt b}}
+\def\c{{\tt c}}
+\def\d{{\tt d}}
+\def\DFA{{\sf DFA}}
+\def\NFA{{\sf NFA}}
+\def\R{{\cal R}}
+\def\Picture#1{\strut\centerline{\input #1.eepic}}
+
+
+\definecolor{midnightblue}{cmyk}{0.98,0.13,0,0.43}
+\definecolor{olivegreen}{cmyk}{0.64,0,0.95,0.40}
+\definecolor{rawsienna}{cmyk}{0,0.72,1,0.45}
+\definecolor{fuchsia}{cmyk}{0.47,0.91,0,0.08}
+\definecolor{shaded}{rgb}{0.7, 0.75, 0.71}
+
+\newcommand{\Blue}[1]{{\color{blue}#1}}
+\newcommand{\Red}[1]{{\color{red}#1}}
+\newcommand{\Brown}[1]{{\color{brown}#1}}
+\newcommand{\OliveGreen}[1]{{\color{olivegreen}#1}}
+\newcommand{\RawSienna}[1]{{\color{rawsienna}#1}}
+\newcommand{\MidnightBlue}[1]{{\color{midnightblue}#1}}
+\newcommand{\Fuchsia}[1]{{\color{fuchsia}#1}}
+\newcommand{\Gray}[1]{{\color{shaded}#1}}
+
+\usepackage{prftree}
+
+
+\newcommand{\M}[1]{{\color{midnightblue}#1}}
+\newcommand{\notl}{\neg}
+\newcommand{\orl}{\vee}
+\newcommand{\andl}{\wedge}
+\newcommand\impl{\rightarrow}
+
+\newcommand{\setof}[1]{\{#1\}}
+\newcommand{\true}{1}
+\newcommand{\false}{0}
+
+\newcommand{\Th}{\mathcal{T}}
+
+\newcommand{\BRr}{\mathrm{B}\mathrm{R}}   
+\newcommand{\Sup}{\mathrm{S}\mathrm{up}}   
+\newcommand{\SUPiss}{\mathrm{S}\mathrm{up}_{\succ,\sel}}   % SUPis with selection
+\newcommand{\sel}{\sigma}
+
+
+% object level equality
+\newcommand{\oeq}{=}%\approx}
+\newcommand{\oneq}{\neq}%\not\approx}
+
+\newcommand{\SUPis}{\mathbb{S}\mathrm{up}}   % SUP
+\newcommand{\Iis}{\mathbb{I}} %inference system
+
+
+\newcommand{\BRis}{\mathbb{BR}}             % binary resolution inference system
+%\newcommand{\Solution}[1]{#1}
+\newcommand{\Solution}[1]{}
+
+\newcommand{\Union}{\bigcup}
+
+
+\begin{document}
+\problemset{November 5, 2025}
+
+
+\section*{\exercises{8}}
+
+
+
+\problem{8.1}  Let $f$ be a unary and $g$ be a binary function symbol.
+Further let $a, b, c$ be constants, and $x, y, z$ be variables.
+We define the weight function $w(s) = w(v) = 1$, for every symbol $s$
+and variable $v$, and let $g \gg f \gg c \gg b \gg a$.
+Answer the following questions using a KBO with the weight
+function $w$ and the precedence relation $\gg$ to order terms,
+and its extension to compare literals and clauses. 
+
+\begin{itemize}
+  \item[(a)] Do the clauses $C_1$ and $C_2$ make the clause $C_3$ redundant?
+    \begin{align*}
+      C_1:~ &~ a \oneq b \lor f(a) \oneq a \\
+      C_2: ~ &~ f(f(x)) \oeq a \\
+      C_3: ~ &~ f(f(b)) \oneq b \lor f(a) \oneq a
+    \end{align*}
+    % Answer: no, because f(f(x)) = a is incomparable to f(f(b)) != b \/ f(a) != a
+    %         shouldn't the answer be "yes"? because we can use demodulation(C_2, C_3) to derive C_1.
+  \item[(b)] Does the clause $ C_4 $ make the clause $ C_5 $ redundant?
+    \begin{align*}
+      C_4: ~ &~ f(g(x, a)) \oneq f(y) \\
+      C_5: ~ &~ f(g(x, z)) \oneq f(g(y, b)) \lor f(g(x, b)) \oneq f(g(a, b))
+    \end{align*}
+    % Answer: yes because f(g(x,a)) != f(y) is unsat, and smaller than the latter clause
+  \item[(c)] Does the clause $ C_6 $ make the clause $ C_7 $ redundant?
+    \begin{align*}
+      C_6: ~ &~ g(x, y) \oneq f(x) \\
+      C_7: ~ &~ g(f(x), f(z)) \oneq f(f(x)) \lor g(a, b) \oneq c
+    \end{align*}
+    % Answer: yes because f(g(x,a)) != f(y) < g(x, f(z)) != f(f(x)) < g(x, f(z)) != f(f(x)) \/ g(a,b) != c
+\end{itemize}
+
+
+\medskip
+
+\Solution{
+  \noindent{\bf Solution.}
+
+
+\begin{itemize}
+  \item[(a)] Yes.
+  Recall, that to show that $C_3$ is redundant w.r.t. $\{C_1,C_2\}$,
+  we need to show that every ground instance of $C_3$ is redundant
+  w.r.t. the set $C_{1,2}^*$ of all ground instances of
+  $\{C_1,C_2\}$.\\
+  
+  
+Note that $C_3$ is ground.\\
+
+
+Using the substitution $x\mapsto b$, the instance $f(f(b)) = a$ of
+$C_2$ is in $C_{1,2}^*$.
+As $C_1$ is ground,  $C_1$ is also in $C_{1,2}^*$.
+Moreover, the ground clauses $\{f(f(b)) = a, C_1\}$ imply $C_3$, and we also
+have that $C_3 \succ (f(f(b)) = a)$ and $C_3 \succ C_1$.
+Hence, every ground instance of $C_3$ (that is, $C_3$) is redundant
+w.r.t. $\{f(f(b)) = a, C_1\}\subseteq C_{1,2}^*$
+This concludes, that the clauses $C_1,C_2$ make $C_3$
+redundant.
+\bigskip
+
+
+
+  \item[(b)] Yes, because $C_4 : f(g(x, a)) \neq f(y)$ is unsat, and
+  smaller than $C_5$.\\
+  
+
+In more detail, we proceed as in point (a) and show that every ground instance of $C_5$ is redundant
+w.r.t. the set $C_4^*$ of all ground instances of $C_4$. Note that $C_4^*$ contains an unsatisfiable ground
+instance: 
+
+\[D_1 : f(g(a,a)) \neq f(g(a,a))\]
+
+Since $D_1$ unsatisfiable, it implies every ground instance of $C_5$
+(and also $C_5$).
+
+It remains to prove that every ground instance of $C_5$ is bigger than
+$D_1$. The smallest ground instance of $C_5$ is:
+
+\[D_2:   f(g(a,a)) \neq f(g(a,b)) \orl f(g(a,b)) != f(g(a,b))\]
+
+
+which is bigger than $D_1$.
+
+Hence, every ground instance of $C_5$ is
+redundant w.r.t. $D_1\subseteq C_4^*$.
+
+As such, $C_4$ makes $C_5$
+redundant. 
+
+
+\bigskip
+
+\item[(c)] Yes.
+
+In short,  because firstly we can rename the variable $z$ to $y$ in the second clause.  
+    This means, since $g(x, y) \oneq f(x) \prec g(f(x), f(z)) \oneq f(f(x))$, then $C_6 \prec C_7$.
+    Further $g(f(x), f(z)) \oneq f(f(x))$ is an instance of $g(x, y)
+    \oneq f(x)$, which means that $C_6$ implies $C_7$.\\
+
+
+In more detail, we proceed as in points (a)-(b):
+we show that every ground instance of $C_7$ is redundant
+w.r.t. the set $C_6^*$ of all ground instances of $C_6$. 
+
+Take any ground instance of $C_7$. It has the form: 
+
+\[  D_1:  g(f(s),f(t)) \neq  f(f(s)) \vee  g(a,b) \neq c\]
+
+where $s,t$ are gound terms. Take the following ground instance of $C_6$:
+
+\[  D_2 : g(f(s),f(t)) \neq f(f(s))\]
+
+
+We have $D_2 \models D_1$ and $D_1\succ D_2$. Hence, $C_7$ is redundant.
+
+
+
+\end{itemize}
+  }
+
+
+%redundancy, subsumption demodulation 
+\problem{8.2}
+Consider the following inference:
+%Aduct21S#27
+\[\prftree{
+  x \oeq f(c)\lor p(x)
+}{
+  f(h(b)) \oeq h(g(y,y)) \lor h(g(d,b))\oneq f(c)
+}{
+  p ( h ( g ( d , b ) ) ) \lor f ( h ( b) )  \oeq  h(g(y,y))
+}\]
+%in the non-ground
+%superposition inference system $\SUPis$ ({\bf without} the rules of the non-ground
+%binary resolution inference system $\BRis$),
+where $p$ is a predicate symbol, $f$, $g$, $h$ are function symbols,
+$b, c, d$ are constants, and $x$, $y$ are variables.
+%
+\begin{itemize}
+    \item[(a)]
+        Prove that the above inference is a sound inference.
+        % suppose M |=  x = f(c) \/ p(x)                             (1)
+        %         M |=  f(h(b)) = h(g(y,y)) \/ h(g(d,b)) != f(c)     (2)
+        % If M |= f(h(b)) = h(g(y,y)), then the conclusion is obviously true in M.
+        % othersise due to (2) it must be the case that M |= h(g(d,b)) != f(c), which means due to (1) that M |= p(g(d,b)) must hold, which means that the conclusion is true in M as well.
+    \item[(b)]
+        Is the above inference a simplifying inference of the
+        non-ground superposition system $\SUPis$,
+        for any KBO?
+        Justify your answer. 
+
+        % Countermodel for Hyp1, Concl |= Hyp2
+        % M |= p(x)
+        % M(f)(C) = H
+        % M(f)(..) = F
+        % M(h(...)) = H
+        % M(g(...)) = G
+        % M(c) = C
+        % M(d) = D
+        % M(b) = B
+
+        % Countermodel for Hyp2, Concl |= Hyp1
+        % M |= ~p(x)
+        % domain = {A, B}
+        % M(f)(..) = A
+        % M(h)(..) = A
+
+\end{itemize}
+
+%
+\medskip
+
+\Solution{
+  \noindent{\bf Solution.} 
+\begin{itemize}
+    \item[(a)]
+        Let $M$ be a model of both assumptions of the rule: 
+        % suppose M |=  x = f(c) \/ p(x)                             (1)
+        %         M |=  f(h(b)) = h(g(y,y)) \/ h(g(d,b)) != f(c)     (2)
+        \begin{align*}
+          M &\models x = f(c) \lor p(x) & \text{(1)} \\
+          M &\models f(h(b)) = h(g(y,y)) \lor h(g(d,b)) \neq f(c) & \text{(2)}\\
+        \end{align*}
+        % If M |= f(h(b)) = h(g(y,y)), then the conclusion is obviously true in M.
+        If $M \models f(h(b)) = h(g(y,y))$, then the conclusion is obviously true in $M$.
+        % othersise due to (2) it must be the case that M |= h(g(d,b)) != f(c), which means due to (1) that M |= p(g(d,b)) must hold, which means that the conclusion is true in M as well.
+        Otherwise due to (2) we know that it must be the case that $M \models h(g(d,b)) \neq f(c)$. 
+        This means due to (1) that $M \models p(g(d,b))$ must hold, which means that the conclusion is true in this case as well.
+    \item[(b)]
+        We will call the left assumption $C_1$ and the right assumption of the rule $C_2$, and the conclusion of the rule $D$.
+
+        In order for the rule to be a simplifying rule, it could either make $C_1$, or $C_2$ redundant, so there are two cases to check.
+
+        Let's first have a look at whether $C_1$ is being made redundant. 
+        In order for that to hold we would need to have that $C_2, D \models C_1$. 
+        This does not hold since the model $M_1$ is a counterexample.
+
+        % Countermodel for Hyp2, Concl |= Hyp1
+        % M |= ~p(x)
+        % domain = {A, B}
+        % M(f)(..) = A
+        % M(h)(..) = A
+        \newcommand\A{\mathsf a}
+        \newcommand\B{\mathsf b}
+        \newcommand\C{\mathsf c}
+        \newcommand\D{\mathsf d}
+        \begin{align*}
+          M_1(\top) &= \Set{\A, \B}\\
+          M_1(p) &= \emptyset\\
+          M_1(f)(x) &= \A\\
+          M_1(h)(x) &= \A\\
+          M_1(g)(x,y) &= \A\\
+        \end{align*}
+        (Note that by $M(\top)$ we denote the domain of the model here.)
+
+        Similarly we can build a counterexample $M_2$ for the statement $C_1, D \models C_2$.
+
+        % Countermodel for Hyp1, Concl |= Hyp2
+        % M |= p(x)
+        % M(f)(C) = H
+        % M(f)(..) = F
+        % M(h(...)) = H
+        % M(g(...)) = G
+        % M(c) = C
+        % M(d) = D
+        % M(b) = B
+        \newcommand\F{\mathsf f}
+        \newcommand\G{\mathsf g}
+        \renewcommand\H{\mathsf h}
+        \begin{align*}
+          M_2(p) = M_2(\top) &= \Set{\B, \C, \D, \F, \G, \H}\\
+          M_2(b) &= \B\\
+          M_2(c) &= \C\\
+          M_2(d) &= \D\\
+          M_2(f)(x) &= \begin{cases}
+            \H & \text{if $x = \C$}\\
+            \F & \text{else}
+          \end{cases}\\
+          M_2(g)(x, y) &= \G\\
+          M_2(h)(x) &= \H\\
+        \end{align*}
+
+
+\end{itemize}
+
+
+}
+
+
+\problem{8.3} Let $\succ$ be a Knuth-Bendix ordering  KBO and
+$\sigma$ a well-behaved selection function wrt $\succ$.
+Consider the following inference instance of the non-ground
+superposition calculus
+$\textrm{Sup}_{\succ,\sigma}$: 
+\[
+\begin{array}{c}
+l=r   \qquad l'=t \ \orl\ D\\
+\hline\\[-.75em]
+(r\theta=t) \orl D
+\end{array}
+\]
+%
+where $l\theta=l'$, 
+%\begin{itemize}
+%\item
+  $ l\succ r$, $l'\succ t$, 
+%\item
+  %$\theta=mgu(l,l')$,
+          $r\theta \succ t$, $(l=r)\theta \succ D$, $(l'=t)\succ D$ and  $l' = t$ is selected
+  in $l'=t\orl D$. 
+          % \end{itemize}
+
+          \begin{itemize}
+            \item[(a)] Is $\big((r\theta=t) \orl D\big)\ \succ\  \big(l'=t \
+              \orl\ D\big)$?
+
+              \medskip
+\Solution{              
+\noindent
+{\bf Solution:} No. 
+
+As $\succ$ is a simplification ordering, from $l\succ r$ we obtain
+$l\theta \succ r\theta$, for any substitution $\theta$, and further, using
+$l\theta = l'$, we get $l'\succ r\theta$. Then, by
+the atom/literal/bag extension properties of $\succ$, we have $l'=t
+\succ r\theta=t$, and hence $l'=t \orl D
+\succ r\theta=t \orl D$.
+
+}
+
+              
+            \item[(b)]
+              Does $l' =t\ \orl\ D$ always become redundant after the inference is
+              applied?
+
+              \medskip
+              \Solution{
+\noindent
+{\bf Solution:}
+No.
+
+Recall that a formula is redundant iff it is the logical consequence of smaller formulas in the search space.
+More precisely in the non-ground case,
+considering that a non-ground formula represents all its ground instances:
+a non-ground formula $\varphi$ is redundant in $S$ if
+every ground instance $\varphi\sigma$ is a logical consequence
+of ground instances of formulas from $S$ that are smaller that $\varphi\sigma$.
+%
+% % The logical consequence $l=r, \, r\theta=t \lor D \models l'=t \lor D$
+% This means we would have to prove the following properties:
+% \begin{enumerate}
+%     \item
+%         $l=r, \, r\theta=t \lor D \models l'=t \lor D$
+%     \item
+%         $l'=t \lor D \succ l=r$
+%     \item
+%         $l'=t \lor D \succ r\theta=t \lor D$
+% \end{enumerate}
+
+In particular, one of the statements to be proved is
+that for each ground substitution $\sigma$
+there exists some ground substitution $\sigma'$
+such that
+$(l'=t \lor D)\sigma \succ (l=r)\sigma'$.
+
+It is easy to see that this cannot always be true if we consider an instance of
+the inference rule where $l$, $r$, and $t$ are ground terms.
+In particular, this means we have $l = l'$
+and thus $l=r \succ l'=t$ (because of the fourth side condition $r\theta \succ t$).
+Furthermore, from the fifth side condition we also get $l=r \succ D$.
+By properties of the bag extension of orderings, this means
+$l=r \succ l'=t \lor D$, which is exactly the opposite of the required ordering constraint.
+
+% Consider the following counter-example
+% \[
+% \begin{array}{c}
+%     f(f(c))=f(c)   \qquad f(f(c))=c \ \orl\ f(c)\neq d \\
+% \hline\\[-.75em]
+% f(c)=c \orl f(c)\neq d
+% \end{array}
+% \]
+% where $f$ is a unary function symbol and $c,d$ are constant symbols.
+% It is a ground instance of the above rule with $l = f(f(c))$, $r = f(c)$, $t = c$, $D = f(c) \neq d$,
+% and $\theta$ the identity substitution.
+% Consider a KBO ordering with weights $w(f) = w(c) = w(d) = 1$ and precedence $f \gg c \gg d$.
+% With this ordering, the side conditions of the rule are satisfied.
+}
+\end{itemize}
+%\noindent Justify your answers.
+
+
+\problem{8.4} Consider the following inference: 
+\[
+  \begin{array}{c}
+    f(a,b)\neq g(x)  \orl f(x,y)=g(a) \qquad f(y,b)=g(y) \orl
+    f(x,a)=g(x) \orl f(y,y)= g(z)
+\\
+\hline\\[-.75em]
+f(a,a)=g(a)
+\end{array}
+\]
+in the non-ground
+superposition inference system $\SUPis$ (including the rules of the non-ground
+binary resolution  inference system $\BRis$),  
+where $f,g$ are function symbols, %$p$ is a predicate symbol, $f$ is a function symbol,
+$x,y,z$ are variables, and $a,b$ are
+constants.  %\\
+
+
+
+          \begin{itemize}
+            \item[(a)] Prove that the above inference is a sound
+              inference of $\SUPis$.
+            \item[(b)]  Is the above inference a simplifying inference of the
+        non-ground superposition system $\SUPis$,
+        for any KBO? 
+              Justify your answer.
+              \end{itemize}
+
+\medskip
+
+\Solution{
+{\bf Solution:}\medskip\\
+(a) We use sound inferences of $\SUPis$ to show that conclusion of the above inference follows from its premises. The following derivation uses the unifiers $\theta:=\{x\mapsto a,y\mapsto a\}$ and $\eta:=\{z\mapsto a\}$:
+\begin{prooftree}
+\AxiomC{$\underline{f(a,b)\neq g(x)} \lor f(x,y)=g(a)$}
+\AxiomC{$\underline{f(y,b)=g(y)} \lor f(x,a)=g(x) \lor f(y,y)= g(z)$}
+\LeftLabel{$\theta$}
+\RightLabel{(BR)}
+\BinaryInfC{$f(a,a)=g(a)\lor f(a,a)=g(a) \lor f(a,a)= g(z)$}
+\RightLabel{EF}
+\UnaryInfC{$f(a,a)=g(a)\lor g(a)\neq g(a) \lor f(a,a)= g(z)$}
+\RightLabel{EF}
+\LeftLabel{$\eta$}
+\UnaryInfC{$f(a,a)=g(a)\lor g(a)\neq g(a) \lor g(a)\neq g(a)$}
+\RightLabel{ER}
+\UnaryInfC{$f(a,a)=g(a)\lor g(a)\neq g(a)$}
+\RightLabel{ER}
+\UnaryInfC{$f(a,a)=g(a)$}
+\end{prooftree}
+
+(b) 
+
+ %(b):
+
+
+In order for the inference to simplify either of its premises, they must be made redundant by the conclusion and the other premise.
+Recall that for a non-ground clause $C$ to be made redundant by clauses $C_i$, we need to have that for every ground instance $C^\theta$ of $C$, there are ground instances $C_i^\theta$ of $C_i$, such that these $C_i^\theta$ make $C^\theta$ redundant.
+ %non-ground superposition, completeneess
+We will show that this is not the case by showing that there are counter-models to the redundancy.
+ 
+ % first premise not redundant. 
+ % Consider interpretation I with domain 
+ % Domain D = {a,b} 
+ % I(f(x, a)) = x
+ % I(f(x, b)) = b
+ % I(g(x)) = x
+ % where have u
+ %           I |= f(a, a) = g(a)
+ %           I |= f(x, a) = g(x)
+ %  but not  I |= f(a,b) != g(x) \/ f(x,y) = g(a)
+ %           for x -> b, y -> b
+
+Let's first have a look at whether the left premise is redundant.
+Consider the interpretation $I$ with domain $\{a, b\}$.
+We define
+\begin{align*}
+I(f)(x, a) = x\\
+I(f)(x, b) = b\\
+I(g)(x) = x\\
+\end{align*}
+
+Then we have $I$ satisfies the conclusion $f(a,a) = a$.
+Further  $I \models f(x, a) = g(x)$, hence it satisfies the right premise,
+but it does not satisfy the left premise for the grounding $\{x \mapsto b, y \mapsto b\}$.
+Therefore the left premise cannot be redundant.
+
+\medskip 
+ 
+ % second premise not redundant. 
+ % Consider interpretation I with domain 
+ % Domain D = {a, b} 
+ % I(f(x, y)) = a
+ % I(g(x)) = x
+ % where have u
+ %           I |= f(a, a) = g(a)
+ %           I |= f(x, y) = g(a)
+ %  but not  I |= f(y, b) = g(y) | f(x, y) = g(y) | f(y,y) = g(z)
+ %           for y -> b, z -> b, x -> b 
+ 
+Let us now show that the right premise is not redundant.
+For that consider the interpretation $I$ with the same domain $\{a, b\}$.
+ 
+\begin{align*}
+I(f)(x, y) = a\\
+I(g)(x) = x\\
+\end{align*}
+
+Again this interpretation satisfies the conclusion, and as it satisfies $f(x,y) = g(a)$, it also satisfies the left premise.
+Further it does not satisfy the rightpremise for the grounding $\{ x \mapsto b, y \mapsto b, z \mapsto b\}$.
+Therefore the right premise is not redundant either.
+
+}
+ 
+
+
+
+
+\end{document}
+

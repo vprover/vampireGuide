@@ -1,0 +1,47 @@
+\usepackage[latin1]{inputenc} % entree 8bit iso-latin1
+\pagestyle{empty}
+\usepackage{graphicx}
+\usepackage{epic}
+\usepackage{eepic}
+
+%
+% New dimensions for paper
+%
+\headsep       = 0cm
+\headheight    = -5mm
+\addtolength{\voffset}{-12mm}
+\addtolength{\textheight}{50mm}
+
+\setlength{\oddsidemargin}{0pt}
+\setlength{\evensidemargin}{0pt}
+\setlength{\textwidth}{6.25in}
+
+\parindent     = 0pt
+%\parskip       = 7mm
+%\renewcommand{\baselinestretch}{1.1}
+
+%problemset{number}{duedate}
+\def\problemset#1{
+\vskip1em
+  \begin{minipage}[c]{11cm}
+    {\bf \Large Automated Deduction - LVA 184.774}\\
+    Laura Kov\'acs 
+  \end{minipage}
+  %
+  \hfill
+  \begin{minipage}[c]{5cm}
+    {\bf Exercises}\\
+    {\bf #1}
+  \end{minipage}
+\medskip
+\hrule
+}
+
+%problem{number}{points}
+\def\problem#1{\bigskip\noindent{\bf Exercise #1.\ }\ }
+
+\def\exercises#1{\bigskip\noindent{\bf Exercises of Lecture #1\ }\ }
+
+
+% For meta notes.
+\def\mynote#1{{\sf $\clubsuit$ #1 $\clubsuit$}}

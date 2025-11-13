@@ -1,0 +1,283 @@
+\documentclass[11pt]{article}
+\usepackage{exercise}
+
+\usepackage{amsmath,times,color,url}
+\usepackage{amsfonts,bussproofs}
+
+\usepackage{alltt}
+\usepackage{proof}
+\usepackage{tikz}
+\usepackage{cancel}
+\usepackage{mathtools}
+
+
+
+\def\set#1{\{#1\}}
+\def\Set#1{\{#1\}}
+\def\z{{\tt 0}}
+\def\o{{\tt 1}}
+\def\t{{\tt 2}}
+\def\a{{\tt a}}
+\def\b{{\tt b}}
+\def\c{{\tt c}}
+\def\d{{\tt d}}
+\def\DFA{{\sf DFA}}
+\def\NFA{{\sf NFA}}
+\def\R{{\cal R}}
+\def\Picture#1{\strut\centerline{\input #1.eepic}}
+
+
+\definecolor{midnightblue}{cmyk}{0.98,0.13,0,0.43}
+\definecolor{olivegreen}{cmyk}{0.64,0,0.95,0.40}
+\definecolor{rawsienna}{cmyk}{0,0.72,1,0.45}
+\definecolor{fuchsia}{cmyk}{0.47,0.91,0,0.08}
+\definecolor{shaded}{rgb}{0.7, 0.75, 0.71}
+
+\newcommand{\Blue}[1]{{\color{blue}#1}}
+\newcommand{\Red}[1]{{\color{red}#1}}
+\newcommand{\Brown}[1]{{\color{brown}#1}}
+\newcommand{\OliveGreen}[1]{{\color{olivegreen}#1}}
+\newcommand{\RawSienna}[1]{{\color{rawsienna}#1}}
+\newcommand{\MidnightBlue}[1]{{\color{midnightblue}#1}}
+\newcommand{\Fuchsia}[1]{{\color{fuchsia}#1}}
+\newcommand{\Gray}[1]{{\color{shaded}#1}}
+
+\usepackage{prftree}
+
+
+\newcommand{\M}[1]{{\color{midnightblue}#1}}
+\newcommand{\notl}{\neg}
+\newcommand{\orl}{\vee}
+\newcommand{\andl}{\wedge}
+\newcommand\impl{\rightarrow}
+
+\newcommand{\setof}[1]{\{#1\}}
+\newcommand{\true}{1}
+\newcommand{\false}{0}
+
+\newcommand{\Th}{\mathcal{T}}
+
+\newcommand{\BRr}{\mathrm{B}\mathrm{R}}   
+\newcommand{\Sup}{\mathrm{S}\mathrm{up}}   
+\newcommand{\SUPiss}{\mathrm{S}\mathrm{up}_{\succ,\sel}}   % SUPis with selection
+\newcommand{\sel}{\sigma}
+
+
+% object level equality
+\newcommand{\oeq}{=}%\approx}
+\newcommand{\oneq}{\neq}%\not\approx}
+
+\newcommand{\SUPis}{\mathbb{S}\mathrm{up}}   % SUP
+\newcommand{\Iis}{\mathbb{I}} %inference system
+
+
+\newcommand{\BRis}{\mathbb{BR}}             % binary resolution inference system
+%\newcommand{\Solution}[1]{#1}
+ \newcommand{\Solution}[1]{}
+
+\newcommand{\Union}{\bigcup}
+
+
+\begin{document}
+\problemset{Lecture 2, October 6, 2025}
+
+%%%% Lecture 2 - Exercises 2
+
+\section*{\exercises{2}}
+
+  
+\problem{2.1}
+Let $S$ be the following set of clauses:
+\[
+\{~\neg p\vee \neg q, \quad \neg p\vee q, \quad p\vee \neg q, \quad p\vee q~\}
+\]
+\noindent Consider the binary resolution  inference system
+$\textrm{BR}$.
+Show that there exists an infinite number of different
+$\textrm{BR}$ derivations of the empty clause from the clauses of $S$.\bigskip
+
+\Solution{
+\noindent {\bf Solution.}
+
+First consider the following derivation of the empty clause.
+
+%\begin{tabular}{rcl}
+%1) & $\lnot p \lor \lnot q $\\
+%2) & $\lnot p \lor       q $\\
+%3) & $      p \lor \lnot q $\\
+%4) & $      p \lor       q $\\
+%\hline
+%5) & $\lnot q \lor \lnot q $& {Binary resolution (1, 3)}\\
+%6) & $      q \lor       q $& {Binary resolution (2, 4)}\\
+%7) & $      q              $& {Factoring (6)}\\
+%8) & $\lnot q              $& {Binary Resolution (6,7)}\\
+%9) & $\Box                 $& {Binary Resolution (6,8)}\\
+%\end{tabular}
+
+\begin{prooftree}
+                \AxiomC{$\lnot p \lor \lnot q$}
+                \AxiomC{$      p \lor \lnot q$}
+            \BinaryInfC{$\lnot q \lor \lnot q$}
+        
+                    \AxiomC{$\lnot p \lor       q$}
+                    \AxiomC{$      p \lor       q$}
+                \BinaryInfC{$      q \lor       q$}
+            \UnaryInfC{$      q $}
+        \BinaryInfC{$\lnot q$}
+                \AxiomC{$\lnot p \lor       q$}
+                \AxiomC{$      p \lor       q$}
+            \BinaryInfC{$      q \lor       q$}
+        \UnaryInfC{$      q $}
+        \RightLabel{(*)}
+        \BinaryInfC{$\Box$}
+\end{prooftree}
+
+\medskip
+Then consider the following other derivation:
+
+\begin{prooftree}
+                \AxiomC{$\ldots$}
+            \UnaryInfC{$q$}
+            \AxiomC{$\lnot p \lor \lnot q$}
+        \BinaryInfC{$\lnot p$}
+        \AxiomC{$p \lor q$}
+    \BinaryInfC{$q$}
+    \UnaryInfC{$\ldots$}
+\end{prooftree}
+
+
+%\begin{tabular}{rcl}
+%I1) & $      q              $& Assumption\\
+%\hline
+%I2) & $\lnot p              $& {Binary resolution (I1,1)}\\
+%I2) & $      q              $& {Binary resolution (I2,4)}\\
+%\end{tabular}
+
+%The we can insert the latter derivation arbitrarily often after (7) in the original derivation, hence there is an abritrary number of derications of the empty clause.
+The we can insert the latter derivation arbitrarily often at step (*) in the original derivation, hence there is an abritrary number of derivations of the empty clause.
+
+
+}
+
+
+\bigskip
+\problem{2.2} Consider a well-founded strict ordering $\succ$ on
+atoms. Prove that the induced ordering on literals, as defined in
+the lecture, is  also well-founded. 
+
+
+\bigskip
+
+
+
+\Solution{
+  \noindent{\bf Solution.}
+Given a literal $L$, let $atom(L):=p$ if $L$ is $p$ for some atom
+$p$. Oherwise, that is if $L$
+is $\neg p$, then  $atom(L):=p$.
+
+We extend the ordering $\succ$ on atoms to an ordering to literals, as
+defined in the lecture. We denote the such resulting induced ordering
+on literals also by $\succ$.
+
+Given two literals $L_i, L_j$, we first show that $L_i\succ L_j$
+implies $atom(L_i)\succ atom(L_j)$. We do it by case distinction on
+the syntax of $L_i, L_j$. Assume $L_i\succ L_j$ and: 
+\begin{itemize}
+  \item $L_i$ is $p_i$ and $L_j$ is $p_j$.  In this case,
+    $atom(L_i)\succ atom(L_j)$ trivially follows from $L_i\succ L_j$.
+    %
+  \item $L_i$ is $p_i$ and $L_j$ is $\neg p_j$. As  $L_i\succ L_j$,
+    we have $p_i   \succ \neg p_j$. By the extension of $\succ$ over
+    literals, we have  $\neg p_i \succ p_i   \succ \neg p_j \succ
+    p_j$. As $p_i\succ p_j$, we have $atom(L_i)\succ atom(L_j)$. 
+    %
+    \item  $L_i$ is $\neg p_i$ and $L_j$ is $ p_j$. This case is
+      similar to the previous case.
+      
+       \item  $L_i$ is $\neg p_i$ and $L_j$ is $\neg p_j$. By the extension of $\succ$ over
+    literals, we have $\neg p_i \succ p_i   \succ \neg p_j \succ
+    p_j$.   As $p_i\succ p_j$, we have $atom(L_i)\succ atom(L_j)$. 
+  \end{itemize}
+
+  We thus conclude that $L_i\succ L_j$ implies $atom(L_i)\succ
+  atom(L_j)$.
+
+  Assume now that $\succ$ over literals is not well-founded. This
+  means there is an infinite chain of literals:
+  \[L_0 \succ L_1 \succ  L_2\succ L_3 \succ \ldots\]
+  Then, we have:
+   \[atom(L_0) \succ atom(L_1) \succ  atom(L_2)\succ atom(L_3) \succ
+     \ldots, \]
+   which implies that the ordering $\succ$ over atoms is not
+   well-founded. This yields however a contradiction. Hence, $\succ$
+   over literals is well-founded too. 
+  
+  }
+
+
+
+
+
+\bigskip
+
+%Ordering, selection function, inference
+\problem{2.3}
+Let $p,q$ be boolean atoms and let $S$ be the following set of ground
+formulas:
+\[\{~ \neg p \lor \neg q, \quad \neg p \lor q, \quad p\lor \neg q,
+  \quad p\lor q~\} \]
+
+Take any ordering such that $p\succ  q$ and any selection function 
+$\sigma$ over $S$ such that 
+\[\{~\neg p \lor \underline{\neg q}, \quad \underline{\neg p} \lor q, \quad p\lor \underline{\neg q},
+  \quad \underline{p}\lor q ~\}.\]
+
+
+\begin{itemize}
+\item[(a)] Is $\sigma$ a well-behaved selection function over $S$? Justify
+  your answer!
+  % yes. in the first three clauses a negative literal is selected, in the last the maximal literal is selected.
+\item[(b)] How many inferences of $\BRis_{\sigma}$ are applicable to 
+  $S$? Justify your answer!
+  % There are no factoring inference possible, as there are no equal positve literals in any of the clauses.
+  % Binary resolution can only be performed between a two selected literals with the same atom and opposite polarity. 
+  % The only such literals are in the second and the last clause, hence the only possible inference is ~p \/ q, p \/ q |- q \/ q
+\end{itemize}
+
+\medskip
+\Solution{
+  \noindent{\bf Solution.}
+
+\begin{itemize}
+\item[(a)]
+    Recall that a well-behaved selection function either selects a
+    negative literal, or, if no negative literal is selected, (only)
+    all maximal literals are selected in a clause.
+
+    In the first three clauses, a negative literal is selected.
+    In the last clause, $p$ is selected which is the (only) maximal literal due to $p \succ q$.
+    Hence $\sigma$ is well-behaved.
+\item[(b)]
+    No factoring inference is possible, because no positive literal appears more than once in any of the clauses.
+    Binary resolution can only be performed on clauses where the resolved literal is selected.
+    As such, there is only one possible inference (between the second
+    and the fourth clause):
+
+    \[
+        \prftree{
+            \underline{\neg p} \lor q
+        }{
+            \underline{p}\lor q
+        }{
+            q \lor q
+        }
+    \]
+\end{itemize}
+
+\medskip
+}
+
+
+
+\end{document}

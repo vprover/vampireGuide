@@ -1,0 +1,391 @@
+
+\documentclass[10pt]{beamer}
+\usepackage{times}
+\usepackage{alltt}
+\usepackage{proof}
+\usepackage{tikz}
+
+\input{dvipsnam.def}
+\input{VampireProofMacros}
+
+\newcommand{\sLide}[1]{\begin{frame}\frametitle{#1}}
+
+\AtBeginSection[]{\frame{\frametitle{Outline}\tableofcontents[current]}}
+
+\setbeamercovered{dynamic}
+\setbeamercolor{math text}{fg=MidnightBlue}
+
+\definecolor{midnightblue}{cmyk}{0.98,0.13,0,0.43}
+%\definecolor{olivegreen}{cmyk}{0.64,0,0.95,0.40}
+\definecolor{rawsienna}{cmyk}{0,0.72,1,0.45}
+\definecolor{fuchsia}{cmyk}{0.47,0.91,0,0.08}
+\colorlet{redshaded}{red!25!bg}
+\colorlet{shaded}{black!25!bg}
+\colorlet{shadedshaded}{black!10!bg}
+\colorlet{blackshaded}{black!40!bg}
+
+\newcommand{\OliveGreen}[1]{{\color{OliveGreen}#1}}
+\newcommand{\RedViolet}[1]{{\color{RedViolet}#1}}
+\newcommand{\Mulberry}[1]{{\color{Mulberry}#1}}
+\newcommand{\Fuchsia}[1]{{\color{Fuchsia}#1}}
+\newcommand{\Brown}[1]{{\color{Brown}#1}}
+\newcommand{\Black}[1]{{\color{Black}#1}}
+\newcommand{\Magenta}[1]{{\color{Magenta}#1}}
+\newcommand{\Green}[1]{{\color{Green}#1}}
+\newcommand{\Purple}[1]{{\color{Purple}#1}}
+\newcommand{\OrangeRed}[1]{{\color{OrangeRed}#1}}
+\newcommand{\RoyalBlue}[1]{{\color{RoyalBlue}#1}}
+\newcommand{\MidnightBlue}[1]{{\color{MidnightBlue}#1}}
+\newcommand{\DarkOrchid}[1]{{\color{DarkOrchid}#1}}
+\newcommand{\RedOrange}[1]{{\color{RedOrange}#1}}
+\newcommand{\PineGreen}[1]{{\color{PineGreen}#1}}
+\newcommand{\WildStrawberry}[1]{{\color{WildStrawberry}#1}}
+\newcommand{\RawSienna}[1]{{\color{RawSienna}#1}}
+\newcommand{\Periwinkle}[1]{{\color{Periwinkle}#1}}
+
+\newcommand{\xone}[2]{{#1_{1},\ldots,#1_{#2}}}
+\newcommand{\setof}[1]{{\{#1\}}}
+\newcommand{\tuple}[1]{{\langle#1\rangle}}
+\newcommand{\M}{}
+\newcommand{\vs}{\visible}
+\newcommand{\DI}[2]{\alert{#1}}
+\newcommand{\DII}[3]{\alert{#1}}
+\newcommand{\RR}{\Rightarrow}
+
+%
+%
+% Algorithms
+%
+%
+
+\newcommand{\inc}{~~~\= \+ \kill}    % used in algorithms
+\newcommand{\dec}{\- \kill}         % used in algorithms
+
+\newcommand{\reserved}[1]{\OliveGreen{\texttt{\bf #1}}}
+\newcommand{\semicol}{\textbf{;}}                  % semicolon in algorithms
+\newcommand{\commentinalg}[1]{\texttt{#1}}         % comment in algorithms
+\newcommand{\PROCEDURE}{\reserved{procedure}}
+\newcommand{\SUBPROCEDURE}{\reserved{subprocedure}}
+\newcommand{\PARAMETERS}{\reserved{parameters}}
+\newcommand{\INPUT}{\reserved{input}}
+\newcommand{\LOOP}{\reserved{loop}}
+\newcommand{\OUTPUT}{\reserved{output}}
+\newcommand{\IF}{\reserved{if}}
+\newcommand{\CASE}{\reserved{case}}
+\newcommand{\OF}{\reserved{of}}
+\newcommand{\DO}{\reserved{do}}
+\newcommand{\OD}{\reserved{od}}
+\newcommand{\THEN}{\reserved{then}}
+\newcommand{\ELSE}{\reserved{else}}
+\newcommand{\WHILE}{\reserved{while}}
+\newcommand{\BEGIN}{\reserved{begin}}
+\newcommand{\END}{\reserved{end}}
+\newcommand{\LET}{\reserved{let}}
+\newcommand{\FORALL}{\reserved{forall}}
+\newcommand{\ASS}{\texttt{ := }}
+\newcommand{\RETURN}{\reserved{return}}
+\newcommand{\REPEAT}{\reserved{repeat}}
+\newcommand{\VAR}{\reserved{var}}
+
+\newcommand{\vampNot}{\~{}}    % negation in Vampire's output
+\newcommand{\Active}{\mathit{active}}
+\newcommand{\Given}{\mathit{given}}
+\newcommand{\Unprocessed}{\mathit{unprocessed}}
+\newcommand{\Passive}{\mathit{passive}}
+\newcommand{\Current}{\mathit{current}}
+\newcommand{\Init}{\mathit{init}}
+\newcommand{\New}{\mathit{new}}
+\newcommand{\Select}{\mathit{select}}
+\newcommand{\Infer}{\mathit{infer}}
+\newcommand{\Queue}{\mathit{queue}}
+\newcommand{\Pop}{\mathit{pop}}
+%\newcommand{\Mark}{\ding{52}}
+\newcommand{\Mark}{\texttt{*}}
+\newcommand{\Simplify}{\mathit{simplify}}
+\newcommand{\Retained}{\mathit{retained}}
+\newcommand{\ForwardSimplify}{\mathit{forward\_simplify}}
+\newcommand{\Process}{\mathit{process}}
+\newcommand{\BackwardSimplify}{\mathit{backward\_simplify}}
+\newcommand{\GoalFound}{\mathit{goal\_found}}
+\newcommand{\opt}[1]{\texttt{#1}}
+\newcommand{\option}[1]{\opt{-#1}}
+\newcommand{\Option}[1]{\opt{--#1}}
+\newcommand{\optionval}[2]{\texttt{-#1~#2}}
+\newcommand{\Optionval}[2]{\texttt{--#1~#2}}
+\newcommand{\optionI}[1]{\texttt{-#1}\index{#1@\texttt{-#1}}}
+\newcommand{\OptionI}[1]{\texttt{--#1}\index{#1@\texttt{--#1}}}
+\newcommand{\optionvalI}[2]{\texttt{-#1~#2}\index{#1@\texttt{-#1}}}
+\newcommand{\OptionvalI}[2]{\texttt{--#1~#2}\index{#1@\texttt{--#1}}}
+\newcommand{\assign}{\texttt{:=}}                  % assignment in algorithms
+
+%
+% Multisets
+%
+
+\newcommand{\msminus}{\mathbin{\protect\dot{-}}} % multiset minus
+\newcommand{\msin}{\mathbin{\protect\dot{\in}}}  % multiset membership
+\newcommand{\msplus}{\mathbin{\protect\dot{+}}}  % multiset plues
+\newcommand{\mscup}{\mathbin{\protect\dot{\cup}}}% multiset union
+\newcommand{\mstimes}{\mathbin{\protect\dot{\times}}}% multiset product
+\newcommand{\mscap}{\mathbin{\protect\dot{\cap}}}% multiset intersection
+\newcommand{\mssubseteq}{\mathbin{\protect\dot{\subseteq}}} % sub multiset
+\newcommand{\mssetof}[1]{{\protect\dot{\{}#1\protect\dot{\}}}} % multiset (explicit listing)
+\newcommand{\mssetofb}{\protect\dot{\{}}     % multiset begin
+\newcommand{\mssetofe}{\protect\dot{\}}}     % multiset end
+\newcommand{\sizeof}[1]{|#1|}                % size of a multiset
+                                % multiset-to-set conversion
+\newcommand{\MtoS}[1]{\protect\stackrel{\curlywedge}{#1}}
+                                % set-to-multiset conversion
+\newcommand{\StoM}[1]{\protect\stackrel{\curlyvee}{#1}}
+
+\newcommand{\eqbydef}{\stackrel{\text{def}}{=}}
+\newcommand{\bydef}{\stackrel{\text{def}}{\Leftrightarrow}}
+
+\newcommand{\rr}{\rightarrow}               % rewrite
+\newcommand{\irr}{\leftarrow}               % inverse of rewrite
+\newcommand{\nfrr}{\rr^!}                 % normal form rewrites
+\newcommand{\nf}[1]{#1\downarrow}         % normal form binary relation
+
+%
+%
+%   Logical notation
+%
+%
+\newcommand{\imply}{\rightarrow}
+\renewcommand{\implies}{\rightarrow}
+\newcommand{\orl}{\vee}
+\newcommand{\bigorl}{\bigvee}
+\newcommand{\andl}{\wedge}
+\newcommand{\bigandl}{\bigwedge}
+\newcommand{\notl}{\neg}
+\newcommand{\iffl}{\leftrightarrow}
+\newcommand{\prov}{\vdash}
+\newcommand{\Subst}[1]{\{#1\}}   % for substitutions
+\newcommand{\subst}[2]{#1 \mapsto #2}   % for substitutions
+\newcommand{\mgu}{\mathit{mgu}}
+\newcommand{\mgs}{\mathit{mgs}}
+\renewenvironment{proof}{
+    {\em Proof.\/}}{
+    \hfill $\Box${\vspace{4mm}}}
+\newcommand{\true}{\mathrm{true}}
+\newcommand{\false}{\mathrm{false}}
+\newcommand{\intI}{I}                  % interpretation
+\newcommand{\emptyclause}{\Box}
+
+\newcommand{\ruleSup}{\mathsf{Sup}}
+\newcommand{\ruleDem}{\mathsf{Dem}}
+\newcommand{\ruleER}{\mathsf{ER}}
+\newcommand{\ruleEF}{\mathsf{EF}}
+\newcommand{\ruleFact}{\mathsf{Fact}}
+\newcommand{\eql}{\simeq}
+\newcommand{\neql}{\neq}
+\newcommand{\deleted}[1]{#1}
+
+%
+%    Resolution
+%
+
+\newcommand{\mextension}[1]{#1^{\mathit{bag}}} % multiset extension of #1
+\newcommand{\succm}{\mextension{\succ}}        % multiset extension of \succ
+\newcommand{\succlm}{\mextension{\succl}}      % multiset extension of \succl
+\newcommand{\succl}{\succ_{\mathit{lit}}}     % literal extension of \succ
+\newcommand{\succeql}{\succeq_{\mathit{lit}}} % literal extension of \succ
+\newcommand{\sel}{\sigma}                   % selection function
+\newcommand{\BRr}{\mathsf{BR}}              % binary resolution rule
+\newcommand{\Fact}{\mathsf{Fact}}           % factoring rule
+\newcommand{\BRis}{\mathbb{BR}}             % binary resolution inference system
+\newcommand{\SUPis}{\mathbb{S}\mathrm{up}}           % superposition inference system
+\newcommand{\isI}{\mathbb{I}}               % inference system I
+\newcommand{\sis}[1]{#1^{\mathrm{sat}}}     % saturating inference system bazed on I
+\newcommand{\BRiss}{\mathbb{BR}_{\sel}}     % binary resolution inference system with selection
+\newcommand{\SUPiss}{\mathbb{S}\mathrm{up}_{\succ,\sel}}   % SUPis with selection
+\newcommand{\TA}{\mathit{TA}}               % term algebra
+\newcommand{\nat}{\mathbb{N}}               % natural numbers
+\newcommand{\KBo}{\succ_{\mathit{KB}}}   % Knuth-Bendix ordering
+\newcommand{\wf}{w}               % weight function
+\newcommand{\weight}[1]{|#1|}     % weight of term
+
+
+\colorlet{darkred}{red!80!black}
+\colorlet{darkblue}{blue!80!black}
+\colorlet{darkgreen}{green!80!black}
+\colorlet{darkergreen}{green!60!black}
+
+\def\radius{0.96cm}
+\def\innerradius{0.85cm}
+
+\def\softness{0.4}
+\definecolor{softred}{rgb}{1,\softness,\softness}
+\definecolor{softgreen}{rgb}{\softness,1,\softness}
+\definecolor{softblue}{rgb}{\softness,\softness,1}
+
+\definecolor{softrg}{rgb}{1,1,\softness}
+\definecolor{softrb}{rgb}{1,\softness,1}
+\definecolor{softgb}{rgb}{\softness,1,1}
+
+
+\newcommand{\ruleSubs}{\mathsf{SubsRes}}
+%\newcommand{\deleted}[1]{\cancel{#1}}
+
+\author{
+  \textcolor{red!90!black}{Laura Kov\'acs}}
+\titlegraphic{\hspace*{1em}\includegraphics[width=.5\textwidth]{forsyte}}
+
+\newcommand{\Blue}[1]{{\color{blue}#1}}
+
+%
+% Misc
+%
+\newcommand{\clr}[2]{\mathit{\OliveGreen{#1}\Red{#2}}}
+
+\title{
+              	       Automated Deduction
+}
+
+%
+%
+\author{
+  \textcolor{red!90!black}{Laura Kov\'acs} \\
+\titlegraphic{\hspace*{1em}\includegraphics{forsyte}}}
+\begin{document}
+
+\date{}
+\frame{\titlepage}
+
+
+%------------------------------------------------------------
+
+
+
+\section{Unification and Lifting (Recap)}
+
+
+
+%---------------------------------------------------------------------
+
+      \begin{frame}\frametitle{Lifting 
+                               \vs<2->{(Robinson,
+                                 1965)\vs<4->{(Bachmair \& Ganzinger, 1990)}}}
+
+                             \begin{overprint}
+  \onslide<1-2>
+\begin{block}{}
+  \Blue{Idea:} Represent an \alert{infinite number of ground
+  inferences}
+by a \alert{single non-ground inference}.
+
+\vspace*{1em}
+
+ \vs<2->{ In case of $\BRis$:
+\begin{itemize}
+  \item Resolution for \alert{non-ground} clauses 
+  \item The notion of \alert{``same''} ground atoms is generalized to \alert{unifiability} of
+    non-ground atoms;
+    \item Only compute \alert{substitutions} that are \alert{most general unifiers
+      (mgu)}.
+  \end{itemize}
+  }
+  \end{block}
+  
+   \onslide<3->
+    
+    \begin{block}{Lifting Lemma for $\BRr$ in $\BRis$:}<3->
+      Let $C$ and $D$ clauses with no shared variables. If:
+
+\[\M{
+  \infer[(ground~\BRr)]{C'}{\begin{array}{l}C \\[.5em]\big\downarrow
+                                     \sigma_1\\[.5em]
+                                     C\sigma_1\end{array}& \begin{array}{l}D
+                                                             \\[.5em]\big\downarrow
+                                                             \sigma_2\\[.5em] D\sigma_2\end{array}}
+}\]
+
+then there exists a substitution $\sigma$ sucht that:
+
+\[\M{
+  \infer[(non-ground~\BRr)]{\begin{array}{c}C''
+                                    \\[.5em]\big\downarrow
+                                    \sigma\\[.5em]
+                                    C'=C''\sigma\end{array}}{C  & D}
+}\]
+      
+\end{block}
+
+
+
+\vs<4->{\alert{ Similar lifting lemmas each inferences of $\BRis$ and
+$\SUPis$.} }
+    \end{overprint}
+                           \end{frame}
+%---------------------------------------------------------------------
+
+              	   \begin{frame}\frametitle{What should we lift?}
+
+\begin{itemize}
+\item Ordering $\M{\succ}$;
+\item Selection function $\M{\sel}$;
+\item Calculus $\M{\SUPiss}$ (thanks to lifting lemmas).
+\end{itemize}
+
+\bigskip
+
+Most importantly, for the lifting to work we should be able to \alert{solve
+equations $\M{s = t}$} between terms and between atoms. This can be done
+using \alert{most general unifiers.}
+
+                                \end{frame}
+
+
+%---------------------------------------------------------------------
+
+
+
+              	   \begin{frame}\frametitle{What should we lift?}
+
+\begin{itemize}
+\item Ordering $\M{\succ}$;
+\item Selection function $\M{\sel}$;
+\item Calculus $\M{\SUPiss}$ (thanks to lifting lemmas).
+\end{itemize}
+
+\bigskip
+
+Most importantly, for the lifting to work we should be able to \alert{solve
+equations $\M{s = t}$} between terms and between atoms. This can be done
+using \alert{most general unifiers.}
+
+                                \end{frame}
+
+
+%---------------------------------------------------------------------                             
+ \section{Non-Ground Superposition}
+\input{non_ground_sup}
+                                
+                                
+\end{document}
+
+\section{Saturation and Superposition in Practice}
+\input{basic_practice}
+
+
+\section{Summary of First-Order Theorem proving}
+\begin{frame}
+
+Revisiting the example about a commutative group
+
+\end{frame}
+
+\end{document}
+
+\section{Cookies}
+\input{cookies}
+
+
+%\section{Satisfiability Checking}
+%\input{satisfiability}
+
+\end{document}
+
+
+
+

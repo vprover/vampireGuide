@@ -1,0 +1,114 @@
+---
+id: ex-l8
+title: "Lecture 8 Exercises"
+sidebar_label: L8
+---
+
+Laura Kovács
+
+## Problem 8.1
+
+Let $f$ be unary, $g$ binary, $a,b,c$ constants, and $x,y,z$ variables. The weight function satisfies $w(s) = 1$ for every symbol and variable, and the precedence is $g \gg f \gg c \gg b \gg a$. Using KBO (extended to literals/clauses), answer:
+
+1. Do $C_1$ and $C_2$ make $C_3$ redundant?
+   $$
+   \begin{aligned}
+   C_1 &: a \neq b \lor f(a) \neq a\\
+   C_2 &: f(f(x)) = a\\
+   C_3 &: f(f(b)) \neq b \lor f(a) \neq a
+   \end{aligned}
+   $$
+2. Does $C_4$ make $C_5$ redundant?
+   $$
+   \begin{aligned}
+   C_4 &: f\big(g(x,a)\big) \neq f(y)\\
+   C_5 &: f\big(g(x,z)\big) \neq f\big(g(y,b)\big) \lor f\big(g(x,b)\big) \neq f\big(g(a,b)\big)
+   \end{aligned}
+   $$
+3. Does $C_6$ make $C_7$ redundant?
+   $$
+   \begin{aligned}
+   C_6 &: g(x,y) \neq f(x)\\
+   C_7 &: g(f(x),f(z)) \neq f(f(x)) \lor g(a,b) \neq c
+   \end{aligned}
+   $$
+
+<details>
+<summary>Solution</summary>
+
+1. **Yes.** Clause $C_3$ is ground. Instantiating $C_2$ with $\{x \mapsto b\}$ yields $f(f(b)) = a$, and together with ground $C_1$ these clauses entail $C_3$. Both supporting clauses are strictly smaller than $C_3$ under KBO, so every ground instance of $C_3$ (namely $C_3$ itself) is redundant.
+2. **Yes.** The ground instance $f(g(a,a)) \neq f(g(a,a))$ of $C_4$ lies in $C_4^*$, is unsatisfiable, and is smaller than any ground instance of $C_5$. Therefore each ground instance of $C_5$ is redundant with respect to $C_4^*$.
+3. **Yes.** Renaming $z$ to $y$ shows $g(f(x),f(z)) \neq f(f(x))$ is an instance of $g(x,y) \neq f(x)$. For any ground instance of $C_7$, the literal $g(f(s),f(t)) \neq f(f(s))$ is implied by the corresponding ground instance of $C_6$ and is strictly smaller than the full clause, so $C_6$ renders $C_7$ redundant.
+
+</details>
+
+## Problem 8.2
+
+Consider the inference (in $\mathbb{SUP}$, no $\mathbb{BR}$):
+
+$$
+\frac{x = f(c) \lor p(x)\qquad f(h(b)) = h(g(y,y)) \lor h(g(d,b)) \neq f(c)}{p\big(h(g(d,b))\big) \lor f(h(b)) = h(g(y,y))}
+$$
+
+with predicate symbol $p$, function symbols $f,g,h$, constants $b,c,d$, and variables $x,y$.
+
+1. Prove the inference is sound.
+2. Is it a simplifying inference of $\mathbb{SUP}$ for some KBO? Justify.
+
+<details>
+<summary>Solution</summary>
+
+1. Let $M$ satisfy both premises. If $M \models f(h(b)) = h(g(y,y))$, the conclusion is immediate. Otherwise the second premise forces $M \models h(g(d,b)) \neq f(c)$, which combined with the first premise yields $M \models p\big(h(g(d,b))\big)$, again making the conclusion true. Hence the inference is sound.
+2. **No.** A simplifying inference would make at least one premise redundant given the other premise and the conclusion. However:
+   - Model $M_1$ with domain $\{\mathsf a,\mathsf b\}$, interpreting $p$ as false everywhere and all $f,g,h$ results as $\mathsf a$, satisfies $C_2$ and the conclusion but not $C_1$.
+   - Model $M_2$ with domain $\{\mathsf b,\mathsf c,\mathsf d,\mathsf f,\mathsf g,\mathsf h\}$, interpreting $p$ as the entire domain and assigning $f,g,h$ as in the LaTeX solution, satisfies $C_1$ and the conclusion but not $C_2$.
+   
+   Therefore neither premise becomes redundant, so the inference is not simplifying for any KBO.
+
+</details>
+
+## Problem 8.3
+
+Consider the superposition inference (with $l\theta = l'$ and $l'=t$ selected):
+
+$$
+\frac{l = r \qquad l' = t \lor D}{(r\theta = t) \lor D}
+$$
+
+subject to $l \succ r$, $l' \succ t$, $r\theta \succ t$, $(l = r)\theta \succ D$, $(l' = t) \succ D$, and a well-behaved selection function.
+
+1. Is $(r\theta = t) \lor D \succ l' = t \lor D$ always true?
+2. Does $l' = t \lor D$ necessarily become redundant after applying the inference?
+
+<details>
+<summary>Solution</summary>
+
+1. **No.** Because $\succ$ is a simplification ordering, $l \succ r$ implies $l\theta \succ r\theta$. Since $l\theta = l'$, we obtain $l' \succ r\theta$. Multiset extension then gives $l' = t \lor D \succ r\theta = t \lor D$, so the conclusion is strictly smaller, not larger.
+2. **No.** Redundancy would require that every ground instance of $l' = t \lor D$ be entailed by smaller ground instances from the premises. When $l,r,t$ are ground, we have $l = l'$ and, because $r\theta = t$ is smaller, $l = r \succ l' = t$. Hence $l' = t \lor D$ is not larger than $l = r$, contradicting the ordering requirement for redundancy. Thus the premise need not become redundant.
+
+</details>
+
+## Problem 8.4
+
+In $\mathbb{SUP}$ (with $\mathbb{BR}$), consider
+
+$$
+\frac{f(a,b) \neq g(x) \lor f(x,y) = g(a) \qquad f(y,b) = g(y) \lor f(x,a) = g(x) \lor f(y,y) = g(z)}{f(a,a) = g(a)}
+$$
+
+where $f,g$ are function symbols, $x,y,z$ variables, and $a,b$ constants.
+
+1. Prove the inference is sound.
+2. Is it simplifying for any KBO? Justify.
+
+<details>
+<summary>Solution</summary>
+
+1. Instantiate both premises with $\theta = \{x \mapsto a, y \mapsto a\}$. Binary resolution yields $f(a,a) = g(a) \lor f(a,a) = g(a) \lor f(a,a) = g(z)$. Two applications of equality factoring generate $f(a,a) = g(a) \lor g(a) \neq g(a)$ and then $f(a,a) = g(a) \lor g(a) \neq g(a) \lor g(a) \neq g(a)$. Two equality-resolution steps reduce this to $f(a,a) = g(a)$. Therefore the conclusion follows by sound $\mathbb{SUP}$ rules, so the inference is sound.
+2. **No.** A simplifying inference would make at least one premise redundant. Consider:
+   - Model $I_1$ with domain $\{a,b\}$, interpreting $f(x,a) = x$, $f(x,b) = b$, and $g(x) = x$. Then $I_1 \models f(a,a) = g(a)$ and $I_1 \models f(x,a) = g(x)$, so $I_1$ satisfies the second premise and the conclusion, but $I_1 \not\models f(a,b) \neq g(x) \lor f(x,y) = g(a)$ for $\{x \mapsto b, y \mapsto b\}$; hence the first premise is not redundant.
+   - Model $I_2$ with domain $\{a,b\}$, interpreting $f(x,y) = a$ and $g(x) = x$. Then $I_2$ satisfies the first premise and the conclusion but falsifies the second premise for $\{x \mapsto b, y \mapsto b, z \mapsto b\}$. Therefore the second premise is not redundant either.
+
+Thus the inference is not simplifying under any KBO.
+
+</details>

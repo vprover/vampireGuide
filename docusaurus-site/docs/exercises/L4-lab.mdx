@@ -8,148 +8,75 @@ Laura Kovács
 
 ## Problem 4.1
 
-Apply the unification algorithm to the following pairs of atoms and determine their most general unifiers (MGUs), if they exist:
-
-1. $p(a,f(y),y)$ and $p(a,x,f(x))$
-2. $p(f(x,a), f(f(b,a)))$ and $p(z,f(z))$
-3. $p(f(x,y), f(y,z))$ and $p(z, f(w, f(y,w)))$
+Apply the unification algorithm to the atoms $p(f(x,a), f(f(b,a)))$ and $p(z,f(z))$. Determine whether an mgu exists and show the intermediate steps of the algorithm.
 
 <details>
 <summary>Solution</summary>
 
-1. Solving the equations gives $x = f(y)$ and $y = f(x)$, which reduces to $y = f(f(y))$. The occurs-check fails, so there is no MGU.
-2. Distinguish the unary and binary occurrences of $f$ (write them as $f_1$ and $f_2$). Solving yields $\{z \mapsto f_2(b,a),\; x \mapsto b\}$ as the MGU.
-3. Unification produces $\{x \mapsto w,\; y \mapsto w,\; z \mapsto f(w,w)\}$, which unifies the atoms.
-
-</details>
-
-
-## Problem 4.2
-
-Consider the set of clauses
+Distinguish the unary and binary occurrences of $f$ (write them as $f_1$ and $f_2$) to avoid ambiguity:
 
 $$
-\neg p(z,a) \lor \neg p(z,x) \lor \neg p(x,z),\qquad
-p(y,a) \lor p(y,f(y)),\qquad
-p(w,a) \lor p(f(w),w).
+E = \{\,p(f_2(x,a), f_1(f_2(b,a))) = p(z, f_1(z))\,\}.
 $$
 
-Give a refutation in the non-ground binary resolution system $\mathbb{BR}$. For each derived clause, state the premises, the rule used, and the most general unifier.
-
-<details>
-<summary>Solution</summary>
-
-Label the clauses $(1)$, $(2)$, and $(3)$:
-
-1. Negative factoring of $(1)$ with $\{x \mapsto a\}$ yields $(4)$ $\neg p(z,a) \lor \neg p(a,z)$.
-2. Negative factoring of $(4)$ with $\{z \mapsto a\}$ yields $(5)$ $\neg p(a,a)$.
-3. Resolving $(5)$ with $(2)$ using $\{y \mapsto a\}$ gives $(6)$ $p(a,f(a))$.
-4. Resolving $(4)$ with $(6)$ using $\{z \mapsto f(a)\}$ gives $(7)$ $\neg p(f(a),a)$.
-5. Resolving $(3)$ with $(7)$ using $\{w \mapsto a\}$ yields $(8)$ $p(a,a)$.
-6. Finally, resolve $(5)$ and $(8)$ to derive the empty clause $\square$.
-
-</details>
-
-
-## Problem 4.3
-
-Let $p$ be a unary predicate symbol, $f$ a unary function symbol, $x,y$ variables, and $c$ a constant. Consider the clauses $C_1 = p(x) \lor p(y)$, $C_2 = p(x)$, and $D = p(f(c))$.
-
-1. Does $C_1$ subsume $D$?
-2. Does $C_2$ subsume $D$?
-
-Justify your answers.
-
-<details>
-<summary>Solution</summary>
-
-1. No. Any substitution applied to $C_1$ still yields two literals, so $C_1\theta$ cannot be a sub-multiset of the single-literal clause $D$.
-2. Yes. With $\theta = \{x \mapsto f(c)\}$, we have $C_2\theta = \{p(f(c))\}$, which is a sub-multiset of $D$.
-
-</details>
-
-
-## Problem 4.4
-
-Provide a superposition refutation (without binary resolution) of the clause set $\{x = f(c),\; a \neq b\}$ such that no inference uses both $\{f,c\}$ and $\{a,b\}$ in the same clause.
-
-<details>
-<summary>Solution</summary>
-
-1. $f(c) = x$ (axiom)
-2. $a \neq b$ (axiom)
-3. Superposition of (1) with itself (renaming variables) yields $x = y$.
-4. Superposition of (2) with (3) yields $a \neq x$.
-5. Equality resolution on (4) using $x \mapsto a$ produces $\square$.
-
-</details>
-
-
-## Problem 4.5
-
-Let $f$ be unary, $g$ binary, and consider constants $a,b,c$ with variables $x,y,z$. Assume the weight function gives every symbol and variable weight $1$, and the precedence satisfies $g \gg f \gg c \gg b \gg a$. Using the induced KBO (extended to literals and clauses), determine whether the following redundancies hold:
-
-1. Do $C_1: a \neq b \lor f(a) \neq a$ and $C_2: f(f(x)) = a$ make $C_3: f(f(b)) \neq b \lor f(a) \neq a$ redundant?
-2. Does $C_4: f(g(x,a)) \neq f(y)$ make $C_5: f(g(x,z)) \neq f(g(y,b)) \lor f(g(x,b)) \neq f(g(a,b))$ redundant?
-3. Does $C_6: g(x,y) \neq f(x)$ make $C_7: g(f(x),f(z)) \neq f(f(x)) \lor g(a,b) \neq c$ redundant?
-
-<details>
-<summary>Solution</summary>
-
-1. No. The unit clause $f(f(x)) = a$ is incomparable with the disjunction in $C_3$, so $C_3$ is not redundant.
-2. Yes. $C_4$ is strictly smaller and already inconsistent, forcing $f(g(x,a)) = f(y)$, which makes $C_5$ redundant.
-3. Yes. After renaming $z$ to $y$ in $C_7$, the literal $g(f(x),f(y)) \neq f(f(x))$ is an instance of $g(x,y) \neq f(x)$, and $C_6$ is smaller, so $C_7$ is redundant.
-
-</details>
-
-
-## Problem 4.6
-
-Consider the superposition inference
+The algorithm rewrites $E$ as
 
 $$
-\frac{x = f(c) \lor p(x)\qquad f(h(b)) = h(g(y,y)) \lor h(g(d,b)) \neq f(c)}{p(h(g(d,b))) \lor f(h(b)) = h(g(y,y))}
+\{\,f_2(x,a) = z,\; f_1(f_2(b,a)) = f_1(z)\,\}
 $$
 
-in $\mathbb{SUP}$ (without binary resolution). Answer:
+and then into
 
-1. Prove the inference is sound.
-2. Is it a simplifying inference? Explain.
+$$
+\{\,z = f_2(x,a),\; f_2(b,a) = z\,\}.
+$$
 
-<details>
-<summary>Solution</summary>
+Substituting $z$ with $f_2(x,a)$ yields
 
-1. Let $M$ satisfy both premises. If $M \models f(h(b)) = h(g(y,y))$, the conclusion holds. Otherwise $M \models h(g(d,b)) \neq f(c)$, forcing $M \models p(h(g(d,b)))$ via the first premise, so the conclusion still holds.
-2. Label the premises $C_1$ and $C_2$, conclusion $D$. For simplification we would need $C_2, D \models C_1$ or $C_1, D \models C_2$, but counter-models show neither entailment holds: one interpretation with $p$ always false, and another with $p$ always true, falsify $C_1$ and $C_2$ respectively while satisfying the other clauses. Therefore the inference is not simplifying.
+$$
+\{\,z = f_2(x,a),\; f_2(b,a) = f_2(x,a)\,\},
+$$
+
+which simplifies to
+
+$$
+\{\,z = f_2(x,a),\; x = b\,\}.
+$$
+
+The resulting substitution
+
+$$
+\theta = \{\,z \mapsto f_2(b,a),\; x \mapsto b\,\}
+$$
+
+is the most general unifier of the original atoms.
 
 </details>
-
 
 ## Problem 4.7
 
-Show that the inverse of a dense order is dense. Proceed by:
-
-1. Formalising the problem in TPTP.
-2. Using Vampire with `-av off` to refute the negation, and describe the key superposition inferences (premises, MGUs, resulting clauses).
+Show that the inverse of a dense order is dense. Outline a TPTP formalisation and the key steps in Vampire’s refutation (`-av off`).
 
 <details>
 <summary>Solution</summary>
 
-Encode the axioms of a dense strict order and introduce a predicate for the inverse relation with forward and backward implications. Negate density for the inverse and run Vampire (`-av off`). The proof uses superposition steps that combine the inverse-direction axioms with the negated density clause; documenting these steps (with MGUs) demonstrates that the inverse relation must also be dense.
+Encode strict total order axioms and density for $r_1(x,y)$, plus clauses asserting $r_2(y,x)$ iff $r_1(x,y)$. Negate density for $r_2$ by adding a clause stating that there exist $a,b$ with no $c$ such that $r_2(a,c)$ and $r_2(c,b)$. Running Vampire (`-av off`) produces a refutation: the proof repeatedly superposes the inverse-direction axioms with the negated density clause until it forces a contradiction with density of $r_1$. Recording the premises, substitutions, and derived clauses from those superposition steps shows precisely how the contradiction—and therefore the density of the inverse relation—arises.
 
 </details>
 
-
 ## Problem 4.8
 
-Using the group theory axioms from the lecture, prove that the left identity element $e$ is also a right identity.
-
-1. Provide a TPTP encoding (axioms plus negated goal).
-2. Run Vampire with `-av off` and explain the main superposition steps in the proof.
+Using the group axioms (associativity, left identity, inverses), prove that the left identity element $e$ is also a right identity. Provide a TPTP encoding (axioms plus negated goal) and describe the main superposition steps in Vampire’s refutation (`-av off`).
 
 <details>
 <summary>Solution</summary>
 
-Model associativity, the existence of a left identity, and inverses in TPTP, then negate $x \cdot e = x$. Vampire derives the empty clause by superposing the axioms with the negated goal. Recording the key inferences (their premises and MGUs) shows precisely how the contradiction—and thus the right identity property—arises.
+Encode the axioms:
+
+- Associativity: $! [X,Y,Z] : mult(mult(X,Y),Z) = mult(X,mult(Y,Z))$.
+- Left identity: $! [X] : mult(e,X) = X$.
+- Inverses: $! [X] : mult(inv(X),X) = e$.
+
+Add the negated goal $! [X] : mult(X,e) \neq X$. Vampire refutes the set by chaining superposition steps: for example, superposing the inverse axiom with the negated goal yields clauses equating $mult(inv(X), mult(X,e))$ with $e$, which then rewrite to contradictions with the left-identity clause. Documenting the key superposition inferences (premises, mgus, conclusions) explains how the empty clause is ultimately derived, establishing that $e$ must also be a right identity.
 
 </details>

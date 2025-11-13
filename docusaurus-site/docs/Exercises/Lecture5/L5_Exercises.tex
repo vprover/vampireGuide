@@ -1,0 +1,822 @@
+\documentclass[11pt]{article}
+\usepackage{exercise}
+
+\usepackage{amsmath,times,color,url}
+\usepackage{amsfonts,bussproofs}
+
+\usepackage{alltt}
+\usepackage{proof}
+\usepackage{tikz}
+\usepackage{cancel}
+\usepackage{mathtools}
+
+
+
+\def\set#1{\{#1\}}
+\def\Set#1{\{#1\}}
+\def\z{{\tt 0}}
+\def\o{{\tt 1}}
+\def\t{{\tt 2}}
+\def\a{{\tt a}}
+\def\b{{\tt b}}
+\def\c{{\tt c}}
+\def\d{{\tt d}}
+\def\DFA{{\sf DFA}}
+\def\NFA{{\sf NFA}}
+\def\R{{\cal R}}
+\def\Picture#1{\strut\centerline{\input #1.eepic}}
+
+
+\definecolor{midnightblue}{cmyk}{0.98,0.13,0,0.43}
+\definecolor{olivegreen}{cmyk}{0.64,0,0.95,0.40}
+\definecolor{rawsienna}{cmyk}{0,0.72,1,0.45}
+\definecolor{fuchsia}{cmyk}{0.47,0.91,0,0.08}
+\definecolor{shaded}{rgb}{0.7, 0.75, 0.71}
+
+\newcommand{\Blue}[1]{{\color{blue}#1}}
+\newcommand{\Red}[1]{{\color{red}#1}}
+\newcommand{\Brown}[1]{{\color{brown}#1}}
+\newcommand{\OliveGreen}[1]{{\color{olivegreen}#1}}
+\newcommand{\RawSienna}[1]{{\color{rawsienna}#1}}
+\newcommand{\MidnightBlue}[1]{{\color{midnightblue}#1}}
+\newcommand{\Fuchsia}[1]{{\color{fuchsia}#1}}
+\newcommand{\Gray}[1]{{\color{shaded}#1}}
+
+\usepackage{prftree}
+
+
+\newcommand{\M}[1]{{\color{midnightblue}#1}}
+\newcommand{\notl}{\neg}
+\newcommand{\orl}{\vee}
+\newcommand{\andl}{\wedge}
+\newcommand\impl{\rightarrow}
+
+\newcommand{\setof}[1]{\{#1\}}
+\newcommand{\true}{1}
+\newcommand{\false}{0}
+
+\newcommand{\Th}{\mathcal{T}}
+
+\newcommand{\BRr}{\mathrm{B}\mathrm{R}}   
+\newcommand{\Sup}{\mathrm{S}\mathrm{up}}   
+\newcommand{\SUPiss}{\mathrm{S}\mathrm{up}_{\succ,\sel}}   % SUPis with selection
+\newcommand{\sel}{\sigma}
+
+
+% object level equality
+\newcommand{\oeq}{=}%\approx}
+\newcommand{\oneq}{\neq}%\not\approx}
+
+\newcommand{\SUPis}{\mathbb{S}\mathrm{up}}   % SUP
+\newcommand{\Iis}{\mathbb{I}} %inference system
+
+
+\newcommand{\BRis}{\mathbb{BR}}             % binary resolution inference system
+%\newcommand{\Solution}[1]{#1}
+ \newcommand{\Solution}[1]{}
+
+\newcommand{\Union}{\bigcup}
+
+
+\begin{document}
+\problemset{Lecture 5, October 20, 2025}
+
+%%%% Lecture 4 - Exercises 4
+
+\section*{\exercises{5}}
+
+%
+
+
+\problem{5.1} 
+Show that positive factoring in binary resolution $\BRis$ can also represented by inferences in the
+superposition system. 
+\bigskip
+
+\Solution{
+\noindent
+{\bf Solution:}
+We ignore selection functions and consider the positive factoring rule
+of $\BRis$:
+
+  \[
+      \infer[(\BRr)]{p \orl C}{p \orl p \orl C}
+  \]
+
+This rule can be represented by inferences in the superposition system
+as:
+
+
+  \[
+    \infer[\mathrm{(ER)}]
+    {p =\top ~~\orl~~ C}
+    {
+    \infer[\mathrm{(EF)}]{p =\top \quad\orl\quad \top \neq \top\quad \orl\quad
+      C}{p =\top \quad\orl\quad p =\top \quad\orl\quad C}
+    }
+  \]
+
+}
+
+
+\problem{5.2}
+Consider a KBO ordering $\succ$ such that 
+$inverse\gg times$ by precedence. 
+Consider the literal: 
+\[
+inverse(times(x,y) ) = times(inverse(y), inverse( x )).\] 
+Compare, w.r.t $\succ$, the left- and right-hand side terms of the
+equality when: 
+\begin{itemize}
+\item $weight(inverse)=weigth(times)=1$; 
+
+  \Solution{
+\medskip
+{\bf Solution:}
+
+As $weight(inverse)=weigth(times)=1$, 
+we have: \[weight(inverse(times(x,y))) =
+2+weight(x)+weight(y)\]
+and 
+\[weight(times(inverse(y), inverse( x ))) =
+3+weight(y)+weight(x).
+\]
+Thus, 
+\[ times(inverse(y), inverse( x )) \succ inverse(times(x,y) ).\]
+\medskip
+}
+
+\item $weight(inverse) = 0$ and $weight(times) = 1$.
+
+  \Solution{
+\medskip
+{\bf Solution:}
+
+Using the given weights of $times$ and $inverse$,  we have:
+
+\[weight(inverse(times(x,y))))=weight(times(inverse(y), inverse( x ))) =1+weight(x)+weight(y).\]
+
+Then by precedence, given that $inverse\gg times$, we conclude that:
+ 
+ \[
+inverse(times(x,y) ) \succ times(inverse(y), inverse( x )).
+\]
+}
+\end{itemize}
+
+
+
+
+\problem{5.3}
+Let $\Sigma$ be a signature containing only function symbols such that
+$\Sigma$ contains at least one constant.
+Let $\gg$ be a  precedence relation on $\Sigma$ and
+$w:\Sigma\to\mathbb{N}$ be a weight function compatible with $\gg$.
+Consider the (ground) Knuth-Bendix order $\succ$ induced by $\gg$
+and $w$ on the set of ground
+terms of $\Sigma$. Describe the set of ground terms that have the minimal
+weight wrt $\succ$.
+
+
+\bigskip
+\Solution{
+\noindent
+{\bf Solution:} 
+Every ground term of $\Sigma$ that has the minimal
+weight wrt $\succ_{KB}$ is either: 
+
+-- a constant $c\in \Sigma$ such that $c$ has the minimal weight
+among the constants of $\Sigma$, 
+
+-- or a term $f^n(c)$, with $n\neq 0$, where $c\in\Sigma$ is a constant of the
+minimal weight among the constants of $\Sigma$ and $w(f)=0$.
+
+
+}
+
+
+% ground superposition
+\problem{5.4} 
+Consider the set $S$ of ground formulas:
+%
+\begin{align*}
+%
+% ['or', ['=', ['g', ['f', 'a']], 'a'], ['=', ['g', ['f', 'b']], 'a']]
+  \{~ & g(f(a)) = a \lor g(f(b)) = a,
+~\\~
+% ['=', ['f', 'a'], 'a']
+& f(a) = a,
+~\\~
+% ['or', ['not', ['=', ['f', 'b'], ['f', 'b']]], ['=', ['f', 'b'], 'a']]
+& f(b)  \neq  f(b) \lor f(b) = a,
+~\\~
+% ['not', ['=', ['g', 'a'], 'a']]
+  & g(a)  \neq  a ~\}
+%
+\end{align*}
+%
+\noindent Show that $S$ is unsatisfiable by applying saturation on $S$ using an
+inference process based on the ground superposition
+calculus $\SUPis_{\succ,\sigma}$ (including the inference rules of binary
+resolution $\BRis_\sigma$), where $\sigma$ is a well-behaved selection
+function wrt $\succ$ and: 
+\begin{itemize}
+  \item[(a)] the ordering $\succ$ is the KBO ordering generated by the precedence 
+    $f\gg a \gg g \gg b$ and the weight function $w$ with $w(f)=0,
+    w(b) = 1, w(a) = 2, w(g) = 3$; 
+   % Further, $\sigma$ is a well-behaved selection function wrt $\succ$.
+
+  \item[(b)] the ordering $\succ$ is the KBO ordering generated by the precedence
+    $g\gg a \gg b \gg f$ and the weight function $w$ with $w(g)=0, w(b) = 1, w(f) = 1, w(a) = 3$.
+  %  Further, $\sigma$ is a well-behaved selection function wrt $\succ$.
+\end{itemize}
+Give details on what literals  are selected and which terms are maximal.
+
+\Solution{
+\medskip
+
+{\bf Solution:}\\
+For clarity, we first number the clauses:
+\begin{align*}
+  (1)~ & g(f(a)) = a \lor g(f(b)) = a \\
+  (2)~ & f(a) = a \\
+  (3)~ & f(b)  \neq  f(b) \lor f(b) = a \\
+  (4)~ & g(a)  \neq  a
+\end{align*}
+In the solution we mark selected literals by underlining them.
+\begin{itemize}
+  \item[(a)]    
+    The following literals are selected:
+\begin{align*}
+  (1)~ & \underline{g(f(a)) = a} \lor g(f(b)) = a & ~~\text{($\{g(f(a)), a\} \succ \{g(f(b)), a\}$ since $g(f(a))\succ g(f(b))$ by weight)} \\
+  (2)~ & \underline{f(a) = a} & \text{(since it is the only literal in the clause)}\\
+  (3)~ & \underline{f(b)  \neq  f(b)} \lor f(b) = a & \text{(since $f(b)  \neq  f(b)$ is negative)}\\
+  (4)~ & \underline{g(a)  \neq  a} & \text{(since it is the only literal in the clause)}
+\end{align*}
+    By equality resolution over (3), we get:
+    \[(5)~\underline{f(b) = a}\]
+    Next, since $f(a)\succ a$ (by precedence) and $g(f(a))\succ a$ (by weight), we apply superposition over
+    (2) and (1), and get
+    \[(6)~ \underline{g(a) = a} \lor g(f(b)) = a,\]
+    where $g(a)=a$ is selected since $g(a)\succ g(f(b))$ (by weight) and thus $\{g(a), a\}\succ \{g(f(b)), a\}$.\\
+    We then apply binary resolution over (6) and (4):
+    \[(7)~ \underline{g(f(b)) = a}\]
+    Next, since $a\succ f(b)$ (by weight) and $g(a)\succ a$ (by weight), we apply superposition over (4) and (5):
+    \[(8)~\underline{g(f(b)) \neq a}\]
+    Finally, we apply binary resolution over (7) and (8):
+    \[(9)~\square\]
+    Hence, $S$ is unsatisfiable.
+
+  \item[(b)] All steps of the solution (a) depended on the following comparisons between
+    (bags of) terms: $\{g(f(a)), a\} \succ \{g(f(b)), a\},\; f(a)\succ a,\; g(f(a))\succ a,\;
+    \{g(a), a\}\succ \{g(f(b)), a\},\; a\succ f(b),\; g(a)\succ a$.
+    However, all these comparisons hold also for the KBO generated by the precedence and the weight
+    function from (b):
+    \begin{itemize}
+      \item from $g(f(a))\succ g(f(b))$ by weight we get $\{g(f(a)), a\} \succ \{g(f(b)), a\}$,
+      \item $f(a)\succ a$ by weight,
+      \item $g(f(a))\succ a$ by weight,
+      \item from $g(a)\succ g(f(b))$ by weight it follows $\{g(a), a\}\succ \{g(f(b)), a\}$,
+      \item $a\succ f(b)$ by weight,
+      \item $g(a)\succ a$ by precedence.
+    \end{itemize}
+    Therefore the proof in (b) is the same as in (a).
+\end{itemize}
+
+\medskip
+}
+
+
+\problem{5.5}
+ Consider the KBO ordering $\succ$ generated by
+the precedence $ f\gg a \gg b \gg c$ and 
+the weight function $w$ with $w(f)=w(a)=w(b)=w(c)=1$.
+
+
+Consider the set $S$ of ground formulas:
+\begin{equation*}
+  \begin{array}{l}
+    a=b \orl a=c\\
+    f(a)\neq f(b)\\
+    b=c
+    \end{array}
+    \end{equation*}
+
+   Apply saturation on S using an inference process based on the
+   ground superposition calculus $\SUPiss$, including the inference
+   rules of ground binary resolution with selection.
+
+Show that $S$ is unsatisfiable such that during
+    saturation {only 4 new clauses} are generated.
+
+    \medskip
+
+    \Solution{
+\medskip
+
+{\bf Solution:}\\
+For clarity, we number the clauses. We aslo indicate selected literals
+by underlining them, and underline maximal terms in selected literals:
+\begin{align*}
+  (1)~ &  \underline{\underline{a}=b} \orl a=c\\
+  (2)~ &\underline{\underline{f(a)}\neq f(b)}\\
+  (3)~ & \underline{\underline{b}=c}
+\end{align*}
+We apply equality factoring (EF) over (1) and derive
+\begin{align*}
+  (4)~&{a}=b \orl \underline{\underline{b}\neq c}
+\end{align*}
+
+We apply binary resolution (BR) over (3,4) and derive
+\begin{align*}
+  (5)~&\underline{\underline{a}=b}
+\end{align*}
+
+We apply superposition (SUP) over (2, 5) and derive:
+\begin{align*}
+  (6)~ &\underline{{f(b}\neq f(b)}
+\end{align*}
+
+We apply equality resolution (ER) over (6) and derive:
+\begin{align*}
+  (7)~ &\square
+\end{align*}
+
+  
+}
+
+\end{document}
+\newpage
+
+
+
+%%%%%%%%%%%%
+% Lecture 4 , Lab 4
+\problemset{May 25-27, 2023}
+\section*{\lab{4}}
+
+\problem{4.1}
+Apply the unification algorithm and show the most general unifier of
+the following atoms: 
+
+\begin{description}
+\item[(a)] $p(a, f(y), y)$ and $p(a,x,f(x))$;
+
+  \Solution{
+\noindent
+{\bf Solution:}
+
+\[
+\begin{array}{ll}
+E=\{p(a, f(y), y) = p(a,x,f(x))\} & \implies\\
+E= \{ a=a, \quad f(y)=x, \quad y=f(x) \}  & \implies\\
+E= \{f(y)=x, \quad y=f(x)\}& \implies\\
+E= \{ x=f(y), \quad y=f(x) \}  & \implies_{x\to f(y)}\\
+E= \{\Gray{x=f(y)}, \quad y=f(f(y))\} &\implies_{Failure}
+
+\end{array}
+\]
+\bigskip
+}
+
+\item[(b)] $p(f(x,a), f(f(b,a)))$ and $p(z,f(z))$;
+
+  \Solution{
+\noindent
+{\bf Solution:}
+Note that $f$ occurs both as a unary and as a binary function. 
+Hence, there are two possibilities to proceed: 
+\begin{itemize}
+\item Report syntax error because one cannot use the same function
+  name with different arities;
+\item Consider the unary and binary occurences of $f$ as different
+  functions. Use then  $f_1$ for the unary occurence of $f$ and $f_2$
+  for the binary function $f$. (Note: In Prolog, it is still possible 
+to use the same function name with different arities.). 
+
+In this case, we have: 
+\[\begin{array}{ll}
+E=\{p(f_2(x,a), f_1(f_2(b,a))) =p(z,f_1(z))\}& \implies\\
+E=\{f_2(x,a)=z,\quad f_1(f_2(b,a))=f_1(z)\} & \implies\\
+E=\{z=f_2(x,a),\quad f_1(f_2(b,a))=f_1(z)\} & \implies_{z\to
+  f_2(x,a)}\\
+E=\{\Gray{z=f_2(x,a)},\quad f_1(f_2(b,a))=f_1(f_2(x,a))\} &\implies\\
+E=\{\Gray{z=f_2(x,a)},\quad f_2(b,a)=f_2(x,a)\} & \implies\\
+E=\{\Gray{z=f_2(x,a)},\quad b=x, \quad a=a\} & \implies\\
+E=\{\Gray{z=f_2(x,a)},\quad x=b, \quad a=a\} & \implies_{x\to b}\\
+E=\{\Gray{z=f_2(b,a)},\quad \Gray{x=b}, \quad a=a\} & \implies\\
+E=\{\Gray{z=f_2(b,a)},\quad \Gray{x=b}\} & \implies_{Success}
+\end{array}
+\]
+The mgu in this case is $\{z\to f_2(b,a), x\to b\}$.
+\end{itemize}\bigskip
+}
+
+\item[(c)] $p(f(x,y),f(y,z))$ and $p(z,f(w,f(y,w)))$.
+
+  \Solution{
+\noindent
+{\bf Solution:}
+
+\[\begin{array}{ll}
+
+E=\{p(f(x,y),f(y,z)) \ = \ p(z,f(w,f(y,w)))\}& \implies\\
+E= \{ f(x,y) =z,\quad f(y,z)= f(w,f(y,w)) \}& \implies\\
+E= \{ \Gray{z=f(x,y)},\quad f(y,z)=f(w,f(y,w))\} & \implies_{ z\to f(x,y)  }\\
+E= \{ \Gray{z=f(x,y)}, \quad f(y,f(x,y)=f(w,f(y,w))\}  \} & \implies\\
+E= \{ \Gray{z=f(x,y)}, \quad y=w, \quad f(x,y)=f(y,w)\}&\implies_{y\to w
+  }\\
+E= \{ \Gray{z=f(x,w)}, \quad \Gray{y=w}, \quad f(x,w), f(w,w)\} \} &
+\implies\\
+E= \{ \Gray{z=f(x,w)}, \quad \Gray{y=w}, \quad x=w, \quad w=w\} &
+\implies_{x\to w}\\
+E= \{ \Gray{z=f(w,w)}, \quad \Gray{y=w}, \quad \Gray{x=w},\quad w=w\}&
+\implies \\
+E= \{ \Gray{z=f(w,w)}, \quad \Gray{y=w}, \quad \Gray{x=w}\}\implies_{Success}
+\end{array}
+\]
+
+
+The mgu is: \[
+{\{z\to f(w,w),\ y\to w, x\to w
+  \} }.
+\]
+}
+\bigskip
+\end{description}
+
+Note: $x,y,z,w$ denote variables, $f$ is a function symbol, $p$ is a 
+predicate symbol and $a,b$ are constants. 
+\medskip
+
+
+
+
+\problem{4.2}
+Consider the following set $S$ of clauses:
+\[
+\begin{array}{l}
+\neg p(z,a) \orl \neg p(z,x) \orl \neg p(x,z)\\
+p(y,a) \orl p(y,f(y))\\
+p(w,a) \orl p(f(w),w)
+\end{array}
+\]
+where $p$ is a predicate symbol, $f$ is a function symbol, $x,y,z,w$ are variables and $a$ is a
+constant. 
+
+\noindent Give a refutation proof of $S$ by using the non-ground binary resolution
+inference system $\BRis$. For each newly derived clause, 
+label the clauses from which it was derived by which inference
+rule  and indicate
+most general unifiers.
+
+\Solution{
+  \bigskip
+
+\noindent
+{\bf Solution:}
+
+For simplicity, we name the given clauses by numbers: 
+\[
+\begin{array}{ll}
+(1) & \neg p(z,a) \orl \neg p(z,x) \orl \neg p(x,z)\\
+(2) & p(y,a) \orl p(y,f(y))\\
+(3)& p(w,a) \orl p(f(w),w)
+\end{array}
+\]
+
+
+By negative factoring on (1), with the mgu $\{x\to a\}$, we get: 
+\[(4) \quad \neg p(z,a) \orl \neg p(a,z)\]
+
+By negative factoring on (4), with the mgu $\{z\to a\}$, we get: 
+\[(5) \quad \neg p(a,a)\]
+
+By resolution on (5) and (2), with the mgu $\{y\to a\}$, we get:
+\[(6) \quad  p(a,f(a))\]
+
+By resolution on (4) and (6), with the mgu $\{z\to f(a)\}$, we get:
+\[(7) \quad \neg p(f(a), a)\]
+
+By resolution on (3) and (7), with the mgu $\{w\to a\}$, we get:
+\[(8) \quad  p(a, a)\]
+
+By resolution on (5) and (8), we finally obtain the empty clause:
+\[(9) \quad  \Box\]
+
+Hence, our input set $S$ of clauses (1), (2) and (3) is
+unsatisfiable.
+}
+
+\bigskip
+
+
+
+
+
+\problem{4.3}
+Let $p$ denote  a unary predicate symbol, $f$  a unary function
+symbol, $x,y$ variables and $c$ a constant.
+Let $C_1$ be the clause $p(x) \vee p(y)$ and consider $C_2$ to be the
+clause $p(x)$. Further, let $D$ denote the clause $p(f(c))$. % We
+%consider $\succ$ to be an ordering over literals; for simplicity, we
+%write $\succ$ also  for the bag extension of $\succ$ for comparing
+%clauses. 
+
+
+\begin{itemize}
+\item[(a)] Does $C_1$ subsume $D$?
+\item[(b)] Does $C_2$ subsume $D$?
+\end{itemize}
+
+Justify your answers!
+\medskip
+
+\Solution{
+{\bf Solution:}
+\begin{itemize}
+  \item[(a)] No. For $C_1$ to subsume $D$, there must be a substitution $\theta$ such
+    that $C_1\theta$ is a sub-multiset of $D$. However, since $C_1$ has two literals, also $C_1\theta$
+    has two literals and therefore it cannot be a sub-multiset of $D$, which only has one literal.
+  %  (Note that for a substitution $\theta = \{x\mapsto f(c), y\mapsto f(c)\}$, it holds that $C\theta\succ D$.
+   % Therefore, while $C\theta$ is a \emph{subset} of $D$, it is not a \emph{sub-multiset}.) 
+  \item[(b)] Yes. For $\theta = \{x\mapsto f(c)\}$, it holds that $C_2\theta$ is a sub-multiset of $D$.
+\end{itemize}
+
+}
+
+
+
+%non-ground sup
+\problem{4.4}
+Let $x$ denote a variable, $a,b,c$ constants, and $f$  a
+ unary function symbol. \\
+Give a superposition refutation of the following set of two clauses:
+
+\[
+  \begin{array}{lll}
+    \{~ &x \oeq f(c),&\\
+    &a\oneq b &~\}
+   \end{array}
+ \]
+ such that, in every inference, the premises and
+ the conclusion of that inference do not use the symbols $f,c$
+ together with the symbols $a,b$. That is, 
+ every inference has the following property: if the premise or the
+ conclusion contain any of the symbols $f,c$,
+ then the premise and the conclusion contain neither $a$ nor $b$.
+ 
+In your proof, use only the inference system of the superposition
+calculus $\SUPis$ (without ordering and selection function); that is,
+no inferences of binary resolution $\BRis$ should be used.
+For each newly derived clause,
+clearly label the clauses from which it was derived and indicate most general unifiers.
+
+\medskip
+
+\Solution
+{\noindent{\bf Solution.}
+Note that if we apply a rule to two clauses, we consider the variables in both clauses to be distinct, even if the two clauses are actually the same one. 
+Therefore we when we apply can use superposition using $f(c) = x$, as both of the premises it is the same thing as applying it to the premises $f(c) = x$ and $f(c) = y$.
+This means we can do the following derivation:
+
+\medskip
+
+$
+  \begin{array}{lcll}
+    1) & f(c) = x & \text{Axiom}\\
+    2) & a \neq b & \text{Axiom}\\
+    3) & x = y & \text{Superposition using (1), and (1), $\sigma = \emptyset$}\\
+    4) & a \neq x & \text{Superposition using (2), and (3), $\sigma = \Set{ y \mapsto b }$}\\
+    5) & \Box & \text{Equality resolution using (4), $\sigma = \Set{ x \mapsto a }$}\\
+  \end{array}
+$
+}
+\medskip
+
+
+
+\problem{4.5}
+
+Let $f$ be a unary and $g$ be a binary function symbol.
+Further let $a, b, c$ be constants, and $x, y, z$ be variables.
+We define the weight function $w(s) = w(v) = 1$, for every symbol $s$
+and variable $v$, and let $g \gg f \gg c \gg b \gg a$.
+Answer the following questions using a KBO with the weight
+function $w$ and the precedence relation $\gg$ to order terms,
+and its extension to compare literals and clauses. 
+
+\begin{itemize}
+  \item[(a)] Do the clauses $C_1$ and $C_2$ make the clause $C_3$ redundant?
+    \begin{align*}
+      C_1:~ &~ a \oneq b \lor f(a) \oneq a \\
+      C_2: ~ &~ f(f(x)) \oeq a \\
+      C_3: ~ &~ f(f(b)) \oneq b \lor f(a) \oneq a
+    \end{align*}
+    % Answer: no, because f(f(x)) = a is incomparable to f(f(b)) != b \/ f(a) != a
+    %         shouldn't the answer be "yes"? because we can use demodulation(C_2, C_3) to derive C_1.
+  \item[(b)] Does the clause $ C_4 $ make the clause $ C_5 $ redundant?
+    \begin{align*}
+      C_4: ~ &~ f(g(x, a)) \oneq f(y) \\
+      C_5: ~ &~ f(g(x, z)) \oneq f(g(y, b)) \lor f(g(x, b)) \oneq f(g(a, b))
+    \end{align*}
+    % Answer: yes because f(g(x,a)) != f(y) is unsat, and smaller than the latter clause
+  \item[(c)] Does the clause $ C_6 $ make the clause $ C_7 $ redundant?
+    \begin{align*}
+      C_6: ~ &~ g(x, y) \oneq f(x) \\
+      C_7: ~ &~ g(f(x), f(z)) \oneq f(f(x)) \lor g(a, b) \oneq c
+    \end{align*}
+    % Answer: yes because f(g(x,a)) != f(y) < g(x, f(z)) != f(f(x)) < g(x, f(z)) != f(f(x)) \/ g(a,b) != c
+\end{itemize}
+
+
+\medskip
+
+\Solution{
+  \noindent{\bf Solution.}
+
+
+\begin{itemize}
+  \item[(a)] No, because $C_2 : f(f(x)) = a$ is incomparable to $C_3 : f(f(b)) \neq b \lor f(a) \neq a $.
+    % Answer: no, because f(f(x)) = a is incomparable to f(f(b)) != b \/ f(a) != a
+    %         shouldn't the answer be "yes"? because we can use demodulation(C_2, C_3) to derive C_1.
+  \item[(b)] Yes, because $C_4 : f(g(x, a)) \neq f(y)$ is unsat, and smaller than $C_5$.
+  \item[(c)] Yes because firstly we can rename the variable $z$ to $y$ in the second clause.  
+    This means, since $g(x, y) \oneq f(x) \prec g(f(x), f(z)) \oneq f(f(x))$, that $C_6 \prec C_7$.
+    Further $g(f(x), f(z)) \oneq f(f(x))$ is an instance of $g(x, y) \oneq f(x)$, which means that we $C_6$ implies $C_7$.
+    % Answer: yes because f(g(x,a)) != f(y) < g(x, f(z)) != f(f(x)) < g(x, f(z)) != f(f(x)) \/ g(a,b) != c $
+  \end{itemize}
+  }
+
+
+
+
+%redundancy, subsumption demodulation 
+\problem{4.6}
+Consider the following inference:
+%Aduct21S#27
+\[\prftree{
+  x \oeq f(c)\lor p(x)
+}{
+  f(h(b)) \oeq h(g(y,y)) \lor h(g(d,b))\oneq f(c)
+}{
+  p ( h ( g ( d , b ) ) ) \lor f ( h ( b) )  \oeq  h(g(y,y))
+}\]
+in the non-ground
+superposition inference system $\SUPis$ ({\bf without} the rules of the non-ground
+binary resolution inference system $\BRis$),
+where $p$ is a predicate symbol, $f$, $g$, $h$ are function symbols,
+$b, c, d$ are constants, and $x$, $y$ are variables.
+%
+\begin{itemize}
+    \item[(a)]
+        Prove that the above inference is a sound inference of $\SUPis$.
+        % suppose M |=  x = f(c) \/ p(x)                             (1)
+        %         M |=  f(h(b)) = h(g(y,y)) \/ h(g(d,b)) != f(c)     (2)
+        % If M |= f(h(b)) = h(g(y,y)), then the conclusion is obviously true in M.
+        % othersise due to (2) it must be the case that M |= h(g(d,b)) != f(c), which means due to (1) that M |= p(g(d,b)) must hold, which means that the conclusion is true in M as well.
+    \item[(b)]
+        Is the above inference a simplifying inference of $\SUPis$?
+        Justify your answer. 
+
+        % Countermodel for Hyp1, Concl |= Hyp2
+        % M |= p(x)
+        % M(f)(C) = H
+        % M(f)(..) = F
+        % M(h(...)) = H
+        % M(g(...)) = G
+        % M(c) = C
+        % M(d) = D
+        % M(b) = B
+
+        % Countermodel for Hyp2, Concl |= Hyp1
+        % M |= ~p(x)
+        % domain = {A, B}
+        % M(f)(..) = A
+        % M(h)(..) = A
+
+\end{itemize}
+
+%
+\medskip
+
+\Solution{
+  \noindent{\bf Solution.} 
+\begin{itemize}
+    \item[(a)]
+        Let $M$ be a model of both assumptions of the rule: 
+        % suppose M |=  x = f(c) \/ p(x)                             (1)
+        %         M |=  f(h(b)) = h(g(y,y)) \/ h(g(d,b)) != f(c)     (2)
+        \begin{align*}
+          M &\models x = f(c) \lor p(x) & \text{(1)} \\
+          M &\models f(h(b)) = h(g(y,y)) \lor h(g(d,b)) \neq f(c) & \text{(2)}\\
+        \end{align*}
+        % If M |= f(h(b)) = h(g(y,y)), then the conclusion is obviously true in M.
+        If $M \models f(h(b)) = h(g(y,y))$, then the conclusion is obviously true in $M$.
+        % othersise due to (2) it must be the case that M |= h(g(d,b)) != f(c), which means due to (1) that M |= p(g(d,b)) must hold, which means that the conclusion is true in M as well.
+        Otherwise due to (2) we know that it must be the case that $M \models h(g(d,b)) \neq f(c)$. 
+        This means due to (1) that $M \models p(g(d,b))$ must hold, which means that the conclusion is true in this case as well.
+    \item[(b)]
+        We will call the left assumption $C_1$ and the right assumption of the rule $C_2$, and the conclusion of the rule $D$.
+
+        In order for the rule to be a simplifying rule, it could either make $C_1$, or $C_2$ redundant, so there are two cases to check.
+
+        Let's first have a look at whether $C_1$ is being made redundant. 
+        In order for that to hold we would need to have that $C_2, D \models C_1$. 
+        This does not hold since the model $M_1$ is a counterexample.
+
+        % Countermodel for Hyp2, Concl |= Hyp1
+        % M |= ~p(x)
+        % domain = {A, B}
+        % M(f)(..) = A
+        % M(h)(..) = A
+        \newcommand\A{\mathsf a}
+        \newcommand\B{\mathsf b}
+        \newcommand\C{\mathsf c}
+        \newcommand\D{\mathsf d}
+        \begin{align*}
+          M_1(\top) &= \Set{\A, \B}\\
+          M_1(p) &= \emptyset\\
+          M_1(f)(x) &= \A\\
+          M_1(h)(x) &= \A\\
+          M_1(g)(x,y) &= \A\\
+        \end{align*}
+        (Note that by $M(\top)$ we denote the domain of the model here.)
+
+        Similarly we can build a counterexample $M_2$ for the statement $C_1, D \models C_2$.
+
+        % Countermodel for Hyp1, Concl |= Hyp2
+        % M |= p(x)
+        % M(f)(C) = H
+        % M(f)(..) = F
+        % M(h(...)) = H
+        % M(g(...)) = G
+        % M(c) = C
+        % M(d) = D
+        % M(b) = B
+        \newcommand\F{\mathsf f}
+        \newcommand\G{\mathsf g}
+        \renewcommand\H{\mathsf h}
+        \begin{align*}
+          M_2(p) = M_2(\top) &= \Set{\B, \C, \D, \F, \G, \H}\\
+          M_2(b) &= \B\\
+          M_2(c) &= \C\\
+          M_2(d) &= \D\\
+          M_2(f)(x) &= \begin{cases}
+            \H & \text{if $x = \C$}\\
+            \F & \text{else}
+          \end{cases}\\
+          M_2(g)(x, y) &= \G\\
+          M_2(h)(x) &= \H\\
+        \end{align*}
+
+
+\end{itemize}
+
+
+}
+
+
+
+
+
+\problem{4.7}  Recall that the inverse of the binary relation $r_1(x,y)$ is the binary
+relation  $r_2(y,x)$ such that $r_1(x,y)$ if and only if
+$r_2(y,x)$. \medskip
+
+Prove that the inverse of a dense order is also dense. For doing so,
+you are required to do the following steps: 
+
+\begin{itemize}
+\item Formalize the problem in {\tt TPTP} and prove it
+using {\tt Vampire}. % Provide your TPTP encoding and {\tt Vampire}
+
+
+\item Explain the superposition reasoning part of the {\tt Vampire} proof by
+  detailing the superposition inferences, generated clauses and mgus
+  in the
+poof. Use  {\tt Vampire}  with the AVATAR option off,
+  that is {\tt -av off}. 
+\end{itemize}
+
+
+%VAMPIRE
+\problem{4.8}
+Consider the group theory axiomatization used in the lecture. Prove
+that the group's left identity element $e$ is also a right
+identity. 
+
+
+\begin{itemize}
+\item Formalize the problem in {\tt TPTP} and use it
+using {\tt Vampire}, by running  {\tt Vampire} with the additional option
+{\tt -av off} .
+
+
+\item Explain the superposition reasoning part of the {\tt Vampire} proof by
+  detailing the superposition inferences, generated clauses and mgus
+in the
+poof. 
+\end{itemize}
+
+\end{document}

@@ -1,0 +1,556 @@
+
+%---------------------------------------------------------------------
+
+                        \begin{frame}\frametitle{Substitution}
+
+\begin{itemize}
+\item
+A \alert{substitution} $\M{\theta}$ is a mapping from variables to terms
+such that the set $\M{\setof{x \mid \theta(x) \neq x}}$ is finite. 
+
+\item
+This set is called the \alert{domain} of $\M{\theta}$.
+
+\item Notation: 
+$\alert{\Subst{\subst{x_1}{t_1},\ldots,\subst{x_n}{t_n}}}$,
+where $\M{\xone{x}{n}}$ are pairwise different variables,
+denotes the substitution $\M{\theta}$ such that
+
+  \[\M{
+    \theta(x) = \left\{
+                  \begin{array}{ll}
+	            t_i & \text{if } x = x_i; \\
+                    x   & \text{if } x \not\in \setof{\xone{x}{n}}.
+                  \end{array}
+                \right.
+  }\]
+
+\item
+\alert{Application of this substitution to an expression} $\M E$: 
+simultaneous replacement of $\M{x_i}$ by $\M{t_i}$.
+
+\item<2->
+Application of a substitution $\M{\theta}$ to $\M E$ is denoted by
+$\alert{E\theta}$.
+
+\item<2-> Since substitutions are functions, we can define their
+\alert{composition} (written $\alert{\sigma\tau}$ instead of $\M{\tau
+\circ \sigma}$). Note that we have $\M{E(\sigma\tau) = (E\sigma)\tau}$.
+\end{itemize}
+
+
+                                \end{frame}
+
+%---------------------------------------------------------------------
+                           \begin{frame}\frametitle{Example}
+Consider: 
+\[
+\begin{array}{l}
+ E=p(x,y,f(a))\\
+ \theta=\Subst{\subst{x}{b},\subst{y}{x}}
+\end{array}\]
+
+What is $E\theta$?
+                             \end{frame}
+
+
+%---------------------------------------------------------------------
+                           \begin{frame}\frametitle{Substitution composition}
+
+
+Suppose we have two substitutions
+
+  \[\M{
+    \begin{array}{l}
+      \theta_1=\Subst{\subst{x_1}{s_1},\ldots,\subst{x_m}{s_m}} \text{ and } \\
+      \theta_2=\Subst{\subst{y_1}{t_1},\ldots,\subst{y_n}{t_n}}.
+    \end{array}
+  }\]
+How can we compute their composition $\M{\theta_1 \theta_2}$?
+
+\bigskip
+
+
+\vs<2->{
+The substitution $\M{\theta_1\theta_2}$ is obtained from the set: 
+
+\[\M{
+    \begin{array}{l}
+      \Subst{\subst{x_1}{s_1\theta_2},\ldots,\subst{x_m}{s_m\theta_2},\\
+      ~~\subst{y_1}{t_1},\ldots,\subst{y_n}{t_n}},
+    \end{array}
+  }\]
+\vs<3->{by deleting
+\begin{itemize}
+\item all $\subst{y_i}{t_i}$ with $y_i\in\{x_1, \ldots,x_m\}$,
+\item all $\subst{x_i}{s_i\theta_2}$ with $x_i=s_i\theta_2$.
+\end{itemize}}
+
+}
+
+                                \end{frame}
+
+%---------------------------------------------------------------------
+                           \begin{frame}\frametitle{Example}
+
+Consider: 
+
+\[
+\begin{array}{l}
+\theta_1=\Subst{\subst{x}{f(y)}, \subst{y}{z}}, \\
+\theta_2=\Subst{\subst{x}{a}, \subst{y}{b}, \subst{z}{y}}.
+\end{array}
+\]
+
+\bigskip
+
+What is $\theta_1\theta_2$?
+  \end{frame}
+
+%---------------------------------------------------------------------
+  
+
+                       \begin{frame}\frametitle{Instances, Ground}
+
+An \alert{instance} of an expression (that is term, atom, literal, or
+clause) $\M E$
+is obtained by applying a substitution to $\M E$. Examples:
+
+\begin{itemize}
+\item some instances of the term $\M{f(\Magenta{x},a,g(\Magenta{x}))}$ are: \\
+  $\M{f(\Magenta{x},a,g(\Magenta{x}))}$, \\
+  $\M{f(\Magenta{y},a,g(\Magenta{y}))}$, \\
+  $\M{f(\Magenta{a},a,g(\Magenta{a}))}$, \\
+  $\M{f(\Magenta{g(b)},a,g(\Magenta{g(b)}))}$;
+\item but the term 
+  $\M{f(\Magenta{b},a,g(\Magenta{c}))}$ is not an instance of this term.
+\end{itemize}
+\alert{Ground instance:} instance with no variables.
+
+
+                                \end{frame}
+
+
+
+%---------------------------------------------------------------------
+
+                        \begin{frame}\frametitle{Herbrand's Theorem}
+
+For a set of clauses $\M S$ denote by \alert{$S^*$} the set of ground
+instances of clauses in $\M S$.
+
+\bigskip
+
+\textbf{\OliveGreen{Theorem}}
+Let $\Sigma$ be a signature with at least one constant symbol and $\M
+S$ be a set of (universal) clauses over $\Sigma$.
+The following conditions are equivalent.
+\begin{enumerate}
+\item \Blue{$\M S$ is unsatisfiable};
+\item \Blue{$\M{S^*}$ is unsatisfiable};
+\end{enumerate}
+
+\vs<2->{
+By compactness of first-order logic the last condition is equivalent to
+
+\begin{enumerate}\setcounter{enumi}{2}%
+\item \Blue{there exists a finite unsatisfiable set of
+ground instances of clauses in $\M S$}.
+\end{enumerate}
+}
+\bigskip
+
+\vs<3->{
+The theorem reduces the problem of checking unsatisfiability of sets of 
+\Magenta{arbitrary} clauses to checking
+unsatisfiability of sets of \alert{ground} clauses \ldots
+
+\medskip
+\vs<4->{The only
+problem is that $\M{S^*}$ can be infinite even if
+$\M{S}$ is finite.}
+}
+                                \end{frame}
+
+%---------------------------------------------------------------------
+
+%       \begin{frame}\frametitle{Note on Herbrand's Theorem, Compactness 
+%         and Completeness}
+
+%The proofs of completeness of resolution and superposition with
+%redundancy elimination \alert{does
+%  not use any of these theorems.} 
+
+%\bigskip
+
+%\vs<2->{
+%  Interestingly, \Blue{they all can be derived as simple corollaries} of this
+%  proof of completeness!
+%}
+
+%                                \end{frame}
+
+%---------------------------------------------------------------------
+
+                              \begin{frame}\frametitle{Lifting}
+
+\alert{Lifting} is a technique for proving completeness theorems
+in the following way:
+
+\begin{enumerate}
+\item Prove completeness of the system for a set of \Blue{ground}
+clauses;
+\item \alert{Lift} the proof to the non-ground case.
+\end{enumerate}
+
+                                \end{frame}
+
+%---------------------------------------------------------------------
+
+
+                       	   \begin{frame}\frametitle{Lifting, Example}
+
+Consider two (non-ground) clauses $\M{p(x,a) \orl q_1(x)}$ and
+$\M{\notl p(y,z) \orl q_2(y,z)}$. If the signature
+contains function symbols, then both clauses have infinite sets of
+instances:
+
+\[\M{
+  \begin{array}{rcl}
+    \{p(r,a) \orl q_1(r) & \mid & r \text{ is ground}\} \\
+    \{\notl p(s,t) \orl q_2(s,t) & \mid & s,t \text{ are ground}\}
+  \end{array}}
+\]
+
+We can resolve such instances if and only if $\M{r = s}$ and
+$\M{t=a}$. Then we can apply the following inference
+
+\[\M{
+  \infer[(\BRr)]{q_1(s) \orl q_2(s,a)}{
+               p(s,a) \orl q_1(s) &
+               \notl p(s,a) \orl q_2(s,a)}
+}\]
+
+But \Blue{there is an infinite number of such inferences.}
+
+
+                                \end{frame}
+
+%---------------------------------------------------------------------
+
+                       	   \begin{frame}\frametitle{Lifting, Idea}
+
+The idea is to represent an \alert{infinite number of ground inferences} of
+the form
+
+\[\M{
+  \infer[(\BRr)]{q_1(s) \orl q_2(s,a)}{
+               p(s,a) \orl q_1(s) &
+               \notl p(s,a) \orl q_2(s,a)}
+}\]
+
+by a \alert{single non-ground inference}
+
+\[\M{
+  \infer[(\BRr)]{q_1(y) \orl q_2(y,a)}{
+               p(x,a) \orl q_1(x) &
+               \notl p(y,z) \orl q_2(y,z)}
+}\]
+
+\OliveGreen{Is this always possible?}
+
+
+                           \end{frame}
+%---------------------------------------------------------------------
+
+                       	   \begin{frame}\frametitle{Yes!}
+
+
+\[\M{
+  \infer[(\BRr)]{q_1(y) \orl q_2(y,a)}{
+               p(x,a) \orl q_1(x) &
+               \notl p(y,z) \orl q_2(y,z)}
+}\]
+
+
+Note that the substitution $\M{\setof{x \mapsto y,z\mapsto a}}$
+is a solution of the ``equation'' $\M{p(x,a) = p(y,z)}$.
+
+
+                           \end{frame}
+
+%---------------------------------------------------------------------
+
+%---------------------------------------------------------------------
+
+      \begin{frame}\frametitle{Lifting
+                               \vs<2->{(Robinson,
+                                 1965)\vs<4->{(Bachmair \& Ganzinger, 1990)}}}
+
+                             \begin{overprint}
+  \onslide<1-2>
+\begin{block}{}
+  \Blue{Idea:} Represent an \alert{infinite number of ground
+  inferences}
+by a \alert{single non-ground inference}.
+
+\vspace*{1em}
+
+ \vs<2->{ In case of $\BRis$:
+\begin{itemize}
+  \item Resolution for \alert{non-ground} clauses 
+  \item The notion of \alert{``same''} ground atoms is generalized to \alert{unifiability} of
+    non-ground atoms;
+    \item Only compute \alert{substitutions} that are \alert{most general unifiers
+      (mgu)}.
+  \end{itemize}
+  }
+  \end{block}
+  
+   \onslide<3->
+    
+    \begin{block}{Lifting Lemma for $\BRr$ in $\BRis$:}<3->
+      Let $C$ and $D$ clauses with no shared variables. If:
+
+\[\M{
+  \infer[(ground~\BRr)]{C'}{\begin{array}{l}C \\[.5em]\big\downarrow
+                                     \sigma_1\\[.5em]
+                                     C\sigma_1\end{array}& \begin{array}{l}D
+                                                             \\[.5em]\big\downarrow
+                                                             \sigma_2\\[.5em] D\sigma_2\end{array}}
+}\]
+
+then there exists a substitution $\sigma$ sucht that:
+
+\[\M{
+  \infer[(non-ground~\BRr)]{\begin{array}{c}C''
+                                    \\[.5em]\big\downarrow
+                                    \sigma\\[.5em]
+                                    C'=C''\sigma\end{array}}{C  & D}
+}\]
+      
+\end{block}
+
+
+
+\vs<4->{\alert{ Similar lifting lemmas each inferences of $\BRis$ and
+$\SUPis$.} }
+    \end{overprint}
+                           \end{frame}
+
+
+%-------------------------------------------------------------------------                           
+              	   \begin{frame}\frametitle{What should we lift?}
+
+\begin{itemize}
+\item Ordering $\M{\succ}$;
+\item Selection function $\M{\sel}$;
+\item Calculus $\M{\SUPiss}$.
+\end{itemize}
+
+Most importantly, for the lifting to work we should be able to \alert{solve
+equations $\M{s = t}$} between terms and between atoms. This can be done
+using \alert{most general unifiers.}
+
+                                \end{frame}
+%---------------------------------------------------------------------
+
+                      \begin{frame}\frametitle{Unifier}
+
+\alert{Unifier} of expressions $\M{s_1}$ and $\M{s_2}$: a substitution
+$\M{\theta}$ such that $\M{s_1\theta=s_2\theta}$.
+
+In other words, a unifier is a \alert{solution to an ``equation''}
+$\M{s_1 = s_2}$. In a similar way we can define solutions to
+systems of equations $\M{s_1 = s_1',\ldots,s_n=s_n'}$.
+We call such solutions \alert{simultaneous unifiers} of 
+$\M{\xone{s}{n}}$ and $\M{\xone{s'}{n}}$.
+
+                                \end{frame}
+
+%---------------------------------------------------------------------
+
+                      \begin{frame}\frametitle{(Most General) Unifiers}
+
+A solution $\M\theta$ to a set of equations $\M{E}$ is said to be
+a \alert{most general solution} if for every other solution $\M\sigma$
+there exists a substitution $\M\tau$ such that
+$\M{\theta\tau = \sigma}$. 
+In a similar way can define a \alert{most general unifier}.
+
+\bigskip
+
+\vs<2->{
+Consider terms $\M{f(x_1,g(x_1),x_2)}$ and $\M{f(y_1,y_2,y_2)}$.
+
+(Some of) their unifiers are \\
+$\Blue{\theta_1 = \Subst{\subst{y_1}{x_1},\subst{y_2}{g(x_1)},\subst{x_2}{g(x_1)}}}$ and \\
+$\Fuchsia{\theta_2 = \Subst{\subst{y_1}{a},\subst{y_2}{g(a)},\subst{x_2}{g(a)},\subst{x_1}{a}}}$:
+
+\medskip
+
+$\Blue{f(x_1,g(x_1),x_2)\theta_1 = f(x_1,g(x_1),g(x_1))}$;\\
+$\Blue{f(y_1,y_2,y_2)\theta_1 = f(x_1,g(x_1),g(x_1))}$;\\
+$\Fuchsia{f(x_1,g(x_1),x_2)\theta_2 = f(a,g(a),g(a))}$;\\
+$\Fuchsia{f(y_1,y_2,y_2)\theta_2 = f(a,g(a),g(a))}$.
+
+\smallskip
+
+But only $\RawSienna{\theta_1}$ is \alert{most general}.
+}
+                                \end{frame}
+
+%---------------------------------------------------------------------
+
+
+              \begin{frame}\frametitle{Unification}
+
+\footnotesize
+Let $\M E$ be a set of equations. An
+\alert{isolated equation in $E$} is any equation $\M{x=t}$ in $E$ such
+that $\M x$ has exactly one occurrence in $\M E$.\vspace*{-.4em}
+
+\begin{tt}
+\begin{tabbing}
+\INPUT: \\[-0.4ex] \inc
+  \rm A finite set of equations $\M{E}$\\
+\rm ($s,t$ denote terms,     $c,d$ constants, $f,g$ function symbols, $x$  variable)\\[-0.4ex] \dec
+\OUTPUT: \\[-0.4ex] \inc
+  \rm A solution to $\M{E}$ or failure. \\[-0.4ex] \dec
+\BEGIN \\[-0.4ex] \inc
+  \WHILE\ {\rm there exists a non-isolated  equation $\M{(s = t) \in E}$} \\[-0.4ex]
+  \DO\ \\[-0.4ex] \inc
+    \CASE\ $\M{(s,t)}$ \OF\ \\[-0.4ex] \inc
+      $\M{(t,t)}$ $\Rightarrow$ \rm Remove this equation from $\M{E}$ \\[-0.4ex]
+      $\M{(x,t)}$ $\Rightarrow$ \\[-0.4ex] \inc
+        \IF\ \rm $\M{x}$ occurs in $\M{t}$ \\[-0.4ex]
+        \THEN\ \rm halt with failure \\[-0.4ex]
+        \ELSE\ \rm replace $\M{x}$ by $\M{t}$ in all other equations of $\M{E}$ \\[-0.4ex] \dec
+      $\M{(t,x)}$ $\Rightarrow$ \= \rm replace this equation by $\M{x = t}$ \+\\[-0.4ex]
+                               \rm and do the same as in the case $\M{(x,t)}$
+                                                                \\[-0.4ex] \dec
+      $\M{(c,d)}$ $\Rightarrow$ \rm halt with failure \\[-0.4ex]
+      $\M{(c,f(\xone{t}{n}))}$ $\Rightarrow$ \rm halt with failure \\[-0.4ex]
+      $\M{(f(\xone{t}{n}),c)}$ $\Rightarrow$ \rm halt with failure \\[-0.4ex]
+      $\M{(f(\xone{s}{m}),g(\xone{t}{n}))}$ $\Rightarrow$ \rm halt
+            with failure \\[-0.4ex]
+      $\M{(f(\xone{s}{n}),f(\xone{t}{n}))}$ $\Rightarrow$
+                \= \rm replace this equation by the set \+\\[-0.4ex]
+                   $\M{s_1 = t_1,\ldots,s_n = t_n}$
+                \\[-0.4ex] \dec
+    \END\ \\[-0.4ex] \dec
+  \OD\ \\[-0.4ex]
+  \rm Now $\M{E}$ has the form $\M{\setof{x_1 = r_1,\ldots,x_l =
+r_l}}$ and every equation in it \\[-0.4ex]
+                    \rm is isolated \\[-0.4ex]
+   \RETURN\ \rm the substitution
+    $\M{\Subst{\subst{x_1}{r_1},\ldots,\subst{x_l}{r_l}}}$ \\[-0.4ex] \dec
+\END
+\end{tabbing}
+\end{tt}
+
+
+                                \end{frame}
+
+%---------------------------------------------------------------------
+
+
+              \begin{frame}\frametitle{Examples}
+
+  \[\M{
+    \begin{array}{l}
+      \setof{h(g(f(x),a)) = h(g(y,y))} \\
+      \setof{h(f(y),y,f(z)) = h(z,f(x),x)} \\
+      \setof{h(g(f(x),z)) = h(g(y,y))} \\
+    \end{array}
+  }\]
+
+                                \end{frame}
+
+%---------------------------------------------------------------------
+
+
+                  \begin{frame}\frametitle{Properties}
+
+
+\textbf{\OliveGreen{Theorem}}
+Suppose we run the unification algorithm on $\M{s = t}$. Then
+
+\begin{itemize}
+\item If $\M{s}$ and $\M{t}$ are unifiable, then the algorithms
+terminates and outputs a most general unifier of $\M{s}$ and $\M{t}$.
+
+\item If $\M{s}$ and $\M{t}$ are not unifiable, then the algorithms
+terminates with failure.
+\end{itemize}
+
+Notation (slightly ambiguous):
+
+\begin{itemize}
+\item $\alert{\mgu(s,t)}$ for a most general unifier;
+\item $\alert{\mgs(E)}$ for a most general solution.
+\end{itemize}
+
+
+                                \end{frame}
+
+%---------------------------------------------------------------------
+
+
+                          \begin{frame}\frametitle{Exercise}
+
+Consider a trivial system of equations $\M{\setof{}}$ or
+$\M{\setof{a=a}}$.
+
+What is the set of solutions to it?
+%any substitution
+
+What is the set of most general solutions to it?
+% all renaming substitutions (permutations): x->y, y->x
+%the unification algorithm computes {} as the mgu of {a=a}. A renaming
+%of the mgu is also an mgu
+%the algorithm computes one mgu, all mgus are obtained by applying a
+%renaming to any single mgu
+
+%{} is the only idempotent mgu of a trivial system
+%{} is the only mgu with isolated equalities of a trivial system
+
+% a substitution σ is idempotent if (σ o σ) = σ, which is the same as saying that domain(σ) ∩ range(σ) = Ø
+
+
+
+                                \end{frame}
+
+%---------------------------------------------------------------------
+
+
+    %                      \begin{frame}\frametitle{Properties}
+
+%\textbf{\OliveGreen{Theorem}}
+%Let $\M C$ be a clause and $\M E$ a set of equations. Then
+
+ % \[\M{
+  %  \setof{D \in C^* \mid \exists \theta(C\theta = D \text{ and } \theta 
+   % \text{ is a solution to } E)} = ((C )\mgs(E))^*.
+  %}\]
+
+%In other words, \alert{to find a set of ground instances of a clause
+%$\M C$ that also satisfy an equation $\M E$, take the most general
+%solution $\sigma$ of $\M E$ and use ground instances of $\M{C \sigma}$.}
+
+ %                               \end{frame}
+
+%---------------------------------------------------------
+
+
+              	   \begin{frame}\frametitle{Revisit: What should we lift?}
+
+\begin{itemize}
+\item Ordering $\M{\succ}$;
+\item Selection function $\M{\sel}$;
+\item Calculus $\M{\SUPiss}$ (thanks to lifting lemmas).
+\end{itemize}
+
+Most importantly, for the lifting to work we use \alert{most general unifiers.}
+
+                                \end{frame}

@@ -8,46 +8,6 @@ Laura Kovács
 
 ## Problem 2.1
 
-Let $\succ$ be a total well-founded ordering on the ground atoms $p_1,\dots,p_6$ with $p_6 \succ p_5 \succ p_4 \succ p_3 \succ p_2 \succ p_1$. Using the bag extension of $\succ$, compare the clauses
-
-$$
-p_6 \vee \neg p_6,\qquad \neg p_2 \vee p_4 \vee p_5,\qquad p_2 \vee p_3.
-$$
-
-<details>
-<summary>Solution</summary>
-
-Totality gives $p_i \succ p_j$ and $p_i \succ \neg p_j$ for $i>j$, so $p_6 \succ \neg p_2, p_4, p_5$ and $p_5 \succ p_2, p_3$. Since $p_6 \vee \neg p_6 \succ p_6$ and $\neg p_2 \vee p_4 \vee p_5 \succ p_5$, we obtain
-
-$$
-p_6 \vee \neg p_6 \succ \neg p_2 \vee p_4 \vee p_5 \succ p_2 \vee p_3.
-$$
-
-</details>
-
-
-## Problem 2.2
-
-Let $S = \{\neg p \lor \neg q,\ \neg p \lor q,\ p \lor \neg q,\ p \lor q\}$, and fix an ordering with $p \succ q$. Consider the selection function
-
-$$
-\{\neg p \lor \underline{\neg q},\ \underline{\neg p} \lor q,\ p \lor \underline{\neg q},\ \underline{p} \lor q\}.
-$$
-
-1. Is the selection function well-behaved on $S$? Justify your answer.
-2. How many $\mathbb{BR}_\sigma$ inferences are applicable to $S$? Explain.
-
-<details>
-<summary>Solution</summary>
-
-1. A well-behaved function either selects a negative literal or all maximal literals. In the first three clauses the selected literal is negative, and in the last clause $p$ is the unique maximal literal. Hence the selection is well-behaved.
-2. No factoring inference applies (no duplicated positive literal). Binary resolution can only use selected literals of opposite polarity; the only pair is $\underline{\neg p} \lor q$ and $\underline{p} \lor q$, yielding $\frac{\underline{\neg p} \lor q \;\;\; \underline{p} \lor q}{q \lor q}(BR)$. Thus exactly one inference is applicable.
-
-</details>
-
-
-## Problem 2.3
-
 Give an example of a non-tautological ground clause with at least one selected literal such that the selection is not well-behaved for any ordering.
 
 <details>
@@ -58,7 +18,7 @@ Take $p \lor \underline{p}$. The maximal literal must be $p$ under any ordering,
 </details>
 
 
-## Problem 2.4
+## Problem 2.2
 
 Let
 

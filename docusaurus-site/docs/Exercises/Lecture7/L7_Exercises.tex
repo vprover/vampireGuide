@@ -1,0 +1,238 @@
+\documentclass[11pt]{article}
+\usepackage{exercise}
+
+\usepackage{amsmath,times,color,url}
+\usepackage{amsfonts,bussproofs}
+
+\usepackage{alltt}
+\usepackage{proof}
+\usepackage{tikz}
+\usepackage{cancel}
+\usepackage{mathtools}
+
+
+
+\def\set#1{\{#1\}}
+\def\Set#1{\{#1\}}
+\def\z{{\tt 0}}
+\def\o{{\tt 1}}
+\def\t{{\tt 2}}
+\def\a{{\tt a}}
+\def\b{{\tt b}}
+\def\c{{\tt c}}
+\def\d{{\tt d}}
+\def\DFA{{\sf DFA}}
+\def\NFA{{\sf NFA}}
+\def\R{{\cal R}}
+\def\Picture#1{\strut\centerline{\input #1.eepic}}
+
+
+\definecolor{midnightblue}{cmyk}{0.98,0.13,0,0.43}
+\definecolor{olivegreen}{cmyk}{0.64,0,0.95,0.40}
+\definecolor{rawsienna}{cmyk}{0,0.72,1,0.45}
+\definecolor{fuchsia}{cmyk}{0.47,0.91,0,0.08}
+\definecolor{shaded}{rgb}{0.7, 0.75, 0.71}
+
+
+\newcommand{\Blue}[1]{{\color{blue}#1}}
+\newcommand{\Red}[1]{{\color{red}#1}}
+\newcommand{\Brown}[1]{{\color{brown}#1}}
+\newcommand{\OliveGreen}[1]{{\color{olivegreen}#1}}
+\newcommand{\RawSienna}[1]{{\color{rawsienna}#1}}
+\newcommand{\MidnightBlue}[1]{{\color{midnightblue}#1}}
+\newcommand{\Fuchsia}[1]{{\color{fuchsia}#1}}
+\newcommand{\Gray}[1]{{\color{shaded}#1}}
+
+\usepackage{prftree}
+
+
+\newcommand{\M}[1]{{\color{midnightblue}#1}}
+\newcommand{\notl}{\neg}
+\newcommand{\orl}{\vee}
+\newcommand{\andl}{\wedge}
+\newcommand\impl{\rightarrow}
+
+\newcommand{\setof}[1]{\{#1\}}
+\newcommand{\true}{1}
+\newcommand{\false}{0}
+
+\newcommand{\Th}{\mathcal{T}}
+
+\newcommand{\BRr}{\mathrm{B}\mathrm{R}}   
+\newcommand{\Sup}{\mathrm{S}\mathrm{up}}   
+\newcommand{\SUPiss}{\mathrm{S}\mathrm{up}_{\succ,\sel}}   % SUPis with selection
+\newcommand{\sel}{\sigma}
+
+
+% object level equality
+\newcommand{\oeq}{=}%\approx}
+\newcommand{\oneq}{\neq}%\not\approx}
+
+\newcommand{\SUPis}{\mathbb{S}\mathrm{up}}   % SUP
+\newcommand{\Iis}{\mathbb{I}} %inference system
+
+
+\newcommand{\BRis}{\mathbb{BR}}             % binary resolution inference system
+%\newcommand{\Solution}[1]{#1}
+\newcommand{\Solution}[1]{}
+
+\newcommand{\Union}{\bigcup}
+
+
+\begin{document}
+\problemset{Lecture 7, November 3, 2025}
+
+
+\section*{\exercises{7}}
+
+\problem{7.1}
+Consider the following set $S$ of clauses:
+\[
+\begin{array}{l}
+\neg p(z,a) \orl \neg p(z,x) \orl \neg p(x,z)\\
+p(y,a) \orl p(y,f(y))\\
+p(w,a) \orl p(f(w),w)
+\end{array}
+\]
+where $p$ is a predicate symbol, $f$ is a function symbol, $x,y,z,w$ are variables and $a$ is a
+constant. 
+
+\noindent Give a refutation proof of $S$ by using the non-ground binary resolution
+inference system $\BRis$. For each newly derived clause, 
+label the clauses from which it was derived by which inference
+rule  and indicate
+most general unifiers.
+
+\Solution{
+  \bigskip
+
+\noindent
+{\bf Solution:}
+
+For simplicity, we name the given clauses by numbers: 
+\[
+\begin{array}{ll}
+(1) & \neg p(z,a) \orl \neg p(z,x) \orl \neg p(x,z)\\
+(2) & p(y,a) \orl p(y,f(y))\\
+(3)& p(w,a) \orl p(f(w),w)
+\end{array}
+\]
+
+
+By negative factoring on (1), with the mgu $\{x\to a\}$, we get: 
+\[(4) \quad \neg p(z,a) \orl \neg p(a,z)\]
+
+By negative factoring on (4), with the mgu $\{z\to a\}$, we get: 
+\[(5) \quad \neg p(a,a)\]
+
+By resolution on (5) and (2), with the mgu $\{y\to a\}$, we get:
+\[(6) \quad  p(a,f(a))\]
+
+By resolution on (4) and (6), with the mgu $\{z\to f(a)\}$, we get:
+\[(7) \quad \neg p(f(a), a)\]
+
+By resolution on (3) and (7), with the mgu $\{w\to a\}$, we get:
+\[(8) \quad  p(a, a)\]
+
+By resolution on (5) and (8), we finally obtain the empty clause:
+\[(9) \quad  \Box\]
+
+Hence, our input set $S$ of clauses (1), (2) and (3) is
+unsatisfiable.
+}
+
+\bigskip
+
+
+
+\problem{7.2}
+Let $p$ denote  a unary predicate symbol, $f$  a unary function
+symbol, $x,y$ variables and $c$ a constant.
+Let $C_1$ be the clause $p(x) \vee p(y)$ and consider $C_2$ to be the
+clause $p(x)$. Further, let $D$ denote the clause $p(f(c))$. % We
+%consider $\succ$ to be an ordering over literals; for simplicity, we
+%write $\succ$ also  for the bag extension of $\succ$ for comparing
+%clauses. 
+
+
+\begin{itemize}
+\item[(a)] Does $C_1$ subsume $D$?
+\item[(b)] Does $C_2$ subsume $D$?
+\end{itemize}
+
+Justify your answers!
+\medskip
+
+\Solution{
+{\bf Solution:}
+\begin{itemize}
+  \item[(a)] No. For $C_1$ to subsume $D$, there must be a substitution $\theta$ such
+    that $C_1\theta$ is a sub-multiset of $D$. However, since $C_1$ has two literals, also $C_1\theta$
+    has two literals and therefore it cannot be a sub-multiset of $D$, which only has one literal.
+  %  (Note that for a substitution $\theta = \{x\mapsto f(c), y\mapsto f(c)\}$, it holds that $C\theta\succ D$.
+   % Therefore, while $C\theta$ is a \emph{subset} of $D$, it is not a \emph{sub-multiset}.) 
+  \item[(b)] Yes. For $\theta = \{x\mapsto f(c)\}$, it holds that $C_2\theta$ is a sub-multiset of $D$.
+\end{itemize}
+
+}
+
+
+
+%non-ground sup
+\problem{7.3}
+Let $x$ denote a variable, $a,b,c$ constants, and $f$  a
+ unary function symbol. \\
+Give a superposition refutation of the following set of two clauses:
+
+\[
+  \begin{array}{lll}
+    \{~ &x \oeq f(c),&\\
+    &a\oneq b &~\}
+   \end{array}
+ \]
+ such that, in every inference, the premises and
+ the conclusion of that inference do not use the symbols $f,c$
+ together with the symbols $a,b$. That is, 
+ every inference has the following property: if the premise or the
+ conclusion contain any of the symbols $f,c$,
+ then the premise and the conclusion contain neither $a$ nor $b$.
+ 
+In your proof, use only the inference system of the superposition
+calculus $\SUPis$ (without ordering and selection function); that is,
+no inferences of binary resolution $\BRis$ should be used.
+For each newly derived clause,
+clearly label the clauses from which it was derived and indicate most general unifiers.
+
+\medskip
+
+\Solution
+{\noindent{\bf Solution.}
+Note that if we apply a rule to two clauses, we consider the variables in both clauses to be distinct, even if the two clauses are actually the same one. 
+Therefore we when we apply can use superposition using $f(c) = x$, as both of the premises it is the same thing as applying it to the premises $f(c) = x$ and $f(c) = y$.
+This means we can do the following derivation:
+
+\medskip
+
+$
+  \begin{array}{lcll}
+    1) & f(c) = x & \text{Axiom}\\
+    2) & a \neq b & \text{Axiom}\\
+    3) & x = y & \text{Superposition using (1), and (1), $\sigma = \emptyset$}\\
+    4) & a \neq x & \text{Superposition using (2), and (3), $\sigma = \Set{ y \mapsto b }$}\\
+    5) & \Box & \text{Equality resolution using (4), $\sigma = \Set{ x \mapsto a }$}\\
+  \end{array}
+$
+}
+\medskip
+
+
+
+
+
+
+
+
+
+
+
+\end{document}

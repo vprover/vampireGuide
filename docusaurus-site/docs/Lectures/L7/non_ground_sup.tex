@@ -1,0 +1,666 @@
+    %                      \begin{frame}\frametitle{Properties}
+
+%\textbf{\OliveGreen{Theorem}}
+%Let $\M C$ be a clause and $\M E$ a set of equations. Then
+
+ % \[\M{
+  %  \setof{D \in C^* \mid \exists \theta(C\theta = D \text{ and } \theta 
+   % \text{ is a solution to } E)} = ((C )\mgs(E))^*.
+  %}\]
+
+%In other words, \alert{to find a set of ground instances of a clause
+%$\M C$ that also satisfy an equation $\M E$, take the most general
+%solution $\sigma$ of $\M E$ and use ground instances of $\M{C \sigma}$.}
+
+ %                               \end{frame}
+
+% ---------------------------------------------------------
+
+                     \begin{frame}\frametitle{Knuth-Bendix Ordering (KBO),
+                         Ground Case \vs<1->{{\small (Recap)}}}
+
+
+\begin{columns}
+\column{0.5\textwidth}
+Let us fix
+
+\begin{itemize}
+  \item Signature $\M{\Sigma}$, it induces the \alert{term algebra} 
+  $\M{\TA(\Sigma)}$.
+
+  \item Total ordering $\M{\gg}$ on $\M{\Sigma}$, called \alert{precedence
+  relation};
+
+  \item \alert{Weight function} $\M{w: \Sigma \rightarrow \nat}$.\\
+\end{itemize}
+
+\vs<1->{\alert{Weight} of a  ground term $t$ is
+
+    \[
+       |g(t_1,\ldots,t_n)| =
+        w(g)+ \sum_{i=1}^n |t_i|.
+   \]
+}
+
+\column{0.5\textwidth}
+\vs<1->{
+\alert{$g(t_1,\ldots,t_n) \KBo h(s_1,\ldots,s_m)$} if
+\begin{enumerate}
+  \item \vs<1->{$\M{|g(t_1,\ldots,t_n)|>|h(s_1,\ldots,s_m)|}$
+
+  \OliveGreen{(by weight)} or}
+
+  \item \vs<1->{$\M{|g(t_1,\ldots,t_n)|=|h(s_1,\ldots,s_m)|}$ and one of the following
+  holds:
+
+  \begin{enumerate}
+     \item $\M{g \gg h}$ \OliveGreen{(by precedence)} or
+     \item  \vs<1->{$\M{g=h}$ and for some $\M{1 \leq i \leq n}$ we have
+     $\M{t_1=s_1,\ldots,t_{i-1}=s_{i-1}}$ and $\M{t_i \KBo s_i}$ 
+     \OliveGreen{{\small (lexicographically, i.e. left-to-right)}}.}
+   \end{enumerate}}
+\end{enumerate}
+}
+\end{columns}
+
+\vspace*{1em}
+
+\vs<2->{Note: \alert{Weight functions} $\M{w}$ are \Blue{\bf not arbitrary
+    functions}\\ -- need to be ``compatible'' with $\M{\gg}$.}
+
+
+
+\end{frame}
+
+
+ % ---------------------------------------------------------
+\begin{frame}{Weight Functions, Ground Case}
+
+    A \alert{weight function} $\M{w: \Sigma \rightarrow \nat}$
+    is any function satisfying:
+
+    \begin{itemize}
+    \item $w(a)>0$ for any constant $a\in\Sigma$;\\[.5em]
+      
+    \item if $w(f)=0$ for a unary function $f\in\Sigma$, then $f\gg g$
+      for all functions $g\in\Sigma$ with $f\neq g$.\\
+
+      That is, $f$ is the greatest element of $\Sigma$ wrt $\gg$.
+      
+     \end{itemize}
+
+
+ \end{frame}
+
+% ---------------------------------------------------------
+\begin{frame}{Weight Functions, Non-Ground Case}
+
+    A \alert{weight function} $\M{w: \Sigma\alert{\cup Vars}
+      \rightarrow \nat}$, {with $Vars$ denoting the set of variables,} 
+    is any function satisfying:
+
+    \begin{itemize}
+      \item \alert{$w(x)=v_0$ for all variables $x\in Vars$, where
+          $v_0>0$;}
+          
+    \item $w(a)\alert{\geq v_0}$ for any constant $a\in\Sigma$;\\[.5em]
+      
+    \item if $w(f)=0$ for a unary function $f\in\Sigma$, then $f\gg g$
+      for all functions $g\in\Sigma$ with $f\neq g$.\\
+
+      That is, $f$ is the greatest element of $\Sigma$ wrt $\gg$.
+      
+     \end{itemize}
+
+     \bigskip
+As a consequence, there is at most one unary function $f$ with
+$w(f)=0$.
+
+%you cannot order the group theory axioms  inv(X * Y) -> inv(X) *
+%inv(Y)  without weight 0
+
+\bigskip
+
+\vs<2->{Notation: Given a term $s$ and variable $x$, we write $\#(x,s)$ to
+   denote the number of occurences of $x$ in $s$. }
+ 
+%SELECTION FUNCTION: 
+%"if for some grounding substitution σ, Lσ is selected in Lσ \/ Cσ,
+% then L is selected in L \/ C"
+
+%if you lift a well-behaved the ground selection function this way, then the corresponding non-ground selection function will be well-behaved too (by monotonicity)
+
+ \end{frame}
+
+ 
+%------------------------------------
+
+                     \begin{frame}\frametitle{Knuth-Bendix Ordering (KBO),
+                        \alert{Non-Ground Case}}
+
+
+\begin{columns}
+\column{0.5\textwidth}
+Let us fix
+
+\begin{itemize}
+  \item Signature $\M{\Sigma}$, it induces the \alert{term algebra} 
+  $\M{\TA(\Sigma)}$.
+
+  \item Total ordering $\M{\gg}$ on $\M{\Sigma}$, called \alert{precedence
+  relation};
+
+  \item \alert{Weight function} $\M{w: \Sigma\cup Vars \rightarrow \nat}$.\\
+\end{itemize}
+
+\vs<1->{\alert{Weight} of a  term $t$ is
+
+    \[
+       |g(t_1,\ldots,t_n)| =
+        w(g)+ \sum_{i=1}^n |t_i|.
+   \]
+}
+
+\column{0.5\textwidth}
+\vs<2->{
+\alert{$s \KBo t$} if
+\begin{enumerate}
+\item $\#(x, s) \geq \#(x, t)$ for all
+  variables $x$ and $\M{|s|>|t|}$ \\
+  \OliveGreen{(by weight) or} 
+  
+
+\item<2->$\#(x, s) \geq \#(x, t)$ for all
+  variables $x$ and $\M{|s|=|t|}$ and one of the following
+  holds:
+  \begin{enumerate}
+    \item $t=x$, $s=f^n(x)$ for some $n\geq 1$, or
+     \item<3->$s=g(t_1,\ldots,t_n)$, $t=h(s_1,\ldots,s_m)$ and $\M{g \gg h}$ \OliveGreen{(by precedence)} or
+     \item<4-> $s=g(t_1,\ldots,t_n)$, $t=g(s_1,\ldots,s_n)$ and for some $\M{1 \leq i \leq n}$ we have
+     $\M{t_1=s_1,\ldots,t_{i-1}=s_{i-1}}$ and $\M{t_i \KBo s_i}$ 
+     \OliveGreen{{\small (lexicographically, i.e. left-to-right)}}.
+   \end{enumerate}
+
+  
+\end{enumerate}
+}
+\end{columns}
+
+\end{frame}
+
+% ---------------------------------------------------------
+\begin{frame}
+\frametitle{Selection Functions, Lifting}
+
+%SELECTION FUNCTION: 
+
+If for some grounding substitution $\theta$, $L\theta$ is selected in
+$L\theta \orl C\theta$, \\then $L$ is selected in $L \orl C$. 
+
+\bigskip
+\smallskip\pause
+
+If the ground selection function is well-behaved, then its corresponding non-ground
+selection function lifted  as above is also well-behaved. 
+
+%if you lift a well-behaved the ground selection function this way, then the corresponding non-ground selection function will be well-behaved too (by monotonicity)
+
+\end{frame}
+
+%----------------------------------------------------------
+
+       \sLide{Non-Ground Superposition, Lifting}
+
+       
+\alert{\underline{Superposition:}} 
+
+  \[
+    \infer[(\ruleSup),]{
+      (s[r] = t \orl C \orl D)\theta
+      }{
+      \WildStrawberry{\underline{l = r}} \orl C
+      &
+      \WildStrawberry{\underline{s[l'] = t}} \orl D
+    }
+ ~~~~~
+    \infer[(\ruleSup),]{
+      (s[r] \neq t \orl C \orl D)\theta
+      }{
+      \WildStrawberry{\underline{l = r}} \orl C
+      &
+      \WildStrawberry{\underline{s[l'] \neq t}} \orl D
+    }
+  \]
+where 
+
+\begin{enumerate}
+\item $\theta$ is an mgu of $l$ and $l'$;
+\item $l'$ is not a variable;
+\item $r\theta \not\succeq l\theta$;
+\item $t\theta \not\succeq s[l']\theta$.
+\end{enumerate}
+
+\vs<2->{
+  \OliveGreen{Observations:}
+  \begin{itemize}
+  \item ordering is \alert{partial}, hence conditions like $r\theta
+    \not\succeq l\theta$; 
+  \item these conditions must be \alert{checked a posteriori}, that is,
+   after the rule has been applied.
+ \end{itemize}
+
+ \medskip
+ 
+\vs<3->{  Note, however, that $l \succ r$ implies $l\theta \succ r\theta$, so
+  checking orderings a priory helps.}
+}
+
+                                \end{frame}
+
+%---------------------------------------------------------------------
+
+       \sLide{More rules}
+
+\alert{\underline{Equality Resolution:}}
+
+  \[
+    \infer[(\ruleER),]{
+      C\theta
+      }{
+      \WildStrawberry{\underline{s \neq s'}} \orl C
+    }
+  \]
+where $\theta$ is an mgu of $s$ and $s'$.
+
+
+\bigskip
+
+\alert{\underline{Equality Factoring:}}
+
+  \[
+    \infer[(\ruleEF),]{
+      (l = r \orl r \neq r' \orl C)\theta
+      }{
+      \WildStrawberry{\underline{l = r}} \orl l' = r' \orl C
+    }
+  \]
+where $\theta$ is an mgu of $l$ and $l'$,
+$r\theta \not\succeq l\theta$,
+$r'\theta \not\succeq l\theta$, and
+$r'\theta \not\succeq r\theta$.
+
+
+                                \end{frame}
+
+
+%---------------------------------------------------------------------
+
+              	   \begin{frame}
+           \frametitle{Non-Ground Binary Resolution}
+
+
+\begin{itemize}
+\item
+  \Blue{Binary resolution},
+
+  \[
+      \infer[(\BRr).]{(C_1 \orl C_2) \theta}{\underline{P} \orl C_1 & 
+                                    \underline{\notl P'} \orl C_2}
+  \]
+  where $\theta$ is the mgu of $P$ and $P'$.\\
+  
+\item
+\Blue{Positive factoring},
+
+  \[
+    \begin{array}[b]{l}
+      \infer[(\Fact).]{(P \orl C)\theta}{\underline{P} \orl \underline{P'} \orl C}
+    \end{array}
+  \]
+where $\theta$ is the mgu of $P$ and $P'$.\\
+
+
+\item 
+\Blue{Negative factoring},
+
+  \[
+    \begin{array}[b]{l}
+      \infer[(\Fact).]{(\notl P \orl C)\theta}{\underline{\notl P}
+        \orl \underline{\notl P'} \orl C}
+    \end{array}
+  \]
+where $\theta$ is the mgu of $P$ and $P'$.
+
+
+\end{itemize}
+
+
+\end{frame}
+
+%---------------------------------------------------------------------
+
+\begin{frame}{Exercise}
+  Consider the following set $S$ of clauses:
+\[
+\begin{array}{l}
+\neg p(z,a) \orl \neg p(z,x) \orl \neg p(x,z)\\
+p(y,a) \orl p(y,f(y))\\
+p(w,a) \orl p(f(w),w)
+\end{array}
+\]
+where $p$ is a predicate symbol, $f$ is a function symbol, $x,y,z,w$ are variables and $a$ is a
+constant.
+
+\bigskip
+
+\noindent Give a refutation proof of $S$ by using the non-ground binary resolution
+inference system $\BRis$. For each newly derived clause, 
+label the clauses from which it was derived by which inference
+rule  and indicate
+most general unifiers.
+
+\end{frame}
+
+
+\section{(Non-Ground) Redundancy}
+%---------------------------------------------------------------------
+
+                  \begin{frame}\frametitle{Checking Redundancy}
+
+Suppose that the current search space $S$ contains {\color<1>{Blue}no redundant clauses.} 
+\alert<1>{How} can a redundant
+clause \alert<1>{appear} in the inference process?\medskip
+
+\vs<2->{
+Only when a \Fuchsia{new clause} (a
+\Fuchsia{child} of the selected clause and possibly other clauses) is added.
+
+\vs<3->{Classification of redundancy checks:
+
+\begin{itemize}
+\item The \Blue{child is redundant};
+\item The child makes one of the \Blue{clauses in the search space
+redundant}. 
+\end{itemize}
+}}
+
+\bigskip 
+\vs<4->{
+  We use some \WildStrawberry{fair strategy} and perform
+  these \WildStrawberry{checks after every inference} that generates a
+  new clause. 
+
+  \medskip 
+ In fact, \alert{one can do better} in some of the cases.
+}
+
+                               \end{frame}
+
+%---------------------------------------------------------------------
+
+                \begin{frame}\frametitle{Subsumption, Non-Ground Case}
+
+
+A clause $\M{C}$ \alert{subsumes} any clause $\M{D}$ if 
+$\M{C\theta}\subseteq D$ for some substitution $\theta$. 
+
+\medskip
+\vs<2->{
+\Blue{Subsumption and redundancy:} 
+If a clause set $\M{S}$ contains two different clauses $\M{C}$ and $\M{D}$ and $\M{C}$ subsumes $\M{D}$,
+then $\M{D}$ is redundant in $\M{S}$ (and can be removed). }
+
+
+
+                \end{frame}
+
+%---------------------------------------------------------------------
+                \begin{frame}\frametitle{Exercise}
+
+Let $p$ denote  a unary predicate symbol, $f$  a unary function
+symbol, $x,y$ variables and $c$ a constant.
+Let $C_1$ be the clause $p(x) \vee p(y)$ and consider $C_2$ to be the
+clause $p(x)$. Further, let $D$ denote the clause $p(f(c))$. 
+\medskip
+
+\begin{itemize}
+\item[(a)] Does $C_1$ subsume $D$?\\\bigskip 
+\item[(b)] Does $C_2$ subsume $D$?
+\end{itemize}
+
+
+                  
+                  \end{frame}
+%---------------------------------------------------------------------
+
+                
+
+                \begin{frame}\frametitle{Demodulation, Non-Ground Case}
+
+  \M{\[
+    \infer[(\ruleDem),]{
+      L[r\theta] \orl D
+      }{
+      l = r
+      &
+      \deleted{L[l'] \orl D}
+    }
+  \]}
+where $\M{l\theta = l'}$, $\M{l\theta \succ r\theta}$, and 
+$\M{(L[l'] \orl D) \succ (l\theta = r\theta)}$.
+
+\medskip
+
+\vs<2->{
+
+Easier to understand:
+
+  \M{\[
+    \infer[(\ruleDem),]{
+      L[r\theta] \orl D
+      }{
+      l = r
+      &
+      \deleted{L[l\theta] \orl D}
+    }
+  \]}
+where $\M{l\theta \succ r\theta}$, and 
+$\M{(L[l\theta] \orl D) \succ (l\theta = r\theta)}$.
+}
+
+                                \end{frame}
+
+ 
+                                % ---------------------------------------------------------------------
+
+                                %---------------------------------------------------------------------
+
+
+                \begin{frame}\frametitle{General Redundancy, Non-Ground
+                    Case}
+
+$D$ is redundant wrt $C$ if $D^*$ is redundant wrt $C^*$, \\ {\small where $D^*$ and
+$C^*$ are respectively the set of ground instances of $D$ and
+$C$.}\\[2em]
+
+\medskip
+
+
+\pause 
+
+                  
+                  Consider two non-ground clauses $C, D$.\\
+                  \smallskip
+                  
+                  To show that $D$ is redundant wrt  $C$, it is
+                  sufficient to find a substitution $\theta$ such that: 
+                  \begin{enumerate}
+                    \item $D^* \succ C\theta$;
+                     \item $D^*$ is a logical consequence of
+                       $C\theta$, 
+                     \end{enumerate}
+                     for \emph{any} ground instance $D^*$ of $D$. 
+
+                \end{frame}
+                   %---------------------------------------------------------------------
+
+             \begin{frame}\frametitle{Generating and Simplifying Inferences}
+
+An inference
+
+  \[\M{
+    \infer[.]{C}{C_1 & \ldots & C_n}
+  }\]
+is called \alert{simplifying}
+if at least one premise $\M{C_i}$ becomes redundant after the addition 
+of the conclusion 
+$\M{C}$ to the search space. We then say that \alert{$\M{C_i}$ is 
+simplified into} $\M{C}$.
+ 
+
+
+A non-simplifying inference is called \alert{generating}.
+
+\bigskip
+
+\vs<2->{
+\Blue{Note.} The property of being simplifying is undecidable. So is
+the property of being redundant. So \Periwinkle{in practice} we employ
+sufficient conditions for simplifying inferences and for redundancy.
+}
+
+\bigskip
+
+\vs<3->{
+\alert{Idea:} try to search \Purple{eagerly} for simplifying inferences \Purple{bypassing the 
+strategy} for inference selection.
+}
+                                \end{frame}
+
+
+%---------------------------------------------------------------------
+
+             \begin{frame}\frametitle{Generating and Simplifying Inferences}
+
+               \begin{center}
+	\alert{Two main implementation principles:} \\*[4ex]
+ \Fuchsia{\fbox{\begin{minipage}[t]{0.4\textwidth}
+  \begin{center}
+  apply simplifying inferences eagerly; \\
+  apply generating inferences lazily.
+  \end{center}
+  \end{minipage}}}~~~~~~
+  \OliveGreen{\fbox{\begin{minipage}[t]{0.45\textwidth}
+  \begin{center}
+  checking for simplifying inferences should pay off; \\
+  so it must be cheap.
+ \end{center}
+ \end{minipage}}}
+ \end{center}
+
+                                \end{frame}
+
+
+%---------------------------------------------------------------------
+
+             \begin{frame}\frametitle{Redundancy Checking}
+
+Redundancy-checking occurs upon addition of a new child $C$. It works as
+follows  
+
+\begin{itemize}
+\item \alert{Retention test:} check if $\M{C}$ is redundant.
+\item \alert{Forward simplification:} check if $C$ can be simplified
+using a simplifying inference.
+\item \alert{Backward simplification:} check if $C$ simplifies or makes
+redundant an old clause.
+\end{itemize}
+
+                               \end{frame}
+
+%---------------------------------------------------------------------
+
+                       \begin{frame}\frametitle{Examples}
+
+\Blue{Retention test:}
+
+\begin{itemize}
+\item \alert{tautology-check};
+
+\item \alert{subsumption}.
+\end{itemize}
+
+%\OliveGreen{(A clause $\M{C}$ subsumes a clause $\M{D}$ if there exists
+%a substitution $\M{\theta}$ such that $\M{C\theta}$ is a submultiset of
+%$D$.)}
+
+\bigskip
+
+\Blue{Simplification:}
+
+\begin{itemize}
+\item \alert{demodulation} (forward and backward);
+\item \alert{subsumption resolution} (forward and backward): 
+
+  \M{\[
+    \infer[(\ruleSubsRes),]{
+      D
+      }{
+      A\orl C
+      &
+      \deleted{\neg B \orl D}
+    }
+  %
+\qquad \text{or}\qquad
+  %
+    \infer[(\ruleSubsRes),]{
+      D
+      }{
+      \neg A\orl C
+      &
+      \deleted{B \orl D}
+    }
+  \]}
+
+
+such that for some substitution $\theta$ we have $A\theta\orl
+C\theta\subseteq B\orl D$.
+
+\end{itemize}
+
+                               \end{frame}
+
+%---------------------------------------------------------------------
+
+             \begin{frame}\frametitle{Some redundancy criteria are expensive}
+
+
+\begin{itemize}
+\item Tautology-checking is based on \OliveGreen{congruence closure}.
+\item Subsumption and subsumption resolution are
+\OliveGreen{NP-complete}. 
+\end{itemize}
+
+                               \end{frame}
+
+%---------------------------------------------------------------------
+
+            \begin{frame}\frametitle{Observations}
+
+\begin{itemize}
+  \item There may be \alert{chains (repeated applications) of forward
+  simplifications}. 
+
+  \item After a chain of forward simplifications \alert{another retention
+  test} can (should) be done.
+
+  \item \vs<2->{\Blue{Backward simplification is often expensive}.}
+
+  \item \vs<3->{In practice, the \Blue{retention test may include other checks,
+  resulting in the loss of completeness}, for example, we may decide
+  to discard too heavy clauses.}
+\end{itemize}
+
+
+                              \end{frame}
+%

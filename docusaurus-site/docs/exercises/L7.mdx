@@ -1,0 +1,82 @@
+---
+id: ex-l7
+title: "Lecture 7 Exercises"
+sidebar_label: L7
+---
+
+Laura Kovács
+
+## Problem 7.1
+
+Consider the clause set
+
+$$
+\begin{aligned}
+(1)\;& \neg p(z,a) \lor \neg p(z,x) \lor \neg p(x,z)\\
+(2)\;& p(y,a) \lor p(y,f(y))\\
+(3)\;& p(w,a) \lor p(f(w),w)
+\end{aligned}
+$$
+
+where $p$ is a predicate symbol, $f$ is a function symbol, $x,y,z,w$ are variables, and $a$ is a constant. Give a refutation in the non-ground binary-resolution system $\mathbb{BR}$. For each derived clause, state the premises, the inference rule, and the mgu used.
+
+<details>
+<summary>Solution</summary>
+
+1. Negative factoring on (1) with $\{x \mapsto a\}$:
+   $$(4)\; \neg p(z,a) \lor \neg p(a,z).$$
+2. Negative factoring on (4) with $\{z \mapsto a\}$:
+   $$(5)\; \neg p(a,a).$$
+3. Resolve (5) with (2) using $\{y \mapsto a\}$:
+   $$(6)\; p(a,f(a)).$$
+4. Resolve (4) with (6) using $\{z \mapsto f(a)\}$:
+   $$(7)\; \neg p\big(f(a),a\big).$$
+5. Resolve (3) with (7) using $\{w \mapsto a\}$:
+   $$(8)\; p(a,a).$$
+6. Resolve (5) with (8) to obtain $\square$.
+
+Since a contradiction is derived, the original set is unsatisfiable.
+
+</details>
+
+## Problem 7.2
+
+Let $p$ be a unary predicate symbol, $f$ a unary function symbol, $x,y$ variables, and $c$ a constant. Consider the clauses $C_1 = p(x) \lor p(y)$, $C_2 = p(x)$, and $D = p(f(c))$.
+
+1. Does $C_1$ subsume $D$?
+2. Does $C_2$ subsume $D$?
+
+Justify both answers.
+
+<details>
+<summary>Solution</summary>
+
+1. **No.** Any instance of $C_1$ contains two literals, whereas $D$ has only one. Therefore no substitution can make $C_1$ a sub-multiset of $D$.
+2. **Yes.** The substitution $\{x \mapsto f(c)\}$ turns $C_2$ into $p(f(c))$, which is exactly $D$, so $C_2$ subsumes $D$.
+
+</details>
+
+## Problem 7.3
+
+Let $x$ be a variable, $a,b,c$ constants, and $f$ a unary function symbol. Give a superposition refutation of
+
+$$
+\{\,x = f(c),\; a \neq b\,\},
+$$
+
+using only $\mathbb{SUP}$ inferences (no $\mathbb{BR}$) and ensuring that no inference mixes the symbols $\{f,c\}$ with $\{a,b\}$ in the same clause. Name every derived clause, cite premises, and record the mgu.
+
+<details>
+<summary>Solution</summary>
+
+Treat repeated occurrences of $x = f(c)$ as variants with distinct variables. The derivation:
+
+1. $(1)$ $f(c) = x$ (axiom)
+2. $(2)$ $a \neq b$ (axiom)
+3. $(3)$ $x = y$ via superposition of (1) with itself ($\sigma = \emptyset$)
+4. $(4)$ $a \neq x$ via superposition of (2) with (3) using $\{y \mapsto b\}$
+5. $(5)$ $\square$ via equality resolution on (4) with $\{x \mapsto a\}$
+
+As $\square$ is derived, the clause set is unsatisfiable.
+
+</details>
