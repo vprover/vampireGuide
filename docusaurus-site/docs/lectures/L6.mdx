@@ -17,8 +17,16 @@ Which of the following statements are true?
 6. Having proofs is <span class="redbold">good</span>.
 
 ## Substitution
-- A <span class="redbold">substitution</span> $\theta$ is a mapping from variables to terms such that the set $\{x \mid \theta(x) \neq x\}$ is finite. This set is the <span class="redbold">domain</span> of $\theta$.
-- We write $\{\;x_1 \mapsto t_1,\ldots,x_n \mapsto t_n\;\}$, where $x_1,\ldots,x_n$ are pairwise different variables, for the substitution $\theta$ that maps every $x_i$ to $t_i$ and leaves all other variables unchanged.
+- A <span class="redbold">substitution</span> $\theta$ is a mapping from variables to terms such that the set $\{x \mid \theta(x) \neq x\}$ is finite. 
+- This set is the <span class="redbold">domain</span> of $\theta$.
+- Notation: $\{\,x_1 \mapsto t_1,\ldots,x_n \mapsto t_n\,\}$, where $x_1,\ldots,x_n$ are pairwise different variables, denotes the substitution $\theta$ with
+  $$
+  \theta(x) =
+  \begin{cases}
+  t_i & \text{if } x = x_i,\\
+  x   & \text{if } x \notin \{x_1,\ldots,x_n\}.
+  \end{cases}
+  $$
 - Applying a substitution $\theta$ to an expression $E$ means replacing each $x_i$ by $t_i$ simultaneously; we denote the result by $E\theta$.
 - Substitutions are functions, so we can compose them. We write $\sigma\tau$ (rather than $\tau \circ \sigma$), and we always have $E(\sigma\tau) = (E\sigma)\tau$.
 
@@ -28,17 +36,28 @@ What is $E\theta$?
 
 ## Substitution Composition
 Suppose we have two substitutions
-$$
-\theta_1 = \{x_1 \mapsto s_1,\ldots,x_m \mapsto s_m\}, \qquad
-\theta_2 = \{y_1 \mapsto t_1,\ldots,y_n \mapsto t_n\}.
-$$
-To compute $\theta_1\theta_2$:
 
-- Start from $\{x_1 \mapsto s_1\theta_2,\ldots,x_m \mapsto s_m\theta_2,\; y_1 \mapsto t_1,\ldots,y_n \mapsto t_n\}$.
-- Delete every $y_i \mapsto t_i$ with $y_i \in \{x_1,\ldots,x_m\}$.
-- Delete every $x_i \mapsto s_i\theta_2$ for which $x_i = s_i\theta_2$.
+$$
+\begin{aligned}
+\theta_1 &= \{x_1 \mapsto s_1,\ldots,x_m \mapsto s_m\},\\
+\theta_2 &= \{y_1 \mapsto t_1,\ldots,y_n \mapsto t_n\}.
+\end{aligned}
+$$
 
-The result is $\theta_1\theta_2$.
+How can we compute their composition $\theta_1\theta_2$?
+
+The substitution $\theta_1\theta_2$ is obtained from
+
+$$
+\{x_1 \mapsto s_1\theta_2,\ldots,x_m \mapsto s_m\theta_2,\; y_1 \mapsto t_1,\ldots,y_n \mapsto t_n\}
+$$
+
+by deleting
+
+1. all $y_i \mapsto t_i$ such that $y_i \in \{x_1,\ldots,x_m\}$;
+2. all $x_i \mapsto s_i\theta_2$ such that $x_i = s_i\theta_2$.
+
+The remaining bindings constitute $\theta_1\theta_2$.
 
 ## Example
 Let
@@ -66,7 +85,7 @@ By compactness of first-order logic, this is equivalent to:
 
 3. <span class="bluebold">There exists a finite unsatisfiable set of ground instances of clauses in $S$.</span>
 
-Thus the theorem reduces checking unsatisfiability of arbitrary clause sets to checking unsatisfiability of sets of <span class="redbold">ground clauses</span>, even though $S^*$ can be infinite.
+Thus the theorem reduces checking unsatisfiability of <span class="redbold">arbitrary</span> clause sets to checking unsatisfiability of sets of <span class="redbold">ground clauses</span>, even though $S^*$ can be infinite.
 
 ## Lifting
 <span class="redbold">Lifting</span> is a technique for proving completeness theorems:
@@ -84,14 +103,21 @@ We can resolve ground instances iff $r=s$ and $t=a$, yielding inferences such as
 $$
 \frac{p(s,a) \lor q_1(s) \qquad \neg p(s,a) \lor q_2(s,a)}{q_1(s) \lor q_2(s,a)}(\text{BR}),
 $$
-but there are infinitely many such inferences.
+but there are <span class="bluebold">infinitely many such inferences</span>.
 
 ## Lifting Idea
-Represent an <span class="redbold">infinite number of ground inferences</span> with a <span class="redbold">single non-ground inference</span>:
+Represent an <span class="redbold">infinite number of ground inferences</span> of the form:
+
+$$
+\frac{p(s,a) \lor q_1(s) \qquad \neg p(s,a) \lor q_2(s,a)}{q_1(s) \lor q_2(s,a)}(\text{BR}),
+$$
+
+with a <span class="redbold">single non-ground inference</span>:
 $$
 \frac{p(x,a) \lor q_1(x) \qquad \neg p(y,z) \lor q_2(y,z)}{q_1(y) \lor q_2(y,a)}(\text{BR}).
 $$
-Is this always possible?
+
+<span class="greenbold">Is this always possible?</span>
 
 ## Yes!
 For the inference
@@ -100,7 +126,7 @@ $$
 $$
 the substitution $\{x \mapsto y,\; z \mapsto a\}$ solves the “equation” $p(x,a) = p(y,z)$, so the lifted inference represents all its ground instances.
 
-## Lifting Lemma for $\mathbb{BR}$
+## Lifting Lemma for $\mathbb{BR}$ (Robinson 1965)
 <span class="bluebold">Idea.</span> Represent infinitely many ground inferences by a single non-ground inference.
 
 For binary resolution $\mathbb{BR}$ with selection:
@@ -132,7 +158,8 @@ A <span class="redbold">unifier</span> of expressions $s_1$ and $s_2$ is a subst
 Equivalently, it is a solution of the “equation” $s_1 = s_2$. For systems of equations $s_1 = s'_1,\ldots,s_n = s'_n$, a substitution that satisfies all equations simultaneously is a <span class="redbold">simultaneous unifier</span>.
 
 ## Most General Unifiers
-A solution $\theta$ to a set of equations $E$ is <span class="redbold">most general</span> if, for every other solution $\sigma$, there exists a substitution $\tau$ with $\theta\tau = \sigma$. The same notion applies to unifiers.
+A solution $\theta$ to a set of equations $E$ is <span class="redbold">most general</span> if, for every other solution $\sigma$, there exists a substitution $\tau$ with $\theta\tau = \sigma$. 
+In a similar way, we can define a <span class="redbold">most general unifier</span>.
 
 Consider the terms $f(x_1,g(x_1),x_2)$ and $f(y_1,y_2,y_2)$. Two unifiers are
 $$
@@ -143,19 +170,25 @@ $$
 Both substitutions make the terms equal, but only $\theta_1$ is an mgu; $\theta_2$ is obtained from it by instantiating $x_1$ with $a$.
 
 ## Unification Algorithm
-Let $E$ be a finite set of equations. An equation $x = t$ in $E$ is <span class="redbold">isolated</span> if $x$ occurs nowhere else in $E$.
+Let $E$ be a set of equations. An <span class="redbold">isolated equation in $E$</span> is any equation $x = t$ in $E$ such that $x$ has exactly one occurrence in $E$.
 
-1. While $E$ contains a non-isolated equation $s = t$, perform one of the following actions:
-   - If $s$ and $t$ are syntactically identical, remove the equation.
-   - If the equation is $x = t$:
-     - If $x$ occurs in $t$, fail (no unifier).
-     - Otherwise, replace every other occurrence of $x$ in $E$ by $t$.
-   - If the equation is $t = x$, swap the sides and handle it as the previous case.
-   - If both sides are distinct constants, fail.
-   - If exactly one side is a constant and the other is a compound term, fail.
-   - If the top symbols are different function symbols, fail.
-   - If both sides are $f(s_1,\ldots,s_n)$ and $f(t_1,\ldots,t_n)$, replace the equation by the set $\{s_1 = t_1,\ldots,s_n = t_n\}$.
-2. Once only isolated equations $\{x_1 = r_1,\ldots,x_\ell = r_\ell\}$ remain, return the substitution $\{x_1 \mapsto r_1,\ldots,x_\ell \mapsto r_\ell\}$.
+**Input.** A finite set of equations $E$ (here $s,t$ denote terms, $c,d$ constants, $f,g$ function symbols, and $x$ a variable).
+
+**Output.** A solution to $E$ or failure.
+
+1. While there exists a non-isolated equation $(s = t) \in E$:
+   - Consider the pair $(s,t)$.
+     - $(t,t)$ $\Rightarrow$ remove this equation from $E$.
+     - $(x,t)$ $\Rightarrow$
+       - if $x$ occurs in $t$, halt with failure;
+       - otherwise, replace every other occurrence of $x$ in $E$ by $t$.
+     - $(t,x)$ $\Rightarrow$ replace this equation by $x = t$ and proceed as in $(x,t)$.
+     - $(c,d)$ $\Rightarrow$ halt with failure.
+     - $(c,f(t_1,\ldots,t_n))$ $\Rightarrow$ halt with failure.
+     - $(f(t_1,\ldots,t_n),c)$ $\Rightarrow$ halt with failure.
+     - $(f(s_1,\ldots,s_m),g(t_1,\ldots,t_n))$ with $f \neq g$ $\Rightarrow$ halt with failure.
+     - $(f(s_1,\ldots,s_n),f(t_1,\ldots,t_n))$ $\Rightarrow$ replace this equation by the set $\{\,s_1 = t_1,\ldots,s_n = t_n\,\}$.
+2. Once $E = \{x_1 = r_1,\ldots,x_\ell = r_\ell\}$ and every equation in it is isolated, return the substitution $\{\,x_1 \mapsto r_1,\ldots,x_\ell \mapsto r_\ell\,\}$.
 
 ## Examples
 Try running the algorithm on:
@@ -182,4 +215,3 @@ Consider the trivial systems of equations $\varnothing$ and $\{a = a\}$.
 - Lift the calculus $\mathbb{S}\mathrm{up}^{\mathrm{sat}}$ (thanks to the lifting lemmas).
 
 Most importantly, lifting works because we use <span class="redbold">most general unifiers</span>.
-
