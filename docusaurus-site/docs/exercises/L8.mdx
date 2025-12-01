@@ -112,3 +112,31 @@ where $f,g$ are function symbols, $x,y,z$ variables, and $a,b$ constants.
 Thus the inference is not simplifying under any KBO.
 
 </details>
+
+## Problem 8.5 (Hands-on Vampire)
+
+Show that the inverse of a dense order is dense. Outline a TPTP formalisation and the key steps in Vampire’s refutation (`-av off`).
+
+<details>
+<summary>Solution</summary>
+
+Encode strict total order axioms and density for $r_1(x,y)$, plus clauses asserting $r_2(y,x)$ iff $r_1(x,y)$. Negate density for $r_2$ by adding a clause stating that there exist $a,b$ with no $c$ such that $r_2(a,c)$ and $r_2(c,b)$. Running Vampire (`-av off`) produces a refutation: the proof repeatedly superposes the inverse-direction axioms with the negated density clause until it forces a contradiction with density of $r_1$. Recording the premises, substitutions, and derived clauses from those superposition steps shows precisely how the contradiction—and therefore the density of the inverse relation—arises.
+
+</details>
+
+## Problem 8.6 (Hands-on Vampire)
+
+Using the group axioms (associativity, left identity, inverses), prove that the left identity element $e$ is also a right identity. Provide a TPTP encoding (axioms plus negated goal) and describe the main superposition steps in Vampire’s refutation (`-av off`).
+
+<details>
+<summary>Solution</summary>
+
+Encode the axioms:
+
+- Associativity: $! [X,Y,Z] : mult(mult(X,Y),Z) = mult(X,mult(Y,Z))$.
+- Left identity: $! [X] : mult(e,X) = X$.
+- Inverses: $! [X] : mult(inv(X),X) = e$.
+
+Add the negated goal $! [X] : mult(X,e) \neq X$. Vampire refutes the set by chaining superposition steps: for example, superposing the inverse axiom with the negated goal yields clauses equating $mult(inv(X), mult(X,e))$ with $e$, which then rewrite to contradictions with the left-identity clause. Documenting the key superposition inferences (premises, mgus, conclusions) explains how the empty clause is ultimately derived, establishing that $e$ must also be a right identity.
+
+</details>
