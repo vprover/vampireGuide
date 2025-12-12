@@ -1,38 +1,71 @@
-export async function runVampire(problemText, args) {
+export async function runVampire(problemText, args, io = {}) {
   const createVampire = (await import("./vampire.js")).default;
-  let stdout = [];
-  let stderr = [];
-  let resolvePromise;
-  const promise = new Promise(resolve => {
-    resolvePromise = resolve;
-  });
+  const { onStdout, onStderr, requestInput } = io;
+
+  const stdout = [];
+  const stderr = [];
+  let resolveDone;
+  let finished = false;
+  const done = new Promise(resolve => { resolveDone = resolve; });
+  const finish = (code) => {
+    if (finished) return;
+    finished = true;
+    resolveDone({ stdout: stdout.join("\n"), stderr: stderr.join("\n"), code });
+  };
 
   const Module = {
     noInitialRun: true,
-    stdin() { return null; }, // never prompt for stdin
-    print:  s => stdout.push(String(s)),
-    printErr: s => stderr.push(String(s)),
-    onRuntimeInitialized() {},
-    onExit: (code) => {
-      resolvePromise({ stdout: stdout.join("\n"), stderr: stderr.join("\n"), code });
+    print: (s) => {
+      const msg = String(s);
+      stdout.push(msg);
+      onStdout?.(msg);
+    },
+    printErr: (s) => {
+      const msg = String(s);
+      stderr.push(msg);
+      onStderr?.(msg);
+    },
+    vampireReadline: requestInput
+      ? (prompt) => Promise.resolve(requestInput(String(prompt ?? "")))
+      : undefined,
+    onExit: (code) => finish(code),
+    onAbort: (what) => {
+      const msg = String(what ?? "abort");
+      stderr.push(msg);
+      onStderr?.(msg);
+      finish(-1);
     }
   };
 
   try {
     const mod = await createVampire(Module);
-    window.mod = mod;    
-    mod.FS.mkdir('/work'); // idempotent
-    mod.FS.writeFile('/work/input.p', new TextEncoder().encode(problemText));
 
-    let argv = parseArgs(args || '');
-    argv.push("/work/input.p");
-    
-    mod.callMain(argv);
+    try { mod.FS.mkdir('/work'); } catch {}
+    mod.FS.writeFile('/work/input.p', new TextEncoder().encode(String(problemText ?? "")));
+
+    const argv = parseArgs(String(args ?? ""));
+    if (!argv.some(arg => arg.endsWith('.p') || arg.startsWith('/'))) {
+      argv.push("/work/input.p");
+    }
+
+    const runner = mod.Asyncify?.handleAsync
+      ? mod.Asyncify.handleAsync(() => mod.callMain(argv))
+      : mod.callMain(argv);
+
+    const ret = await runner;
+    finish(typeof ret === 'number' ? ret : 0);
   } catch (err) {
-    return { stdout: '', stderr: "FATAL: " + (err && err.message || err), code: -1 };
+    if (err && err.name === 'ExitStatus' && typeof err.status === 'number') {
+      finish(err.status);
+    } else {
+      const msg = err?.message || String(err);
+      stderr.push("FATAL: " + msg);
+      onStderr?.("FATAL: " + msg);
+      finish(-1);
+    }
   }
 
-  return promise;
+  return done;
 }
 
 export function parseArgs(str) {

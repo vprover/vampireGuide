@@ -1,110 +1,36 @@
 // static/vampire-runner/script.js
 
-// ---------- Base URL detection (robust) ----------
 const BASE_CACHE_KEY = 'vampireRunner.baseUrl';
 
-async function urlLooksJs(url) {
-  try {
-    const r = await fetch(url, { method: 'HEAD' });
-    if (!r.ok) return false;
-    const ct = (r.headers.get('content-type') || '').toLowerCase();
-    return /javascript|ecmascript/.test(ct);
-  } catch {
-    return false;
-  }
+function ensureSlash(path) {
+  return path.endsWith('/') ? path : path + '/';
 }
 
-async function findWorkingBaseUrl() {
-  // 1) cached
+function getBaseUrl() {
   const cached = sessionStorage.getItem(BASE_CACHE_KEY);
-  if (cached) return cached.endsWith('/') ? cached : cached + '/';
+  if (cached) return ensureSlash(cached);
 
-  // 2) obvious candidates
   const candidates = [];
-
-  // from Docusaurus
-  const docusaurusBase = (window.__docusaurus && window.__docusaurus.baseUrl) || null;
+  const docusaurusBase = typeof window !== 'undefined' && window.__docusaurus && window.__docusaurus.baseUrl;
   if (docusaurusBase) candidates.push(docusaurusBase);
 
-  // <base href>
-  const baseTag = document.querySelector('base')?.getAttribute('href');
+  const baseTag = typeof document !== 'undefined' ? document.querySelector('base')?.getAttribute('href') : null;
   if (baseTag) candidates.push(baseTag);
 
-  // current path prefixes (e.g., '/', '/vampireGuide/', '/vampireGuide/docs/')
-  const path = location.pathname;
-  const parts = path.split('/').filter(Boolean); // e.g., ['vampireGuide', 'docs', 'page']
-  const prefixes = ['/' ];
-  for (let i = 0; i < parts.length; i++) {
-    const prefix = '/' + parts.slice(0, i + 1).join('/') + '/';
-    prefixes.push(prefix);
+  if (typeof location !== 'undefined') {
+    candidates.push(new URL('./', location.href).pathname);
   }
-  // Prefer longest first (most specific), then shorter
-  prefixes.reverse().forEach(p => { if (!candidates.includes(p)) candidates.push(p); });
 
-  // ensure trailing slash + unique
+  candidates.push('/');
+
   const seen = new Set();
   const normalized = candidates
-    .map(b => (b.endsWith('/') ? b : b + '/'))
-    .filter(b => (seen.has(b) ? false : (seen.add(b), true)));
+    .map(ensureSlash)
+    .filter(p => (seen.has(p) ? false : (seen.add(p), true)));
 
-  // 3) probe each: require SW AND glue to be reachable
-  for (const base of normalized) {
-    const swOk   = await urlLooksJs(base + 'coi-serviceworker.min.js');
-    const glueOk = await urlLooksJs(base + 'vampire-runner/vampire.js');
-    if (swOk && glueOk) {
-      sessionStorage.setItem(BASE_CACHE_KEY, base);
-      return base;
-    }
-  }
-
-  // 4) last resort: try the most likely two explicitly
-  const fallbacks = ['/', '/vampireGuide/'];
-  for (const b of fallbacks) {
-    const swOk   = await urlLooksJs(b + 'coi-serviceworker.min.js');
-    const glueOk = await urlLooksJs(b + 'vampire-runner/vampire.js');
-    if (swOk && glueOk) {
-      sessionStorage.setItem(BASE_CACHE_KEY, b);
-      return b;
-    }
-  }
-
-  throw new Error('Could not locate baseUrl that serves coi-serviceworker.min.js and vampire-runner/vampire.js');
-}
-
-async function getBaseUrl() {
-  const base = await findWorkingBaseUrl();
-  return base.endsWith('/') ? base : base + '/';
-}
-
-// ---------- COI (cross-origin isolation) ----------
-async function ensureCOI() {
-  if (self.crossOriginIsolated) return;
-
-  if (!('serviceWorker' in navigator)) {
-    throw new Error('Service Workers unavailable; cannot enable crossOriginIsolated.');
-  }
-
-  const base = await getBaseUrl();
-  const swUrl = base + 'coi-serviceworker.min.js';
-  const FLAG = 'coi-reloaded-once';
-
-  // sanity check (already done in finder, but keep for clarity)
-  const ok = await urlLooksJs(swUrl);
-  if (!ok) throw new Error(`COI SW not found at ${swUrl}`);
-
-  await navigator.serviceWorker.register(swUrl, { scope: base });
-  await navigator.serviceWorker.ready;
-
-  // If this load isn’t yet controlled, reload once so COOP/COEP apply
-  if (!navigator.serviceWorker.controller && !sessionStorage.getItem(FLAG)) {
-    sessionStorage.setItem(FLAG, '1');
-    location.reload();
-    await new Promise(() => {}); // never returns
-  }
-
-  if (!self.crossOriginIsolated) {
-    throw new Error('Not crossOriginIsolated after SW registration. Check console for COEP-blocked assets.');
-  }
+  const base = normalized[0] || '/';
+  sessionStorage.setItem(BASE_CACHE_KEY, base);
+  return base;
 }
 
 // ---------- argv helpers ----------
@@ -134,79 +60,98 @@ export function shellQuote(argv) {
 }
 
 // ---------- Runner APIs ----------
-export async function runVampireRaw({ tptp, args }) {
-  // 1) Ensure COI and discover correct baseUrl
-  await ensureCOI();
-  const base = await getBaseUrl();
+export async function runVampireRaw({ tptp, args, onStdout, onStderr, requestInput }) {
+  const base = getBaseUrl();
 
-  // 2) Import Emscripten glue straight from /static, bypass bundler
   const glueUrl = base + 'vampire-runner/vampire.js';
   const createVampire = (await import(/* webpackIgnore: true */ glueUrl)).default;
 
-  let stdoutBuf = [];
-  let stderrBuf = [];
+  const stdoutBuf = [];
+  const stderrBuf = [];
   let resolveRun;
+  let resolved = false;
   const done = new Promise((resolve) => (resolveRun = resolve));
+  const finish = (code) => {
+    if (resolved) return;
+    resolved = true;
+    resolveRun({
+      stdout: stdoutBuf.join('\n'),
+      stderr: stderrBuf.join('\n'),
+      code
+    });
+  };
 
   const Module = {
     noInitialRun: true,
-
-    // Make sure wasm/pthread worker resolve relative to our static folder
     locateFile: (path) => base + 'vampire-runner/' + path,
-
-    // Helps pthread workers derive the main script URL correctly
-    mainScriptUrlOrBlob: glueUrl,
-
-    print:  (s) => stdoutBuf.push(String(s)),
-    printErr: (s) => stderrBuf.push(String(s)),
-    onExit: (code) => {
-      resolveRun({
-        stdout: stdoutBuf.join('\n'),
-        stderr: '',
-        // stderr: stderrBuf.join('\n'), // <-- stderr is hidden...this hides errors about webassembly that aren't really errors from vampire.
-        code
-      });
+    print:  (s) => {
+      const msg = String(s);
+      stdoutBuf.push(msg);
+      onStdout?.(msg);
     },
+    printErr: (s) => {
+      const msg = String(s);
+      stderrBuf.push(msg);
+      onStderr?.(msg);
+    },
+    vampireReadline: requestInput
+      ? (prompt) => Promise.resolve(requestInput(String(prompt ?? '')))
+      : undefined,
+    onExit: (code) => finish(code),
+    onAbort: (what) => {
+      const msg = String(what ?? 'abort');
+      stderrBuf.push(msg);
+      onStderr?.(msg);
+      finish(-1);
+    }
   };
 
   try {
     const mod = await createVampire(Module);
 
-    // Ensure /work exists
     try { mod.FS.mkdir('/work'); } catch {}
-
-    // Write input file
     mod.FS.writeFile('/work/input.p', new TextEncoder().encode(String(tptp ?? '')));
 
-    // Build argv; ensure positional file present
     const argv = parseArgs(String(args ?? ''));
     if (!argv.some(x => x.endsWith('.p') || x.startsWith('/'))) {
       argv.push('/work/input.p');
     }
 
+    const runner = mod.Asyncify?.handleAsync
+      ? mod.Asyncify.handleAsync(() => mod.callMain(argv))
+      : mod.callMain(argv);
+
     try {
-      mod.callMain(argv);
-    } catch {
-      // Some builds throw on non-zero exit; output still delivered via onExit
+      const ret = await runner;
+      finish(typeof ret === 'number' ? ret : 0);
+    } catch (e) {
+      if (e && e.name === 'ExitStatus' && typeof e.status === 'number') {
+        finish(e.status);
+      } else {
+        throw e;
+      }
     }
   } catch (e) {
-    resolveRun({
-      stdout: '',
-      stderr: 'FATAL: ' + (e?.message || String(e)),
-      code: -1
-    });
+    if (e && e.name === 'ExitStatus' && typeof e.status === 'number') {
+      finish(e.status);
+    } else {
+      const detail = e?.stack || e?.message || String(e);
+      const msg = 'FATAL: ' + detail;
+      stderrBuf.push(msg);
+      onStderr?.(msg);
+      finish(-1);
+    }
   }
 
   return done;
 }
 
-export async function runVampire({ tptp, args }) {
-  const { stdout, stderr } = await runVampireRaw({ tptp, args });
+export async function runVampire({ tptp, args, onStdout, onStderr, requestInput }) {
+  const { stdout, stderr, code } = await runVampireRaw({ tptp, args, onStdout, onStderr, requestInput });
   const combined = [stdout, stderr].filter(Boolean).join('\n');
-  return combined || '(no output)';
+  return combined || `(exit ${code})`;
 }
 
-// ---------- Utilities: reset cached base if needed ----------
 export function clearBaseUrlCache() {
   sessionStorage.removeItem(BASE_CACHE_KEY);
 }

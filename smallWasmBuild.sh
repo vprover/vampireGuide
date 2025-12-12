@@ -1,19 +1,21 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-rm -rf build-ems64
+BUILD_DIR=${BUILD_DIR:-build-ems}
 
-# --- compile flags (must include -mwasm64 for 64-bit pointers) ---
-CXXFLAGS="-Oz -fwasm-exceptions -fno-strict-aliasing -pthread -sMEMORY64=1"
+rm -rf "$BUILD_DIR"
+export EM_CACHE="${EM_CACHE:-$PWD/.emcache}"
 
-# --- link flags: SINGLE LINE, NO NEWLINES ---
-LDFLAGS="-sMEMORY64=1 -sUSE_PTHREADS=1 -sPTHREAD_POOL_SIZE=4 -sPROXY_TO_PTHREAD=1 -sEXIT_RUNTIME=1 -sSTACK_SIZE=16777216 -sDEFAULT_PTHREAD_STACK_SIZE=16777216 -sINITIAL_MEMORY=805306368 -sALLOW_MEMORY_GROWTH=1 -sMAXIMUM_MEMORY=2147483648 -sFORCE_FILESYSTEM=1 -sWASM_BIGINT=1 -sASSERTIONS=1 -sENVIRONMENT=web -sMODULARIZE=1 -sEXPORT_ES6=1 -sEXPORTED_RUNTIME_METHODS='[\"callMain\",\"FS\",\"ccall\",\"cwrap\"]' -sEXPORTED_FUNCTIONS='[\"_main\",\"_emscripten_force_exit\"]'"
+# Async-friendly wasm32 build; keep it light but enlarge stacks for Asyncify.
+CXXFLAGS="-O2 -fexceptions -fno-strict-aliasing"
 
-emcmake cmake -S . -B build-ems64 \
+# SINGLE LINE, NO NEWLINES. Asyncify only the async readline hook.
+LDFLAGS="-sASYNCIFY=1 -sASYNCIFY_STACK_SIZE=67108864 -sASYNCIFY_IMPORTS='[\"__asyncjs__vampire_async_readline\"]' -sASYNCIFY_IGNORE_INDIRECT=0 -sSTACK_SIZE=67108864 -sALLOW_MEMORY_GROWTH=1 -sINITIAL_MEMORY=268435456 -sMAXIMUM_MEMORY=2147483648 -sENVIRONMENT=web -sMODULARIZE=1 -sEXPORT_ES6=1 -sFORCE_FILESYSTEM=1 -sEXIT_RUNTIME=1 -sASSERTIONS=2 -sEXPORTED_RUNTIME_METHODS='[\"callMain\",\"ccall\",\"cwrap\",\"FS\",\"Asyncify\",\"UTF8ToString\",\"stringToUTF8\",\"lengthBytesUTF8\"]' -sEXPORTED_FUNCTIONS='[\"_main\",\"_emscripten_force_exit\"]'"
+
+emcmake cmake -S . -B "$BUILD_DIR" \
   -DCMAKE_BUILD_TYPE=MinSizeRel \
   -DBUILD_SHARED_LIBS=OFF \
   -DCMAKE_CXX_FLAGS="$CXXFLAGS" \
   -DCMAKE_EXE_LINKER_FLAGS="$LDFLAGS"
 
-emmake make -C build-ems64 -j"$(nproc)"
-
+emmake make -C "$BUILD_DIR" -j"$(nproc)"

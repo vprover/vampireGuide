@@ -16,51 +16,35 @@ function highlightNowOrWhenReady(el) {
   window.addEventListener('load', tryHl, { once: true });
 }
 
-// Find a base URL that serves your runner assets (coi-serviceworker + script.js).
-// If you already solved this elsewhere, you can swap this out.
+// Find a base URL that serves the runner assets.
 const BASE_CACHE_KEY = 'vampireRunner.baseUrl';
-async function headIsJs(url){
-  try {
-    const r = await fetch(url, { method: 'HEAD' });
-    if (!r.ok) return false;
-    const ct = (r.headers.get('content-type') || '').toLowerCase();
-    return /javascript|ecmascript/.test(ct);
-  } catch { return false; }
-}
+const ensureSlash = (p) => p.endsWith('/') ? p : (p + '/');
 async function findWorkingBaseUrl(){
   const cached = sessionStorage.getItem(BASE_CACHE_KEY);
-  if (cached) return cached.endsWith('/') ? cached : cached + '/';
+  if (cached) return ensureSlash(cached);
 
-  const candidates = new Set();
+  const candidates = [];
   const docusaurusBase = typeof window!=='undefined' && window.__docusaurus && window.__docusaurus.baseUrl;
-  if (docusaurusBase) candidates.add(docusaurusBase);
+  if (docusaurusBase) candidates.push(docusaurusBase);
 
-  const baseTag = typeof document!=='undefined' && document.querySelector('base')?.getAttribute('href');
-  if (baseTag) candidates.add(baseTag);
+  const baseTag = typeof document!=='undefined' ? document.querySelector('base')?.getAttribute('href') : null;
+  if (baseTag) candidates.push(baseTag);
 
-  const parts = typeof location!=='undefined' ? location.pathname.split('/').filter(Boolean) : [];
-  for (let i=parts.length; i>=0; i--) {
-    const prefix = '/' + parts.slice(0, i).join('/') + (i ? '/' : '');
-    candidates.add(prefix || '/');
+  if (typeof location !== 'undefined') {
+    candidates.push(new URL('./', location.href).pathname);
   }
-  // common guesses
-  candidates.add('/vampireGuide/');
-  candidates.add('/');
 
-  for (const base0 of candidates) {
-    const base = base0.endsWith('/') ? base0 : base0 + '/';
-    const swOk   = await headIsJs(base + 'coi-serviceworker.min.js');
-    const glueOk = await headIsJs(base + 'vampire-runner/script.js');
-    if (swOk && glueOk) {
-      sessionStorage.setItem(BASE_CACHE_KEY, base);
-      return base;
-    }
-  }
-  throw new Error('Could not locate baseUrl that serves Vampire Runner assets.');
+  candidates.push('/vampireGuide/');
+  candidates.push('/');
+
+  const seen = new Set();
+  const base = (candidates.map(ensureSlash).find(b => (seen.has(b) ? false : (seen.add(b), true))) || '/');
+  sessionStorage.setItem(BASE_CACHE_KEY, base);
+  return base;
 }
 async function getWorkingBaseUrl(){
   const base = await findWorkingBaseUrl();
-  return base.endsWith('/') ? base : base + '/';
+  return ensureSlash(base);
 }
 
 /** ---------------------- LiveCode (Prism-Live editor) ---------------------- **/
@@ -112,9 +96,14 @@ fof(b, conjecture, p).`,
   outputLanguage = 'tptp',
 }) {
   const [tptp, setTptp]   = useState(defaultProblem);
-  const [args, setArgs]   = useState('--proof on --time_limit 1');
+  const [args, setArgs]   = useState('--manual_cs on --show_new on --proof on');
   const [out, setOut]     = useState('Ready.');
+  const [pendingPrompt, setPendingPrompt] = useState(null);
+  const [pendingInput, setPendingInput]   = useState('');
+  const pendingResolveRef = useRef(null);
+  const [running, setRunning] = useState(false);
   const outCodeRef        = useRef(null);
+  const latestOutRef      = useRef('Ready.');
 
   // Re-highlight output whenever it changes (or when Prism arrives)
   useEffect(() => {
@@ -122,21 +111,91 @@ fof(b, conjecture, p).`,
     highlightNowOrWhenReady(outCodeRef.current);
   }, [out, outputLanguage]);
 
+  useEffect(() => {
+    latestOutRef.current = out;
+  }, [out]);
+
+  // Append a line to the transcript (one big string for highlighting)
+  const appendLine = (text) => {
+    setOut(prev => {
+      const next = prev ? `${prev}\n${text}` : text;
+      latestOutRef.current = next;
+      return next;
+    });
+  };
+
+  const handleRequestInput = (promptText) => {
+    const promptLine = promptText || '>';
+    appendLine(promptLine);
+    setPendingPrompt(promptLine);
+    setPendingInput('');
+    return new Promise((resolve) => {
+      pendingResolveRef.current = resolve;
+    });
+  };
+
+  const submitPromptResponse = () => {
+    if (!pendingResolveRef.current) return;
+    const answer = pendingInput;
+    appendLine(`> ${answer}`);
+    pendingResolveRef.current(answer);
+    pendingResolveRef.current = null;
+    setPendingPrompt(null);
+    setPendingInput('');
+  };
+
+  const handleKeyDown = (ev) => {
+    if (ev.key === 'Enter') {
+      ev.preventDefault();
+      submitPromptResponse();
+    }
+  };
+
   async function onRun() {
+    setRunning(true);
     setOut('Running…');
+    setPendingPrompt(null);
+    setPendingInput('');
+    if (pendingResolveRef.current) {
+      pendingResolveRef.current('');
+      pendingResolveRef.current = null;
+    }
     try {
       const base = await getWorkingBaseUrl();
       // Use webpackIgnore so the URL can be absolute at runtime
       const mod = await import(/* webpackIgnore: true */ (base + 'vampire-runner/script.js'));
-      const run = mod.runVampire || mod.default;
-      if (typeof run !== 'function') {
-        setOut('Error: runVampire() not found in script.js');
+      const runRaw = mod.runVampireRaw || mod.runVampire || mod.default;
+      if (typeof runRaw !== 'function') {
+        setOut('Error: runVampireRaw() not found in script.js');
+        setRunning(false);
         return;
       }
-      const result = await run({ tptp, args });
-      setOut(String(result ?? ''));
+      const { code } = await runRaw({
+        tptp,
+        args,
+        onStdout: (msg) => String(msg ?? '').split('\n').forEach(appendLine),
+        onStderr: (msg) => String(msg ?? '').split('\n').forEach(line => appendLine(`[err] ${line}`)),
+        requestInput: handleRequestInput,
+      });
+      const exitCode = typeof code === 'number' ? code : 0;
+      appendLine(`(exit ${exitCode})`);
+
+      // Best-effort clipboard copy to speed up sharing logs
+      if (navigator?.clipboard?.writeText) {
+        setTimeout(() => {
+          navigator.clipboard.writeText(latestOutRef.current).catch(() => {});
+        }, 0);
+      }
     } catch (e) {
       setOut(`Error: ${e?.message || e}`);
+    } finally {
+      if (pendingResolveRef.current) {
+        pendingResolveRef.current('');
+        pendingResolveRef.current = null;
+      }
+      setPendingPrompt(null);
+      setPendingInput('');
+      setRunning(false);
     }
   }
 
@@ -163,13 +222,30 @@ fof(b, conjecture, p).`,
             <textarea
               value={args}
               onChange={e => setArgs(e.target.value)}
-              placeholder={`Example:\n  --proof on --time_limit 1`}
+              placeholder={`Example:\n  --manual_cs on --show_new on --proof on`}
             />
           </div>
         )}
       </div>
 
-      <p><button className="vr-run" onClick={onRun}>Run Vampire</button></p>
+      <p><button className="vr-run" onClick={onRun} disabled={running}>Run Vampire</button></p>
+
+      {pendingPrompt && (
+        <div style={{ marginBottom: '0.75rem' }}>
+          <label>Input required (prompt: {pendingPrompt})</label>
+          <input
+            type="text"
+            value={pendingInput}
+            onChange={e => setPendingInput(e.target.value)}
+            onKeyDown={handleKeyDown}
+            style={{ width: '100%', padding: '0.4rem', fontFamily: 'monospace' }}
+            autoFocus
+          />
+          <button className="vr-run" onClick={submitPromptResponse} style={{ marginTop: '0.35rem' }}>
+            Send
+          </button>
+        </div>
+      )}
 
       <label>Output</label>
       <pre style={{ maxHeight: outputMaxHeight, overflow: 'auto', marginTop: 0 }}>
