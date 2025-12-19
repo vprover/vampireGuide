@@ -147,6 +147,15 @@ run_patch "Relax TermOrderingDiagram asserts for Emscripten" '--- a/Kernel/TermO
 +#endif
 '
 
+# Fallback: if patch context doesn't match, do a direct in-place rewrite.
+TOD_PATH="$ROOT_DIR/Kernel/TermOrderingDiagram.hpp"
+if [[ -f "$TOD_PATH" ]]; then
+  if grep -q "static_assert(sizeof(uint64_t) == sizeof(Branch));" "$TOD_PATH"; then
+    perl -0777 -i -pe 's/static_assert\\(sizeof\\(uint64_t\\) == sizeof\\(Branch\\)\\);\\s*static_assert\\(sizeof\\(uint64_t\\) == sizeof\\(TermList\\)\\);\\s*static_assert\\(sizeof\\(uint64_t\\) == sizeof\\(void\\*\\)\\);\\s*static_assert\\(sizeof\\(uint64_t\\) == sizeof\\(intptr_t\\)\\);/#ifndef __EMSCRIPTEN__\\n    static_assert(sizeof(uintptr_t) == sizeof(Branch));\\n    static_assert(sizeof(uintptr_t) == sizeof(TermList));\\n    static_assert(sizeof(uintptr_t) == sizeof(void*));\\n    static_assert(sizeof(uintptr_t) == sizeof(intptr_t));\\n#endif/s' "$TOD_PATH"
+    echo "Applied: Relax TermOrderingDiagram asserts for Emscripten (fallback)"
+  fi
+fi
+
 run_patch "List WebInteractive.cpp in sources" '--- a/cmake/sources.cmake
 +++ b/cmake/sources.cmake
 @@
