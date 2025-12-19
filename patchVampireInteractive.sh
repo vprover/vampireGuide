@@ -181,4 +181,13 @@ run_patch "List WebInteractive.cpp in sources" '--- a/cmake/sources.cmake
      Lib/VirtualIterator.hpp
 '
 
+# Fallback: ensure WebInteractive.cpp is in sources.cmake
+SRC_PATH="$ROOT_DIR/cmake/sources.cmake"
+if [[ -f "$SRC_PATH" ]]; then
+  if ! grep -q "Lib/WebInteractive.cpp" "$SRC_PATH"; then
+    perl -0777 -i -pe 's/Lib\\/Timer\\.hpp\\n/Lib\\/Timer.hpp\\n    Lib\\/WebInteractive.cpp\\n/' "$SRC_PATH"
+    echo "Applied: List WebInteractive.cpp in sources (fallback)"
+  fi
+fi
+
 echo "Interactive patch completed."
