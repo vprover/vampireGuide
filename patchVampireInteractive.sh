@@ -185,9 +185,9 @@ run_patch "List WebInteractive.cpp in sources" '--- a/cmake/sources.cmake
 SRC_PATH="$ROOT_DIR/cmake/sources.cmake"
 if [[ -f "$SRC_PATH" ]]; then
   if ! grep -q "Lib/WebInteractive.cpp" "$SRC_PATH"; then
-    python - <<'PY'
+    python - <<PY
 from pathlib import Path
-path = Path(r"""'"$SRC_PATH"'""")
+path = Path(r"$SRC_PATH")
 text = path.read_text()
 needle = "Lib/Timer.hpp\n"
 insert = "Lib/Timer.hpp\n    Lib/WebInteractive.cpp\n"
