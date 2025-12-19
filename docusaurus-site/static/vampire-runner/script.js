@@ -60,7 +60,7 @@ export function shellQuote(argv) {
 }
 
 // ---------- Runner APIs ----------
-export async function runVampireRaw({ tptp, args, onStdout, onStderr, requestInput }) {
+export async function runVampireRaw({ tptp, args, onStdout, onStderr, requestInput, onReady }) {
   const base = getBaseUrl();
 
   const glueUrl = base + 'vampire-runner/vampire.js';
@@ -81,8 +81,11 @@ export async function runVampireRaw({ tptp, args, onStdout, onStderr, requestInp
     });
   };
 
+  const isInteractive = typeof requestInput === 'function';
   const Module = {
     noInitialRun: true,
+    // Keep the runtime alive during interactive runs; allow exit otherwise
+    noExitRuntime: isInteractive,
     locateFile: (path) => base + 'vampire-runner/' + path,
     print:  (s) => {
       const msg = String(s);
@@ -108,6 +111,9 @@ export async function runVampireRaw({ tptp, args, onStdout, onStderr, requestInp
 
   try {
     const mod = await createVampire(Module);
+    if (typeof onReady === 'function') {
+      onReady(mod);
+    }
 
     try { mod.FS.mkdir('/work'); } catch {}
     mod.FS.writeFile('/work/input.p', new TextEncoder().encode(String(tptp ?? '')));
@@ -117,13 +123,12 @@ export async function runVampireRaw({ tptp, args, onStdout, onStderr, requestInp
       argv.push('/work/input.p');
     }
 
-    const runner = mod.Asyncify?.handleAsync
-      ? mod.Asyncify.handleAsync(() => mod.callMain(argv))
-      : mod.callMain(argv);
-
+    const ret = mod.callMain(argv);
     try {
-      const ret = await runner;
-      finish(typeof ret === 'number' ? ret : 0);
+      const awaited = ret && typeof ret.then === 'function' ? await ret : ret;
+      if (!isInteractive) {
+        finish(typeof awaited === 'number' ? awaited : 0);
+      }
     } catch (e) {
       if (e && e.name === 'ExitStatus' && typeof e.status === 'number') {
         finish(e.status);
