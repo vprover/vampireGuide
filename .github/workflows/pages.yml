@@ -16,8 +16,6 @@ concurrency:
 
 env:
   SITE_DIR: docusaurus-site
-  WASM_OUT: dist-wasm              # <-- wherever your buildVampireWasm.sh writes
-  STATIC_TARGET: static/vampire-runner
 
 jobs:
   build:
@@ -33,6 +31,12 @@ jobs:
           node-version: 20
           cache: npm
           cache-dependency-path: ${{ env.SITE_DIR }}/package-lock.json
+
+      # Ensure `python` is available for buildVampireWasm.sh
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
 
       # Emscripten toolchain (emcc, emcmake, emconfigure, etc.)
       - name: Setup Emscripten
@@ -50,16 +54,6 @@ jobs:
 
       - name: Build WASM
         run: ./buildVampireWasm.sh
-
-      # Copy WASM outputs into Docusaurus /static so they get bundled into /build
-      - name: Stage WASM into Docusaurus static/
-        run: |
-          mkdir -p "${{ env.SITE_DIR }}/${{ env.STATIC_TARGET }}"
-          if [ -d "${{ env.WASM_OUT }}" ]; then
-            cp -a "${{ env.WASM_OUT }}/." "${{ env.SITE_DIR }}/${{ env.STATIC_TARGET }}/"
-          else
-            echo "WASM_OUT folder '${{ env.WASM_OUT }}' not found; skipping copy."
-          fi
 
       # Install & build Docusaurus (in subfolder)
       - name: Install deps
@@ -90,4 +84,3 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
-
