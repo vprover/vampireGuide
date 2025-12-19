@@ -158,6 +158,13 @@ if [[ -f "$TOD_PATH" ]]; then
     perl -0777 -i -pe 's/^([ \\t]*)static_assert\\(sizeof\\(uint64_t\\) == sizeof\\(([^)]+)\\)\\);/${1}#ifndef __EMSCRIPTEN__\\n${1}static_assert(sizeof(uint64_t) == sizeof($2));\\n${1}#endif/gm' "$TOD_PATH"
     echo "Applied: Guard uint64_t static_asserts for Emscripten (fallback)"
   fi
+  if grep -q "static_assert(sizeof(uint64_t) == sizeof(Branch));" "$TOD_PATH"; then
+    perl -pi -e 's/^\s*static_assert\(sizeof\(uint64_t\) == sizeof\(Branch\)\);$/#ifndef __EMSCRIPTEN__\n    static_assert(sizeof(uint64_t) == sizeof(Branch));\n#endif/' "$TOD_PATH"
+    perl -pi -e 's/^\s*static_assert\(sizeof\(uint64_t\) == sizeof\(TermList\)\);$/#ifndef __EMSCRIPTEN__\n    static_assert(sizeof(uint64_t) == sizeof(TermList));\n#endif/' "$TOD_PATH"
+    perl -pi -e 's/^\s*static_assert\(sizeof\(uint64_t\) == sizeof\(void\*\)\);$/#ifndef __EMSCRIPTEN__\n    static_assert(sizeof(uint64_t) == sizeof(void*));\n#endif/' "$TOD_PATH"
+    perl -pi -e 's/^\s*static_assert\(sizeof\(uint64_t\) == sizeof\(intptr_t\)\);$/#ifndef __EMSCRIPTEN__\n    static_assert(sizeof(uint64_t) == sizeof(intptr_t));\n#endif/' "$TOD_PATH"
+    echo "Applied: Guard specific uint64_t static_asserts for Emscripten (fallback)"
+  fi
 fi
 
 run_patch "List WebInteractive.cpp in sources" '--- a/cmake/sources.cmake
