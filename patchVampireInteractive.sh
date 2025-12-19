@@ -185,7 +185,16 @@ run_patch "List WebInteractive.cpp in sources" '--- a/cmake/sources.cmake
 SRC_PATH="$ROOT_DIR/cmake/sources.cmake"
 if [[ -f "$SRC_PATH" ]]; then
   if ! grep -q "Lib/WebInteractive.cpp" "$SRC_PATH"; then
-    perl -0777 -i -pe 's/Lib\\/Timer\\.hpp\\n/Lib\\/Timer.hpp\\n    Lib\\/WebInteractive.cpp\\n/' "$SRC_PATH"
+    python - <<'PY'
+from pathlib import Path
+path = Path(r"""'"$SRC_PATH"'""")
+text = path.read_text()
+needle = "Lib/Timer.hpp\n"
+insert = "Lib/Timer.hpp\n    Lib/WebInteractive.cpp\n"
+if needle in text and "Lib/WebInteractive.cpp" not in text:
+    text = text.replace(needle, insert, 1)
+    path.write_text(text)
+PY
     echo "Applied: List WebInteractive.cpp in sources (fallback)"
   fi
 fi
