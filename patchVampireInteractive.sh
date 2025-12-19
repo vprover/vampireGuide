@@ -67,6 +67,36 @@ EOF
 
 install_header
 
+ensure_webinteractive_cpp() {
+  local dest="$ROOT_DIR/Lib/WebInteractive.cpp"
+  if [[ -f "$dest" ]]; then
+    return
+  fi
+  cat >"$dest" <<'EOF'
+#include "Lib/WebInteractive.hpp"
+
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+
+extern "C" {
+EM_ASYNC_JS(char*, vampire_async_readline, (const char* prompt), {
+  if (typeof Module.vampireReadline !== 'function') { return 0; }
+  const text = prompt ? UTF8ToString(prompt) : "";
+  const response = await Module.vampireReadline(text);
+  if (response === undefined || response === null) { return 0; }
+  const len = lengthBytesUTF8(response) + 1;
+  const buf = _malloc(len);
+  stringToUTF8(response, buf, len);
+  return buf;
+});
+}
+#endif
+EOF
+  echo "Ensured source: ${dest#$ROOT_DIR/}"
+}
+
+ensure_webinteractive_cpp
+
 run_patch "Add WebInteractive.cpp implementation" '*** Add File: Lib/WebInteractive.cpp
 #include "Lib/WebInteractive.hpp"
 
