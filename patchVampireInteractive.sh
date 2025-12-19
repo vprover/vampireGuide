@@ -154,6 +154,10 @@ if [[ -f "$TOD_PATH" ]]; then
     perl -0777 -i -pe 's/static_assert\\(sizeof\\(uint64_t\\) == sizeof\\(Branch\\)\\);\\s*static_assert\\(sizeof\\(uint64_t\\) == sizeof\\(TermList\\)\\);\\s*static_assert\\(sizeof\\(uint64_t\\) == sizeof\\(void\\*\\)\\);\\s*static_assert\\(sizeof\\(uint64_t\\) == sizeof\\(intptr_t\\)\\);/#ifndef __EMSCRIPTEN__\\n    static_assert(sizeof(uintptr_t) == sizeof(Branch));\\n    static_assert(sizeof(uintptr_t) == sizeof(TermList));\\n    static_assert(sizeof(uintptr_t) == sizeof(void*));\\n    static_assert(sizeof(uintptr_t) == sizeof(intptr_t));\\n#endif/s' "$TOD_PATH"
     echo "Applied: Relax TermOrderingDiagram asserts for Emscripten (fallback)"
   fi
+  if grep -q "static_assert(sizeof(uint64_t)" "$TOD_PATH"; then
+    perl -0777 -i -pe 's/^([ \\t]*)static_assert\\(sizeof\\(uint64_t\\) == sizeof\\(([^)]+)\\)\\);/${1}#ifndef __EMSCRIPTEN__\\n${1}static_assert(sizeof(uint64_t) == sizeof($2));\\n${1}#endif/gm' "$TOD_PATH"
+    echo "Applied: Guard uint64_t static_asserts for Emscripten (fallback)"
+  fi
 fi
 
 run_patch "List WebInteractive.cpp in sources" '--- a/cmake/sources.cmake
