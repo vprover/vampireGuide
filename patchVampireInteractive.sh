@@ -195,11 +195,7 @@ run_patch "Avoid random_device failure in WASM" '--- a/Lib/Random.hpp
 +  inline static unsigned systemSeed()
 +  {
 +#ifdef __EMSCRIPTEN__
-+    try {
-+      return std::random_device()();
-+    } catch (...) {
-+      return static_cast<unsigned>(std::time(nullptr));
-+    }
++    return static_cast<unsigned>(std::time(nullptr));
 +#else
 +    return std::random_device()();
 +#endif
@@ -234,6 +230,32 @@ run_patch "Use Random::systemSeed in PortfolioMode" '--- a/CASC/PortfolioMode.cp
 -      opt.setRandomSeed(std::random_device()());
 +      opt.setRandomSeed(Random::systemSeed());
 '
+
+run_patch "Disable portfolio mode on WASM" '--- a/CASC/PortfolioMode.cpp
++++ b/CASC/PortfolioMode.cpp
+@@
+ bool PortfolioMode::perform(Problem* problem)
+ {
++#ifdef __EMSCRIPTEN__
++  std::cerr << "% Portfolio mode is not supported in WebAssembly builds." << std::endl;
++  return false;
++#endif
+   PortfolioMode pm(problem);
+'
+
+run_patch "Force non-portfolio mode on WASM" '--- a/vampire.cpp
++++ b/vampire.cpp
+@@
+     Shell::CommandLine cl(argc, argv);
+     cl.interpret(opts);
++#ifdef __EMSCRIPTEN__
++    if (opts.mode() == Options::Mode::CASC ||
++        opts.mode() == Options::Mode::SMTCOMP ||
++        opts.mode() == Options::Mode::PORTFOLIO) {
++      std::cerr << "% WASM build: forcing --mode vampire (portfolio disabled)" << std::endl;
++      opts.setMode(Options::Mode::VAMPIRE);
++    }
++#endif
 
 run_patch "Relax TermOrderingDiagram asserts for Emscripten" '--- a/Kernel/TermOrderingDiagram.hpp
 +++ b/Kernel/TermOrderingDiagram.hpp
@@ -282,11 +304,7 @@ insert = (
     "  inline static unsigned systemSeed()\n"
     "  {\n"
     "#ifdef __EMSCRIPTEN__\n"
-    "    try {\n"
-    "      return std::random_device()();\n"
-    "    } catch (...) {\n"
-    "      return static_cast<unsigned>(std::time(nullptr));\n"
-    "    }\n"
+    "    return static_cast<unsigned>(std::time(nullptr));\n"
     "#else\n"
     "    return std::random_device()();\n"
     "#endif\n"
@@ -333,9 +351,39 @@ text = path.read_text()
 if "Lib/Random.hpp" not in text:
     text = text.replace('#include "Lib/Timer.hpp"\\n', '#include "Lib/Timer.hpp"\\n#include "Lib/Random.hpp"\\n', 1)
 text = text.replace("opt.setRandomSeed(std::random_device()());", "opt.setRandomSeed(Random::systemSeed());")
+if "Portfolio mode is not supported in WebAssembly" not in text:
+    marker = "bool PortfolioMode::perform(Problem* problem)\\n{\\n"
+    if marker in text:
+        text = text.replace(marker, marker + "#ifdef __EMSCRIPTEN__\\n  std::cerr << \"% Portfolio mode is not supported in WebAssembly builds.\" << std::endl;\\n  return false;\\n#endif\\n", 1)
 path.write_text(text)
 PY
     echo "Applied: Use Random::systemSeed in PortfolioMode (fallback)"
+  fi
+fi
+
+# Fallback: force mode vampire on WASM in vampire.cpp
+VAMP_PATH="$ROOT_DIR/vampire.cpp"
+if [[ -f "$VAMP_PATH" ]]; then
+  if ! grep -q "WASM build: forcing --mode vampire" "$VAMP_PATH"; then
+    python - <<PY
+from pathlib import Path
+path = Path(r"$VAMP_PATH")
+text = path.read_text()
+marker = "cl.interpret(opts);\\n"
+inject = ("cl.interpret(opts);\\n"
+          "#ifdef __EMSCRIPTEN__\\n"
+          "    if (opts.mode() == Options::Mode::CASC ||\\n"
+          "        opts.mode() == Options::Mode::SMTCOMP ||\\n"
+          "        opts.mode() == Options::Mode::PORTFOLIO) {\\n"
+          "      std::cerr << \"% WASM build: forcing --mode vampire (portfolio disabled)\" << std::endl;\\n"
+          "      opts.setMode(Options::Mode::VAMPIRE);\\n"
+          "    }\\n"
+          "#endif\\n")
+if marker in text:
+    text = text.replace(marker, inject, 1)
+    path.write_text(text)
+PY
+    echo "Applied: Force non-portfolio mode on WASM (fallback)"
   fi
 fi
 
