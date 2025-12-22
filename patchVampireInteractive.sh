@@ -165,19 +165,47 @@ run_patch "Use web-aware input in ManCSPassiveClauseContainer" '--- a/Saturation
 run_patch "Avoid random_device failure in WASM" '--- a/Lib/Random.hpp
 +++ b/Lib/Random.hpp
 @@
++  inline static unsigned systemSeed()
++  {
++#ifdef __EMSCRIPTEN__
++    try {
++      return std::random_device()();
++    } catch (...) {
++      return static_cast<unsigned>(std::time(nullptr));
++    }
++#else
++    return std::random_device()();
++#endif
++  }
++
    inline static void resetSeed ()
    {
 -    setSeed(std::random_device()());
-+#ifdef __EMSCRIPTEN__
-+    try {
-+      setSeed(std::random_device()());
-+    } catch (...) {
-+      setSeed(static_cast<unsigned>(std::time(nullptr)));
-+    }
-+#else
-+    setSeed(std::random_device()());
-+#endif
++    setSeed(systemSeed());
    }
+'
+
+run_patch "Use Random::systemSeed in Options sampling" '--- a/Shell/Options.cpp
++++ b/Shell/Options.cpp
+@@
+-  auto rng = _randomStrategySeed.actualValue == 0
+-    ? std::mt19937((std::random_device())())
++  auto rng = _randomStrategySeed.actualValue == 0
++    ? std::mt19937(Random::systemSeed())
+     : std::mt19937(_randomStrategySeed.actualValue);
+'
+
+run_patch "Use Random::systemSeed in PortfolioMode" '--- a/CASC/PortfolioMode.cpp
++++ b/CASC/PortfolioMode.cpp
+@@
+ #include "Lib/ScopedLet.hpp"
+ #include "Debug/TimeProfiling.hpp"
+ #include "Lib/Timer.hpp"
+ #include "Lib/Sys/Multiprocessing.hpp"
++#include "Lib/Random.hpp"
+@@
+-      opt.setRandomSeed(std::random_device()());
++      opt.setRandomSeed(Random::systemSeed());
 '
 
 run_patch "Relax TermOrderingDiagram asserts for Emscripten" '--- a/Kernel/TermOrderingDiagram.hpp
@@ -218,18 +246,54 @@ fi
 # Fallback: guard random_device for Emscripten in Lib/Random.hpp
 RAND_PATH="$ROOT_DIR/Lib/Random.hpp"
 if [[ -f "$RAND_PATH" ]]; then
-  if grep -q "resetSeed" "$RAND_PATH" && ! grep -q "__EMSCRIPTEN__" "$RAND_PATH"; then
+  if grep -q "resetSeed" "$RAND_PATH" && ! grep -q "systemSeed" "$RAND_PATH"; then
     python - <<PY
 from pathlib import Path
 path = Path(r"$RAND_PATH")
 text = path.read_text()
+insert = \"\"\"  inline static unsigned systemSeed()\\n  {\\n#ifdef __EMSCRIPTEN__\\n    try {\\n      return std::random_device()();\\n    } catch (...) {\\n      return static_cast<unsigned>(std::time(nullptr));\\n    }\\n#else\\n    return std::random_device()();\\n#endif\\n  }\\n\\n\"\"\"
 old = "  inline static void resetSeed ()\\n  {\\n    setSeed(std::random_device()());\\n  }\\n"
-new = "  inline static void resetSeed ()\\n  {\\n#ifdef __EMSCRIPTEN__\\n    try {\\n      setSeed(std::random_device()());\\n    } catch (...) {\\n      setSeed(static_cast<unsigned>(std::time(nullptr)));\\n    }\\n#else\\n    setSeed(std::random_device()());\\n#endif\\n  }\\n"
+new = "  inline static void resetSeed ()\\n  {\\n    setSeed(systemSeed());\\n  }\\n"
+if old in text:
+    text = text.replace(old, insert + new, 1)
+    path.write_text(text)
+PY
+    echo "Applied: Avoid random_device failure in WASM (fallback)"
+  fi
+fi
+
+# Fallback: patch Options.cpp to use Random::systemSeed()
+OPT_PATH="$ROOT_DIR/Shell/Options.cpp"
+if [[ -f "$OPT_PATH" ]]; then
+  if grep -q "random_device" "$OPT_PATH" && grep -q "strategySamplerFilename" "$OPT_PATH"; then
+    python - <<PY
+from pathlib import Path
+path = Path(r"$OPT_PATH")
+text = path.read_text()
+old = "  auto rng = _randomStrategySeed.actualValue == 0\\n    ? std::mt19937((std::random_device())())\\n    : std::mt19937(_randomStrategySeed.actualValue);\\n"
+new = "  auto rng = _randomStrategySeed.actualValue == 0\\n    ? std::mt19937(Random::systemSeed())\\n    : std::mt19937(_randomStrategySeed.actualValue);\\n"
 if old in text:
     text = text.replace(old, new, 1)
     path.write_text(text)
 PY
-    echo "Applied: Avoid random_device failure in WASM (fallback)"
+    echo "Applied: Use Random::systemSeed in Options sampling (fallback)"
+  fi
+fi
+
+# Fallback: patch PortfolioMode.cpp to use Random::systemSeed()
+PORT_PATH="$ROOT_DIR/CASC/PortfolioMode.cpp"
+if [[ -f "$PORT_PATH" ]]; then
+  if grep -q "randomizeSeedForPortfolioWorkers" "$PORT_PATH"; then
+    python - <<PY
+from pathlib import Path
+path = Path(r"$PORT_PATH")
+text = path.read_text()
+if "Lib/Random.hpp" not in text:
+    text = text.replace('#include "Lib/Timer.hpp"\\n', '#include "Lib/Timer.hpp"\\n#include "Lib/Random.hpp"\\n', 1)
+text = text.replace("opt.setRandomSeed(std::random_device()());", "opt.setRandomSeed(Random::systemSeed());")
+path.write_text(text)
+PY
+    echo "Applied: Use Random::systemSeed in PortfolioMode (fallback)"
   fi
 fi
 
