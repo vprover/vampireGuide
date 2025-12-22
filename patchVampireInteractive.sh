@@ -270,7 +270,10 @@ old = "  inline static void resetSeed ()\\n  {\\n    setSeed(std::random_device(
 new = "  inline static void resetSeed ()\\n  {\\n    setSeed(systemSeed());\\n  }\\n"
 if old in text:
     text = text.replace(old, insert + new, 1)
-    path.write_text(text)
+elif "public:" in text:
+    text = text.replace("public:\\n", "public:\\n" + insert, 1)
+text = text.replace("setSeed(std::random_device()());", "setSeed(systemSeed());")
+path.write_text(text)
 PY
     echo "Applied: Avoid random_device failure in WASM (fallback)"
   fi
