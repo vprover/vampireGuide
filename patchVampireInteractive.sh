@@ -131,12 +131,12 @@ run_patch "Wire interactive input helper into vampire.cpp" '--- a/vampire.cpp
 @@ -566,7 +567,7 @@ void interactiveMetamode()
  
    while (true) {
-     std::string line;
+    std::string line;
 -    if (!getline(cin, line) || line.rfind("exit",0) == 0) {
 +    if (!Lib::Web::readInteractiveLine(line) || line.rfind("exit",0) == 0) {
-       cout << "Bye." << endl;
-       break;
-     } else if (line.rfind("run",0) == 0) {
+      cout << "Bye." << endl;
+      break;
+    } else if (line.rfind("run",0) == 0) {
 '
 
 run_patch "Use web-aware input in ManCSPassiveClauseContainer" '--- a/Saturation/ManCSPassiveClauseContainer.cpp
@@ -160,6 +160,24 @@ run_patch "Use web-aware input in ManCSPassiveClauseContainer" '--- a/Saturation
 +      throw std::runtime_error("No input available for clause selection");
 +    }
     unsigned selectedId = std::stoi(id);
+'
+
+run_patch "Avoid random_device failure in WASM" '--- a/Lib/Random.hpp
++++ b/Lib/Random.hpp
+@@
+   inline static void resetSeed ()
+   {
+-    setSeed(std::random_device()());
++#ifdef __EMSCRIPTEN__
++    try {
++      setSeed(std::random_device()());
++    } catch (...) {
++      setSeed(static_cast<unsigned>(std::time(nullptr)));
++    }
++#else
++    setSeed(std::random_device()());
++#endif
+   }
 '
 
 run_patch "Relax TermOrderingDiagram asserts for Emscripten" '--- a/Kernel/TermOrderingDiagram.hpp
@@ -194,6 +212,24 @@ if [[ -f "$TOD_PATH" ]]; then
     perl -pi -e 's/^\s*static_assert\(sizeof\(uint64_t\) == sizeof\(void\*\)\);$/#ifndef __EMSCRIPTEN__\n    static_assert(sizeof(uint64_t) == sizeof(void*));\n#endif/' "$TOD_PATH"
     perl -pi -e 's/^\s*static_assert\(sizeof\(uint64_t\) == sizeof\(intptr_t\)\);$/#ifndef __EMSCRIPTEN__\n    static_assert(sizeof(uint64_t) == sizeof(intptr_t));\n#endif/' "$TOD_PATH"
     echo "Applied: Guard specific uint64_t static_asserts for Emscripten (fallback)"
+  fi
+fi
+
+# Fallback: guard random_device for Emscripten in Lib/Random.hpp
+RAND_PATH="$ROOT_DIR/Lib/Random.hpp"
+if [[ -f "$RAND_PATH" ]]; then
+  if grep -q "resetSeed" "$RAND_PATH" && ! grep -q "__EMSCRIPTEN__" "$RAND_PATH"; then
+    python - <<PY
+from pathlib import Path
+path = Path(r"$RAND_PATH")
+text = path.read_text()
+old = "  inline static void resetSeed ()\\n  {\\n    setSeed(std::random_device()());\\n  }\\n"
+new = "  inline static void resetSeed ()\\n  {\\n#ifdef __EMSCRIPTEN__\\n    try {\\n      setSeed(std::random_device()());\\n    } catch (...) {\\n      setSeed(static_cast<unsigned>(std::time(nullptr)));\\n    }\\n#else\\n    setSeed(std::random_device()());\\n#endif\\n  }\\n"
+if old in text:
+    text = text.replace(old, new, 1)
+    path.write_text(text)
+PY
+    echo "Applied: Avoid random_device failure in WASM (fallback)"
   fi
 fi
 
