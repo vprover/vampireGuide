@@ -252,18 +252,18 @@ import os
 path = Path(os.environ["RAND_PATH"])
 text = path.read_text()
 insert = (
-    "  inline static unsigned systemSeed()\\n"
-    "  {\\n"
-    "#ifdef __EMSCRIPTEN__\\n"
-    "    try {\\n"
-    "      return std::random_device()();\\n"
-    "    } catch (...) {\\n"
-    "      return static_cast<unsigned>(std::time(nullptr));\\n"
-    "    }\\n"
-    "#else\\n"
-    "    return std::random_device()();\\n"
-    "#endif\\n"
-    "  }\\n\\n"
+    "  inline static unsigned systemSeed()\n"
+    "  {\n"
+    "#ifdef __EMSCRIPTEN__\n"
+    "    try {\n"
+    "      return std::random_device()();\n"
+    "    } catch (...) {\n"
+    "      return static_cast<unsigned>(std::time(nullptr));\n"
+    "    }\n"
+    "#else\n"
+    "    return std::random_device()();\n"
+    "#endif\n"
+    "  }\n\n"
 )
 if "systemSeed()" not in text:
     marker = "inline static void resetSeed"
