@@ -256,7 +256,7 @@ run_patch "Force non-portfolio mode on WASM" '--- a/vampire.cpp
 +      opts.setMode(Options::Mode::VAMPIRE);
 +    }
 +#endif
-
+'
 run_patch "Relax TermOrderingDiagram asserts for Emscripten" '--- a/Kernel/TermOrderingDiagram.hpp
 +++ b/Kernel/TermOrderingDiagram.hpp
 @@
