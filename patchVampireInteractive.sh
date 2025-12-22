@@ -246,8 +246,7 @@ fi
 # Fallback: guard random_device for Emscripten in Lib/Random.hpp
 RAND_PATH="$ROOT_DIR/Lib/Random.hpp"
 if [[ -f "$RAND_PATH" ]]; then
-  if grep -q "resetSeed" "$RAND_PATH" && ! grep -q "systemSeed" "$RAND_PATH"; then
-    RAND_PATH="$RAND_PATH" python - <<'PY'
+  RAND_PATH="$RAND_PATH" python - <<'PY'
 from pathlib import Path
 import os
 path = Path(os.environ["RAND_PATH"])
@@ -266,17 +265,12 @@ insert = (
     "#endif\\n"
     "  }\\n\\n"
 )
-old = "  inline static void resetSeed ()\\n  {\\n    setSeed(std::random_device()());\\n  }\\n"
-new = "  inline static void resetSeed ()\\n  {\\n    setSeed(systemSeed());\\n  }\\n"
-if old in text:
-    text = text.replace(old, insert + new, 1)
-elif "public:" in text:
+if "systemSeed()" not in text and "public:" in text:
     text = text.replace("public:\\n", "public:\\n" + insert, 1)
 text = text.replace("setSeed(std::random_device()());", "setSeed(systemSeed());")
 path.write_text(text)
 PY
-    echo "Applied: Avoid random_device failure in WASM (fallback)"
-  fi
+  echo "Applied: Avoid random_device failure in WASM (fallback)"
 fi
 
 # Fallback: patch Options.cpp to use Random::systemSeed()
