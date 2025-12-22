@@ -162,6 +162,32 @@ run_patch "Use web-aware input in ManCSPassiveClauseContainer" '--- a/Saturation
     unsigned selectedId = std::stoi(id);
 '
 
+run_patch "Disable mutex usage in Timer for Emscripten" '--- a/Lib/Timer.cpp
++++ b/Lib/Timer.cpp
+@@
+-#include <mutex>
++#include <mutex>
+@@
+-static std::recursive_mutex EXIT_LOCK;
++#ifdef __EMSCRIPTEN__
++struct DummyMutex {
++  void lock() {}
++  void unlock() {}
++};
++static DummyMutex EXIT_LOCK;
++#else
++static std::recursive_mutex EXIT_LOCK;
++#endif
+@@
+ void reinitialise(bool tryInitInstructionLimiting) {
+   // might (probably have) locked this in the parent process, release it for the child
+   //
+   // I am not sure of the semantics of placement-new for std::recursive_mutex,
+   // but nobody else seems to be either - if you know, tell me! - Michael
+-  ::new (&EXIT_LOCK) std::recursive_mutex;
++#ifndef __EMSCRIPTEN__
++  ::new (&EXIT_LOCK) std::recursive_mutex;
++#endif
 run_patch "Avoid random_device failure in WASM" '--- a/Lib/Random.hpp
 +++ b/Lib/Random.hpp
 @@
