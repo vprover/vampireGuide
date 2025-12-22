@@ -247,11 +247,25 @@ fi
 RAND_PATH="$ROOT_DIR/Lib/Random.hpp"
 if [[ -f "$RAND_PATH" ]]; then
   if grep -q "resetSeed" "$RAND_PATH" && ! grep -q "systemSeed" "$RAND_PATH"; then
-    python - <<PY
+    RAND_PATH="$RAND_PATH" python - <<'PY'
 from pathlib import Path
-path = Path(r"$RAND_PATH")
+import os
+path = Path(os.environ["RAND_PATH"])
 text = path.read_text()
-insert = \"\"\"  inline static unsigned systemSeed()\\n  {\\n#ifdef __EMSCRIPTEN__\\n    try {\\n      return std::random_device()();\\n    } catch (...) {\\n      return static_cast<unsigned>(std::time(nullptr));\\n    }\\n#else\\n    return std::random_device()();\\n#endif\\n  }\\n\\n\"\"\"
+insert = (
+    "  inline static unsigned systemSeed()\\n"
+    "  {\\n"
+    "#ifdef __EMSCRIPTEN__\\n"
+    "    try {\\n"
+    "      return std::random_device()();\\n"
+    "    } catch (...) {\\n"
+    "      return static_cast<unsigned>(std::time(nullptr));\\n"
+    "    }\\n"
+    "#else\\n"
+    "    return std::random_device()();\\n"
+    "#endif\\n"
+    "  }\\n\\n"
+)
 old = "  inline static void resetSeed ()\\n  {\\n    setSeed(std::random_device()());\\n  }\\n"
 new = "  inline static void resetSeed ()\\n  {\\n    setSeed(systemSeed());\\n  }\\n"
 if old in text:
