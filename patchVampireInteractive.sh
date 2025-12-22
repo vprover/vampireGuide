@@ -188,6 +188,7 @@ run_patch "Disable mutex usage in Timer for Emscripten" '--- a/Lib/Timer.cpp
 +#ifndef __EMSCRIPTEN__
 +  ::new (&EXIT_LOCK) std::recursive_mutex;
 +#endif
+'
 run_patch "Avoid random_device failure in WASM" '--- a/Lib/Random.hpp
 +++ b/Lib/Random.hpp
 @@
