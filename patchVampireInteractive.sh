@@ -266,10 +266,11 @@ insert = (
     "  }\\n\\n"
 )
 if "systemSeed()" not in text:
-    if "public:" in text:
+    marker = "inline static void resetSeed"
+    if marker in text:
+        text = text.replace(marker, insert + marker, 1)
+    elif "public:" in text:
         text = text.replace("public:\\n", "public:\\n" + insert, 1)
-    elif "inline static void resetSeed" in text:
-        text = text.replace("  inline static void resetSeed", insert + "  inline static void resetSeed", 1)
 text = text.replace("setSeed(std::random_device()());", "setSeed(systemSeed());")
 path.write_text(text)
 PY
