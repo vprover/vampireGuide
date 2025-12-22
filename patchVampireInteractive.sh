@@ -189,6 +189,26 @@ run_patch "Disable mutex usage in Timer for Emscripten" '--- a/Lib/Timer.cpp
 +  ::new (&EXIT_LOCK) std::recursive_mutex;
 +#endif
 '
+
+# Fallback: disable mutex usage in Timer.cpp for Emscripten
+TIMER_PATH="$ROOT_DIR/Lib/Timer.cpp"
+if [[ -f "$TIMER_PATH" ]]; then
+  python - <<PY
+from pathlib import Path
+path = Path(r"$TIMER_PATH")
+text = path.read_text()
+if "DummyMutex" not in text:
+    text = text.replace(
+        "static std::recursive_mutex EXIT_LOCK;",
+        "#ifdef __EMSCRIPTEN__\\nstruct DummyMutex {\\n  void lock() {}\\n  void unlock() {}\\n};\\nstatic DummyMutex EXIT_LOCK;\\n#else\\nstatic std::recursive_mutex EXIT_LOCK;\\n#endif",
+        1,
+    )
+text = text.replace("::new (&EXIT_LOCK) std::recursive_mutex;",
+                    "#ifndef __EMSCRIPTEN__\\n  ::new (&EXIT_LOCK) std::recursive_mutex;\\n#endif")
+path.write_text(text)
+PY
+  echo "Applied: Disable mutex usage in Timer for Emscripten (fallback)"
+fi
 run_patch "Avoid random_device failure in WASM" '--- a/Lib/Random.hpp
 +++ b/Lib/Random.hpp
 @@
