@@ -1,21 +1,28 @@
 // static/vampire-runner/script.js
 
-const BASE_CACHE_KEY = 'vampireRunner.baseUrl';
+const BASE_CACHE_KEY = 'vampireRunner.baseUrl.v2';
 
 function ensureSlash(path) {
   return path.endsWith('/') ? path : path + '/';
 }
 
 function getBaseUrl() {
+  const candidates = [];
+  const docusaurusBase = typeof window !== 'undefined' && window.__docusaurus && window.__docusaurus.baseUrl;
+  if (docusaurusBase) {
+    const base = ensureSlash(docusaurusBase);
+    sessionStorage.setItem(BASE_CACHE_KEY, base);
+    return base;
+  }
+
   const cached = sessionStorage.getItem(BASE_CACHE_KEY);
   if (cached) return ensureSlash(cached);
 
-  const candidates = [];
-  const docusaurusBase = typeof window !== 'undefined' && window.__docusaurus && window.__docusaurus.baseUrl;
-  if (docusaurusBase) candidates.push(docusaurusBase);
-
   const baseTag = typeof document !== 'undefined' ? document.querySelector('base')?.getAttribute('href') : null;
   if (baseTag) candidates.push(baseTag);
+
+  // Prefer the known site root before falling back to the current page path (e.g. /docs/)
+  candidates.push('/vampireGuide/');
 
   if (typeof location !== 'undefined') {
     candidates.push(new URL('./', location.href).pathname);

@@ -17,15 +17,19 @@ function highlightNowOrWhenReady(el) {
 }
 
 // Find a base URL that serves the runner assets.
-const BASE_CACHE_KEY = 'vampireRunner.baseUrl';
+const BASE_CACHE_KEY = 'vampireRunner.baseUrl.v2';
 const ensureSlash = (p) => p.endsWith('/') ? p : (p + '/');
 async function findWorkingBaseUrl(){
-  const cached = sessionStorage.getItem(BASE_CACHE_KEY);
-  if (cached) return ensureSlash(cached);
-
   const candidates = [];
   const docusaurusBase = typeof window!=='undefined' && window.__docusaurus && window.__docusaurus.baseUrl;
-  if (docusaurusBase) candidates.push(docusaurusBase);
+  if (docusaurusBase) {
+    const base = ensureSlash(docusaurusBase);
+    sessionStorage.setItem(BASE_CACHE_KEY, base);
+    return base;
+  }
+
+  const cached = sessionStorage.getItem(BASE_CACHE_KEY);
+  if (cached) return ensureSlash(cached);
 
   const baseTag = typeof document!=='undefined' ? document.querySelector('base')?.getAttribute('href') : null;
   if (baseTag) candidates.push(baseTag);
@@ -106,11 +110,11 @@ fof(b, conjecture, p).`,
   const [pendingSpacer, setPendingSpacer] = useState('');
   const [pendingMatchText, setPendingMatchText] = useState('');
   const pendingResolveRef = useRef(null);
+  const pendingPromiseRef = useRef(null);
   const [running, setRunning] = useState(false);
   const outWrapRef        = useRef(null);
   const outCodeRef        = useRef(null);
   const latestOutRef      = useRef('Ready.');
-  const cancelRunRef      = useRef(null);
   const runIdRef          = useRef(0);
 
   useEffect(() => {
@@ -129,12 +133,12 @@ fof(b, conjecture, p).`,
   }, [out, pendingPrompt, pendingInput, pendingInline]);
 
   useEffect(() => {
-    if (!pendingPrompt) return;
+    if (pendingPrompt === null) return;
     outWrapRef.current?.focus({ preventScroll: true });
   }, [pendingPrompt]);
 
   const visibleOut = (() => {
-    if (!pendingPrompt) return out;
+    if (pendingPrompt === null) return out;
     const lastLineRaw = out.split('\n').slice(-1)[0] || '';
     const lastLine = lastLineRaw.replace(/\s+$/, '');
     const forceInline = pendingMatchText && lastLine.endsWith(pendingMatchText);
@@ -142,7 +146,7 @@ fof(b, conjecture, p).`,
       return out + pendingSpacer + pendingInput;
     }
     const sep = out ? '\n' : '';
-    return out + sep + (pendingPrompt || '> ') + pendingInput;
+    return out + sep + (pendingPrompt ?? '> ') + pendingInput;
   })();
 
   // Append a line to the transcript (one big string for highlighting)
@@ -163,6 +167,9 @@ fof(b, conjecture, p).`,
   };
 
   const handleRequestInput = (promptText) => {
+    if (pendingResolveRef.current) {
+      return pendingPromiseRef.current || new Promise(() => {});
+    }
     const raw = String(promptText ?? '');
     const trimmed = raw.replace(/\s+$/, '');
     const lastLineRaw = (latestOutRef.current || '').split('\n').slice(-1)[0] || '';
@@ -176,9 +183,11 @@ fof(b, conjecture, p).`,
     setPendingSpacer(spacer);
     setPendingMatchText(normalizedPrompt);
     setPendingInput('');
-    return new Promise((resolve) => {
+    const promise = new Promise((resolve) => {
       pendingResolveRef.current = resolve;
     });
+    pendingPromiseRef.current = promise;
+    return promise;
   };
 
   const submitPromptResponse = () => {
@@ -194,6 +203,7 @@ fof(b, conjecture, p).`,
     }
     pendingResolveRef.current(answer);
     pendingResolveRef.current = null;
+    pendingPromiseRef.current = null;
     setPendingPrompt(null);
     setPendingInput('');
     setPendingInline(false);
@@ -202,7 +212,7 @@ fof(b, conjecture, p).`,
   };
 
   const handleKeyDown = (ev) => {
-    if (!pendingPrompt) return;
+    if (!pendingResolveRef.current) return;
     if (ev.key === 'Enter') {
       ev.preventDefault();
       submitPromptResponse();
@@ -220,7 +230,7 @@ fof(b, conjecture, p).`,
   };
 
   const handlePaste = (ev) => {
-    if (!pendingPrompt) return;
+    if (!pendingResolveRef.current) return;
     const text = ev.clipboardData?.getData('text');
     if (!text) return;
     ev.preventDefault();
@@ -230,17 +240,17 @@ fof(b, conjecture, p).`,
   async function onRun() {
     const newRunId = runIdRef.current + 1;
     runIdRef.current = newRunId;
-    if (cancelRunRef.current) {
-      cancelRunRef.current();
-      cancelRunRef.current = null;
+    if (pendingResolveRef.current) {
+      pendingResolveRef.current = null;
+      pendingPromiseRef.current = null;
     }
     setRunning(true);
     setOut('Running…');
     setPendingPrompt(null);
     setPendingInput('');
-    if (pendingResolveRef.current) {
-      pendingResolveRef.current = null;
-    }
+    setPendingInline(false);
+    setPendingSpacer('');
+    setPendingMatchText('');
     try {
       const base = await getWorkingBaseUrl();
       // Use webpackIgnore so the URL can be absolute at runtime
@@ -266,16 +276,6 @@ fof(b, conjecture, p).`,
           if (runIdRef.current !== newRunId) return new Promise(() => {});
           return handleRequestInput(promptText);
         },
-        onReady: (instance) => {
-          if (runIdRef.current !== newRunId) {
-            return;
-          }
-          cancelRunRef.current = () => {
-            if (pendingResolveRef.current) {
-              pendingResolveRef.current = null;
-            }
-          };
-        },
       });
       if (runIdRef.current === newRunId) {
         const exitCode = typeof code === 'number' ? code : 0;
@@ -292,13 +292,14 @@ fof(b, conjecture, p).`,
       setOut(`Error: ${e?.message || e}`);
     } finally {
       if (runIdRef.current === newRunId) {
-        if (pendingResolveRef.current) {
-          pendingResolveRef.current = null;
-        }
+        pendingResolveRef.current = null;
+        pendingPromiseRef.current = null;
         setPendingPrompt(null);
         setPendingInput('');
+        setPendingInline(false);
+        setPendingSpacer('');
+        setPendingMatchText('');
         setRunning(false);
-        cancelRunRef.current = null;
       }
     }
   }
