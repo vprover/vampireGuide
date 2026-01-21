@@ -67,6 +67,36 @@ EOF
 
 install_header
 
+ensure_webinteractive_cpp() {
+  local dest="$ROOT_DIR/Lib/WebInteractive.cpp"
+  if [[ -f "$dest" ]]; then
+    return
+  fi
+  cat >"$dest" <<'EOF'
+#include "Lib/WebInteractive.hpp"
+
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+
+extern "C" {
+EM_ASYNC_JS(char*, vampire_async_readline, (const char* prompt), {
+  if (typeof Module.vampireReadline !== 'function') { return 0; }
+  const text = prompt ? UTF8ToString(prompt) : "";
+  const response = await Module.vampireReadline(text);
+  if (response === undefined || response === null) { return 0; }
+  const len = lengthBytesUTF8(response) + 1;
+  const buf = _malloc(len);
+  stringToUTF8(response, buf, len);
+  return buf;
+});
+}
+#endif
+EOF
+  echo "Ensured source: ${dest#$ROOT_DIR/}"
+}
+
+ensure_webinteractive_cpp
+
 run_patch "Add WebInteractive.cpp implementation" '*** Add File: Lib/WebInteractive.cpp
 #include "Lib/WebInteractive.hpp"
 
@@ -192,15 +222,35 @@ fi
 run_patch "List WebInteractive.cpp in sources" '--- a/cmake/sources.cmake
 +++ b/cmake/sources.cmake
 @@
-     Lib/System.cpp
-     Lib/System.hpp
-     Lib/Timer.cpp
-     Lib/Timer.hpp
+    Lib/System.cpp
+    Lib/System.hpp
+    Lib/Timer.cpp
+    Lib/Timer.hpp
 +    Lib/WebInteractive.cpp
-     Lib/TriangularArray.hpp
-     Lib/TypeList.hpp
-     Lib/Vector.hpp
-     Lib/VirtualIterator.hpp
+    Lib/TriangularArray.hpp
+    Lib/TypeList.hpp
+    Lib/Vector.hpp
+    Lib/VirtualIterator.hpp
 '
+
+# Fallback: ensure WebInteractive.cpp is in sources.cmake
+SRC_PATH="$ROOT_DIR/cmake/sources.cmake"
+if [[ -f "$SRC_PATH" ]]; then
+  if ! grep -q "Lib/WebInteractive.cpp" "$SRC_PATH"; then
+    SRC_PATH="$SRC_PATH" python - <<'PY'
+from pathlib import Path
+import os
+
+path = Path(os.environ["SRC_PATH"])
+text = path.read_text()
+needle = "Lib/Timer.hpp\n"
+insert = "Lib/Timer.hpp\n    Lib/WebInteractive.cpp\n"
+if needle in text:
+    text = text.replace(needle, insert, 1)
+    path.write_text(text)
+    print("Applied: List WebInteractive.cpp in sources (fallback)")
+PY
+  fi
+fi
 
 echo "Interactive patch completed."
