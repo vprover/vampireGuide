@@ -147,6 +147,29 @@ run_patch "Relax TermOrderingDiagram asserts for Emscripten" '--- a/Kernel/TermO
 +#endif
 '
 
+# Fallback: guard TermOrderingDiagram static_asserts if patch context doesn't match
+TOD_PATH="$ROOT_DIR/Kernel/TermOrderingDiagram.hpp"
+if [[ -f "$TOD_PATH" ]]; then
+  TOD_PATH="$TOD_PATH" python - <<'PY'
+from pathlib import Path
+import os
+
+path = Path(os.environ["TOD_PATH"])
+text = path.read_text()
+needle = (
+    "    static_assert(sizeof(uint64_t) == sizeof(Branch));\n"
+    "    static_assert(sizeof(uint64_t) == sizeof(TermList));\n"
+    "    static_assert(sizeof(uint64_t) == sizeof(void*));\n"
+    "    static_assert(sizeof(uint64_t) == sizeof(intptr_t));\n"
+)
+if needle in text and "__EMSCRIPTEN__" not in text:
+    repl = "#ifndef __EMSCRIPTEN__\n" + needle + "#endif\n"
+    text = text.replace(needle, repl, 1)
+    path.write_text(text)
+    print("Applied: Relax TermOrderingDiagram asserts for Emscripten (fallback)")
+PY
+fi
+
 run_patch "List WebInteractive.cpp in sources" '--- a/cmake/sources.cmake
 +++ b/cmake/sources.cmake
 @@
