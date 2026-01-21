@@ -153,19 +153,38 @@ if [[ -f "$TOD_PATH" ]]; then
   TOD_PATH="$TOD_PATH" python - <<'PY'
 from pathlib import Path
 import os
+import re
 
 path = Path(os.environ["TOD_PATH"])
-text = path.read_text()
-needle = (
-    "    static_assert(sizeof(uint64_t) == sizeof(Branch));\n"
-    "    static_assert(sizeof(uint64_t) == sizeof(TermList));\n"
-    "    static_assert(sizeof(uint64_t) == sizeof(void*));\n"
-    "    static_assert(sizeof(uint64_t) == sizeof(intptr_t));\n"
-)
-if needle in text and "__EMSCRIPTEN__" not in text:
-    repl = "#ifndef __EMSCRIPTEN__\n" + needle + "#endif\n"
-    text = text.replace(needle, repl, 1)
-    path.write_text(text)
+lines = path.read_text().splitlines(True)
+pattern = re.compile(r'^\s*static_assert\(sizeof\(uint64_t\)\s*==\s*sizeof\([^)]+\)\);\s*$')
+
+groups = []
+start = None
+for i, line in enumerate(lines):
+    if pattern.match(line):
+        if start is None:
+            start = i
+    else:
+        if start is not None:
+            groups.append((start, i))
+            start = None
+if start is not None:
+    groups.append((start, len(lines)))
+
+changed = False
+for start, end in reversed(groups):
+    prev = start - 1
+    while prev >= 0 and lines[prev].strip() == "":
+        prev -= 1
+    if prev >= 0 and lines[prev].strip() == "#ifndef __EMSCRIPTEN__":
+        continue
+    lines.insert(end, "#endif\n")
+    lines.insert(start, "#ifndef __EMSCRIPTEN__\n")
+    changed = True
+
+if changed:
+    path.write_text("".join(lines))
     print("Applied: Relax TermOrderingDiagram asserts for Emscripten (fallback)")
 PY
 fi
