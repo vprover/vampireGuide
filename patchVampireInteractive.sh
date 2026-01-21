@@ -112,9 +112,9 @@ run_patch "Wire interactive input helper into vampire.cpp" '--- a/vampire.cpp
 run_patch "Use web-aware input in ManCSPassiveClauseContainer" '--- a/Saturation/ManCSPassiveClauseContainer.cpp
 +++ b/Saturation/ManCSPassiveClauseContainer.cpp
 @@ -13,6 +13,8 @@
-  */
- #include <iostream>
- #include <algorithm>
+ */
+#include <iostream>
+#include <algorithm>
 +#include <stdexcept>
 +#include "Lib/WebInteractive.hpp"
  #include "ManCSPassiveClauseContainer.hpp"
@@ -124,12 +124,27 @@ run_patch "Use web-aware input in ManCSPassiveClauseContainer" '--- a/Saturation
 @@ -49,7 +51,9 @@ Clause* ManCSPassiveClauseContainer::popSelected()
      // ask user to pick a clause id
      std::cout << "Pick a clause:\n";
-     std::string id;
+   std::string id;
 -    std::cin >> id;
 +    if (!Lib::Web::readInteractiveLine(id)) {
 +      throw std::runtime_error("No input available for clause selection");
 +    }
-    unsigned selectedId = std::stoi(id);
+   unsigned selectedId = std::stoi(id);
+'
+
+run_patch "Relax TermOrderingDiagram asserts for Emscripten" '--- a/Kernel/TermOrderingDiagram.hpp
++++ b/Kernel/TermOrderingDiagram.hpp
+@@
+-    static_assert(sizeof(uint64_t) == sizeof(Branch));
+-    static_assert(sizeof(uint64_t) == sizeof(TermList));
+-    static_assert(sizeof(uint64_t) == sizeof(void*));
+-    static_assert(sizeof(uint64_t) == sizeof(intptr_t));
++#ifndef __EMSCRIPTEN__
++    static_assert(sizeof(uint64_t) == sizeof(Branch));
++    static_assert(sizeof(uint64_t) == sizeof(TermList));
++    static_assert(sizeof(uint64_t) == sizeof(void*));
++    static_assert(sizeof(uint64_t) == sizeof(intptr_t));
++#endif
 '
 
 run_patch "List WebInteractive.cpp in sources" '--- a/cmake/sources.cmake
