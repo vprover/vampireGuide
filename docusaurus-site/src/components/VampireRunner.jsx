@@ -112,9 +112,14 @@ fof(b, conjecture, p).`,
   const pendingResolveRef = useRef(null);
   const pendingPromiseRef = useRef(null);
   const [running, setRunning] = useState(false);
+  const [hasOutput, setHasOutput] = useState(false);
+  const hasOutputRef      = useRef(false);
+  const [runningDots, setRunningDots] = useState(0);
   const outWrapRef        = useRef(null);
   const outCodeRef        = useRef(null);
   const latestOutRef      = useRef('Ready.');
+  const flushTimerRef     = useRef(null);
+  const cancelRunRef      = useRef(null);
   const runIdRef          = useRef(0);
 
   useEffect(() => {
@@ -125,7 +130,7 @@ fof(b, conjecture, p).`,
   useEffect(() => {
     if (typeof window === 'undefined') return;
     highlightNowOrWhenReady(outCodeRef.current);
-  }, [out, outputLanguage, pendingPrompt, pendingInput, pendingInline]);
+  }, [out, outputLanguage]);
 
   useEffect(() => {
     if (!outWrapRef.current) return;
@@ -137,8 +142,24 @@ fof(b, conjecture, p).`,
     outWrapRef.current?.focus({ preventScroll: true });
   }, [pendingPrompt]);
 
+  useEffect(() => {
+    if (!running) {
+      setRunningDots(0);
+      return;
+    }
+    const id = setInterval(() => {
+      setRunningDots(prev => (prev + 1) % 3);
+    }, 500);
+    return () => clearInterval(id);
+  }, [running]);
+
   const visibleOut = (() => {
-    if (pendingPrompt === null) return out;
+    if (pendingPrompt === null) {
+      if (!running || hasOutput) return out;
+      const dots = '.'.repeat((runningDots % 3) + 1);
+      const sep = out ? '\n' : '';
+      return out + sep + `Running${dots}`;
+    }
     const lastLineRaw = out.split('\n').slice(-1)[0] || '';
     const lastLine = lastLineRaw.replace(/\s+$/, '');
     const forceInline = pendingMatchText && lastLine.endsWith(pendingMatchText);
@@ -149,26 +170,39 @@ fof(b, conjecture, p).`,
     return out + sep + (pendingPrompt ?? '> ') + pendingInput;
   })();
 
+  const scheduleFlush = () => {
+    if (flushTimerRef.current) return;
+    flushTimerRef.current = setTimeout(() => {
+      flushTimerRef.current = null;
+      setOut(latestOutRef.current || '');
+    }, 50);
+  };
+
+  useEffect(() => () => {
+    if (flushTimerRef.current) {
+      clearTimeout(flushTimerRef.current);
+    }
+  }, []);
+
   // Append a line to the transcript (one big string for highlighting)
   const appendLine = (text) => {
-    setOut(prev => {
-      const next = prev ? `${prev}\n${text}` : text;
-      latestOutRef.current = next;
-      return next;
-    });
+    const prev = latestOutRef.current || '';
+    latestOutRef.current = prev ? `${prev}\n${text}` : text;
+    scheduleFlush();
   };
 
   const appendInline = (text) => {
-    setOut(prev => {
-      const next = (prev || '') + text;
-      latestOutRef.current = next;
-      return next;
-    });
+    latestOutRef.current = (latestOutRef.current || '') + text;
+    scheduleFlush();
   };
 
   const handleRequestInput = (promptText) => {
     if (pendingResolveRef.current) {
       return pendingPromiseRef.current || new Promise(() => {});
+    }
+    if (!hasOutputRef.current) {
+      hasOutputRef.current = true;
+      setHasOutput(true);
     }
     const raw = String(promptText ?? '');
     const trimmed = raw.replace(/\s+$/, '');
@@ -240,12 +274,19 @@ fof(b, conjecture, p).`,
   async function onRun() {
     const newRunId = runIdRef.current + 1;
     runIdRef.current = newRunId;
+    if (cancelRunRef.current) {
+      cancelRunRef.current();
+      cancelRunRef.current = null;
+    }
     if (pendingResolveRef.current) {
       pendingResolveRef.current = null;
       pendingPromiseRef.current = null;
     }
     setRunning(true);
-    setOut('Running…');
+    setHasOutput(false);
+    hasOutputRef.current = false;
+    latestOutRef.current = '';
+    setOut('');
     setPendingPrompt(null);
     setPendingInput('');
     setPendingInline(false);
@@ -266,15 +307,30 @@ fof(b, conjecture, p).`,
         args,
         onStdout: (msg) => {
           if (runIdRef.current !== newRunId) return;
-          String(msg ?? '').split('\n').forEach(appendLine);
+          const text = String(msg ?? '');
+          if (text && !hasOutputRef.current) {
+            hasOutputRef.current = true;
+            setHasOutput(true);
+          }
+          text.split('\n').forEach(appendLine);
         },
         onStderr: (msg) => {
           if (runIdRef.current !== newRunId) return;
-          String(msg ?? '').split('\n').forEach(line => appendLine(`[err] ${line}`));
+          const text = String(msg ?? '');
+          if (text && !hasOutputRef.current) {
+            hasOutputRef.current = true;
+            setHasOutput(true);
+          }
+          text.split('\n').forEach(line => appendLine(`[err] ${line}`));
         },
         requestInput: (promptText) => {
           if (runIdRef.current !== newRunId) return new Promise(() => {});
           return handleRequestInput(promptText);
+        },
+        onReady: (ready) => {
+          if (ready && typeof ready.cancel === 'function') {
+            cancelRunRef.current = ready.cancel;
+          }
         },
       });
       if (runIdRef.current === newRunId) {
@@ -300,6 +356,8 @@ fof(b, conjecture, p).`,
         setPendingSpacer('');
         setPendingMatchText('');
         setRunning(false);
+        cancelRunRef.current = null;
+        scheduleFlush();
       }
     }
   }

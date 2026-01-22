@@ -67,7 +67,108 @@ export function shellQuote(argv) {
 }
 
 // ---------- Runner APIs ----------
+function buildArgv(tptp, args) {
+  const argv = parseArgs(String(args ?? ''));
+  if (!argv.some(x => x.endsWith('.p') || x.startsWith('/'))) {
+    argv.push('/work/input.p');
+  }
+  return argv;
+}
+
+async function runVampireInWorker({ tptp, args, onStdout, onStderr, requestInput, onReady }) {
+  const base = getBaseUrl();
+  const workerUrl = base + 'vampire-runner/worker.js';
+  const worker = new Worker(workerUrl, { type: 'module' });
+
+  const stdoutBuf = [];
+  const stderrBuf = [];
+  let resolveRun;
+  let resolved = false;
+  const done = new Promise((resolve) => (resolveRun = resolve));
+  const finish = (code) => {
+    if (resolved) return;
+    resolved = true;
+    resolveRun({
+      stdout: stdoutBuf.join('\n'),
+      stderr: stderrBuf.join('\n'),
+      code
+    });
+  };
+
+  worker.onmessage = async (ev) => {
+    const msg = ev.data || {};
+    if (msg.type === 'stdout') {
+      const line = String(msg.data ?? '');
+      stdoutBuf.push(line);
+      onStdout?.(line);
+      return;
+    }
+    if (msg.type === 'stderr') {
+      const line = String(msg.data ?? '');
+      stderrBuf.push(line);
+      onStderr?.(line);
+      return;
+    }
+    if (msg.type === 'requestInput') {
+      if (typeof requestInput !== 'function') {
+        worker.postMessage({ type: 'input', value: '' });
+        return;
+      }
+      try {
+        const answer = await requestInput(String(msg.prompt ?? ''));
+        worker.postMessage({ type: 'input', value: answer ?? '' });
+      } catch {
+        worker.postMessage({ type: 'input', value: '' });
+      }
+      return;
+    }
+    if (msg.type === 'done') {
+      finish(typeof msg.code === 'number' ? msg.code : 0);
+      worker.terminate();
+      return;
+    }
+    if (msg.type === 'fatal') {
+      const line = String(msg.message ?? 'FATAL');
+      stderrBuf.push(line);
+      onStderr?.(line);
+      finish(-1);
+      worker.terminate();
+    }
+  };
+
+  worker.onerror = (err) => {
+    const line = String(err?.message || err);
+    stderrBuf.push(line);
+    onStderr?.(line);
+    finish(-1);
+    worker.terminate();
+  };
+
+  const argv = buildArgv(tptp, args);
+  worker.postMessage({
+    type: 'run',
+    tptp: String(tptp ?? ''),
+    argv
+  });
+
+  if (typeof onReady === 'function') {
+    onReady({
+      cancel: () => {
+        if (!resolved) {
+          finish(-1);
+        }
+        worker.terminate();
+      }
+    });
+  }
+
+  return done;
+}
+
 export async function runVampireRaw({ tptp, args, onStdout, onStderr, requestInput, onReady }) {
+  if (typeof Worker !== 'undefined') {
+    return runVampireInWorker({ tptp, args, onStdout, onStderr, requestInput, onReady });
+  }
   const base = getBaseUrl();
 
   const glueUrl = base + 'vampire-runner/vampire.js';
@@ -89,6 +190,7 @@ export async function runVampireRaw({ tptp, args, onStdout, onStderr, requestInp
   };
 
   const isInteractive = typeof requestInput === 'function';
+  const stdin = () => null;
   const Module = {
     noInitialRun: true,
     // Keep the runtime alive during interactive runs; allow exit otherwise
@@ -107,6 +209,8 @@ export async function runVampireRaw({ tptp, args, onStdout, onStderr, requestInp
     vampireReadline: requestInput
       ? (prompt) => Promise.resolve(requestInput(String(prompt ?? '')))
       : undefined,
+    stdin,
+    input: stdin,
     onExit: (code) => finish(code),
     onAbort: (what) => {
       const msg = String(what ?? 'abort');
@@ -125,10 +229,7 @@ export async function runVampireRaw({ tptp, args, onStdout, onStderr, requestInp
     try { mod.FS.mkdir('/work'); } catch {}
     mod.FS.writeFile('/work/input.p', new TextEncoder().encode(String(tptp ?? '')));
 
-    const argv = parseArgs(String(args ?? ''));
-    if (!argv.some(x => x.endsWith('.p') || x.startsWith('/'))) {
-      argv.push('/work/input.p');
-    }
+    const argv = buildArgv(tptp, args);
 
     const ret = mod.callMain(argv);
     try {

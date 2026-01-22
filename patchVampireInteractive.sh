@@ -153,14 +153,67 @@ run_patch "Use web-aware input in ManCSPassiveClauseContainer" '--- a/Saturation
  namespace Saturation
 @@ -49,7 +51,9 @@ Clause* ManCSPassiveClauseContainer::popSelected()
      // ask user to pick a clause id
-     std::cout << "Pick a clause:\n";
-   std::string id;
+    std::cout << "Pick a clause:\n";
+    std::string id;
 -    std::cin >> id;
 +    if (!Lib::Web::readInteractiveLine(id)) {
 +      throw std::runtime_error("No input available for clause selection");
 +    }
-   unsigned selectedId = std::stoi(id);
+   unsigned selectedId = 0;
+   try {
+     selectedId = std::stoul(id);
+   } catch (const std::exception&) {
+     std::cout << "User error: Invalid clause id '" << id << "'!\n";
+     continue;
+   }
 '
+
+# Fallback: ensure web-aware input is used in ManCSPassiveClauseContainer
+MANCS_PATH="$ROOT_DIR/Saturation/ManCSPassiveClauseContainer.cpp"
+if [[ -f "$MANCS_PATH" ]]; then
+  MANCS_PATH="$MANCS_PATH" python - <<'PY'
+from pathlib import Path
+import os
+import re
+
+path = Path(os.environ["MANCS_PATH"])
+text = path.read_text()
+
+if "Lib/WebInteractive.hpp" not in text:
+    text = text.replace("#include <algorithm>\n", "#include <algorithm>\n#include <stdexcept>\n#include \"Lib/WebInteractive.hpp\"\n", 1)
+
+pattern = re.compile(r'^\s*std::cin\s*>>\s*id;\s*$', re.M)
+if pattern.search(text):
+    text = pattern.sub(
+        "    if (!Lib::Web::readInteractiveLine(id)) {\n"
+        "      throw std::runtime_error(\"No input available for clause selection\");\n"
+        "    }",
+        text,
+        count=1,
+    )
+
+def ensure_validation(src: str) -> str:
+    if "std::stoul" in src and "Invalid clause id" in src:
+        return src
+    return src.replace(
+        "    unsigned selectedId = std::stoi(id);\n",
+        "    unsigned selectedId = 0;\n"
+        "    try {\n"
+        "      selectedId = std::stoul(id);\n"
+        "    } catch (const std::exception&) {\n"
+        "      std::cout << \"User error: Invalid clause id '\" << id << \"'!\" << std::endl;\n"
+        "      continue;\n"
+        "    }\n",
+        1,
+    )
+
+new_text = ensure_validation(text)
+if new_text != text:
+    text = new_text
+    path.write_text(text)
+    print("Applied: Use web-aware input in ManCSPassiveClauseContainer (fallback)")
+PY
+fi
 
 run_patch "Relax TermOrderingDiagram asserts for Emscripten" '--- a/Kernel/TermOrderingDiagram.hpp
 +++ b/Kernel/TermOrderingDiagram.hpp
@@ -217,6 +270,162 @@ if changed:
     path.write_text("".join(lines))
     print("Applied: Relax TermOrderingDiagram asserts for Emscripten (fallback)")
 PY
+fi
+
+run_patch "Disable mutex usage in Timer for single-threaded Emscripten" '--- a/Lib/Timer.cpp
++++ b/Lib/Timer.cpp
+@@
+-#include <mutex>
++#include <mutex>
+@@
+-static std::recursive_mutex EXIT_LOCK;
++#if defined(__EMSCRIPTEN__) && !defined(__EMSCRIPTEN_PTHREADS__)
++struct DummyMutex {
++  void lock() {}
++  void unlock() {}
++};
++static DummyMutex EXIT_LOCK;
++#else
++static std::recursive_mutex EXIT_LOCK;
++#endif
+@@
+-  ::new (&EXIT_LOCK) std::recursive_mutex;
++#if !defined(__EMSCRIPTEN__) || defined(__EMSCRIPTEN_PTHREADS__)
++  ::new (&EXIT_LOCK) std::recursive_mutex;
++#endif
+'
+
+# Fallback: disable mutex usage in Timer for single-threaded Emscripten
+TIMER_PATH="$ROOT_DIR/Lib/Timer.cpp"
+if [[ -f "$TIMER_PATH" ]]; then
+  TIMER_PATH="$TIMER_PATH" python - <<'PY'
+from pathlib import Path
+import os
+
+path = Path(os.environ["TIMER_PATH"])
+text = path.read_text()
+if "DummyMutex" not in text:
+    text = text.replace(
+        "static std::recursive_mutex EXIT_LOCK;",
+        "#if defined(__EMSCRIPTEN__) && !defined(__EMSCRIPTEN_PTHREADS__)\nstruct DummyMutex {\n  void lock() {}\n  void unlock() {}\n};\nstatic DummyMutex EXIT_LOCK;\n#else\nstatic std::recursive_mutex EXIT_LOCK;\n#endif",
+        1,
+    )
+if "::new (&EXIT_LOCK) std::recursive_mutex;" in text:
+    text = text.replace("::new (&EXIT_LOCK) std::recursive_mutex;",
+                        "#if !defined(__EMSCRIPTEN__) || defined(__EMSCRIPTEN_PTHREADS__)\n  ::new (&EXIT_LOCK) std::recursive_mutex;\n#endif")
+path.write_text(text)
+PY
+  echo "Applied: Disable mutex usage in Timer for single-threaded Emscripten (fallback)"
+fi
+
+run_patch "Avoid random_device failure in WASM" '--- a/Lib/Random.hpp
++++ b/Lib/Random.hpp
+@@
++  inline static unsigned systemSeed()
++  {
++#ifdef __EMSCRIPTEN__
++    return static_cast<unsigned>(std::time(nullptr));
++#else
++    return std::random_device()();
++#endif
++  }
++
+   inline static void resetSeed ()
+   {
+-    setSeed(std::random_device()());
++    setSeed(systemSeed());
+   }
+'
+
+run_patch "Use Random::systemSeed in Options sampling" '--- a/Shell/Options.cpp
++++ b/Shell/Options.cpp
+@@
+-  auto rng = _randomStrategySeed.actualValue == 0
+-    ? std::mt19937((std::random_device())())
++  auto rng = _randomStrategySeed.actualValue == 0
++    ? std::mt19937(Random::systemSeed())
+     : std::mt19937(_randomStrategySeed.actualValue);
+'
+
+run_patch "Use Random::systemSeed in PortfolioMode" '--- a/CASC/PortfolioMode.cpp
++++ b/CASC/PortfolioMode.cpp
+@@
+ #include "Lib/ScopedLet.hpp"
+ #include "Debug/TimeProfiling.hpp"
+ #include "Lib/Timer.hpp"
+ #include "Lib/Sys/Multiprocessing.hpp"
++#include "Lib/Random.hpp"
+@@
+-      opt.setRandomSeed(std::random_device()());
++      opt.setRandomSeed(Random::systemSeed());
+'
+
+# Fallback: guard random_device for Emscripten in Lib/Random.hpp
+RAND_PATH="$ROOT_DIR/Lib/Random.hpp"
+if [[ -f "$RAND_PATH" ]]; then
+  RAND_PATH="$RAND_PATH" python - <<'PY'
+from pathlib import Path
+import os
+
+path = Path(os.environ["RAND_PATH"])
+text = path.read_text()
+insert = (
+    "  inline static unsigned systemSeed()\n"
+    "  {\n"
+    "#ifdef __EMSCRIPTEN__\n"
+    "    return static_cast<unsigned>(std::time(nullptr));\n"
+    "#else\n"
+    "    return std::random_device()();\n"
+    "#endif\n"
+    "  }\n\n"
+)
+if "systemSeed()" not in text:
+    marker = "inline static void resetSeed"
+    if marker in text:
+        text = text.replace(marker, insert + marker, 1)
+    elif "public:" in text:
+        text = text.replace("public:\n", "public:\n" + insert, 1)
+text = text.replace("setSeed(std::random_device()());", "setSeed(systemSeed());")
+path.write_text(text)
+PY
+  echo "Applied: Avoid random_device failure in WASM (fallback)"
+fi
+
+# Fallback: patch Options.cpp to use Random::systemSeed()
+OPT_PATH="$ROOT_DIR/Shell/Options.cpp"
+if [[ -f "$OPT_PATH" ]]; then
+  if grep -q "random_device" "$OPT_PATH" && grep -q "strategySamplerFilename" "$OPT_PATH"; then
+    OPT_PATH="$OPT_PATH" python - <<'PY'
+from pathlib import Path
+import os
+path = Path(os.environ["OPT_PATH"])
+text = path.read_text()
+old = "  auto rng = _randomStrategySeed.actualValue == 0\n    ? std::mt19937((std::random_device())())\n    : std::mt19937(_randomStrategySeed.actualValue);\n"
+new = "  auto rng = _randomStrategySeed.actualValue == 0\n    ? std::mt19937(Random::systemSeed())\n    : std::mt19937(_randomStrategySeed.actualValue);\n"
+if old in text:
+    text = text.replace(old, new, 1)
+    path.write_text(text)
+PY
+    echo "Applied: Use Random::systemSeed in Options sampling (fallback)"
+  fi
+fi
+
+# Fallback: patch PortfolioMode.cpp to use Random::systemSeed()
+PORT_PATH="$ROOT_DIR/CASC/PortfolioMode.cpp"
+if [[ -f "$PORT_PATH" ]]; then
+  if grep -q "randomizeSeedForPortfolioWorkers" "$PORT_PATH"; then
+    PORT_PATH="$PORT_PATH" python - <<'PY'
+from pathlib import Path
+import os
+path = Path(os.environ["PORT_PATH"])
+text = path.read_text()
+if "Lib/Random.hpp" not in text:
+    text = text.replace('#include "Lib/Timer.hpp"\n', '#include "Lib/Timer.hpp"\n#include "Lib/Random.hpp"\n', 1)
+text = text.replace("opt.setRandomSeed(std::random_device()());", "opt.setRandomSeed(Random::systemSeed());")
+path.write_text(text)
+PY
+    echo "Applied: Use Random::systemSeed in PortfolioMode (fallback)"
+  fi
 fi
 
 run_patch "List WebInteractive.cpp in sources" '--- a/cmake/sources.cmake

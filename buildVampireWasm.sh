@@ -1,30 +1,50 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+VAMPIRE_DIR=${VAMPIRE_DIR:-vampire}
+# Pin to a known-good commit for reproducible builds; override via env if needed.
+VAMPIRE_REF=${VAMPIRE_REF:-5a7e9a5e82bc89aa8303ae5033d1d22b555c6fd7}
+VAMPIRE_RECLONE=${VAMPIRE_RECLONE:-0}
+
 # 1. Clone the Vampire repo if not already present
-if [[ ! -d vampire ]]; then
-  echo "Cloning Vampire..."
-  git clone https://github.com/vprover/vampire.git
+if [[ "$VAMPIRE_RECLONE" == "1" && -d "$VAMPIRE_DIR" ]]; then
+  echo "Removing existing '$VAMPIRE_DIR' for a clean clone..."
+  rm -rf "$VAMPIRE_DIR"
+fi
+
+if [[ ! -d "$VAMPIRE_DIR" ]]; then
+  echo "Cloning Vampire ($VAMPIRE_REF)..."
+  git clone https://github.com/vprover/vampire.git "$VAMPIRE_DIR"
+  if [[ -n "$VAMPIRE_REF" ]]; then
+    git -C "$VAMPIRE_DIR" checkout "$VAMPIRE_REF"
+  fi
 else
-  echo "Repo 'vampire' already exists, skipping clone."
+  echo "Repo '$VAMPIRE_DIR' already exists, using it as-is."
+  if [[ -n "$VAMPIRE_REF" ]]; then
+    current_ref=$(git -C "$VAMPIRE_DIR" rev-parse HEAD)
+    if [[ "$current_ref" != "$VAMPIRE_REF" ]]; then
+      echo "Warning: '$VAMPIRE_DIR' is at $current_ref, expected $VAMPIRE_REF."
+      echo "Set VAMPIRE_RECLONE=1 to reclone a clean copy at the pinned ref."
+    fi
+  fi
 fi
 
 BUILD_DIR=${BUILD_DIR:-build-ems}
 
 # 2. Copy smallWasmBuild.sh into the repo
 echo "Copying smallWasmBuild.sh..."
-cp -f smallWasmBuild.sh vampire/
+cp -f smallWasmBuild.sh "$VAMPIRE_DIR"/
 
 # 3. Apply patch/edit script to CMakeLists.txt
 echo "Editing CMakeLists.txt..."
-./editCMakeLists.sh vampire/CMakeLists.txt
+./editCMakeLists.sh "$VAMPIRE_DIR"/CMakeLists.txt
 
 # 3b. Apply interactive stdin/stdout hooks for the WASM build
 echo "Applying interactive WASM patch..."
-./patchVampireInteractive.sh vampire
+./patchVampireInteractive.sh "$VAMPIRE_DIR"
 
 # 4. cd into vampire
-cd vampire
+cd "$VAMPIRE_DIR"
 
 # 5. Run build script
 echo "Running smallWasmBuild.sh..."
