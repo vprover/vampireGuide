@@ -67,6 +67,32 @@ export function shellQuote(argv) {
 }
 
 // ---------- Runner APIs ----------
+function isTruthy(val) {
+  if (val == null) return false;
+  const v = String(val).toLowerCase();
+  return v === '1' || v === 'true' || v === 'on' || v === 'yes';
+}
+
+function readBoolArg(argv, i) {
+  const next = argv[i + 1];
+  if (next == null || String(next).startsWith('-')) {
+    return true;
+  }
+  return isTruthy(next);
+}
+
+function isInteractiveArgs(argv) {
+  for (let i = 0; i < argv.length; i += 1) {
+    if (argv[i] === '--manual_cs') {
+      return readBoolArg(argv, i);
+    }
+    if (argv[i] === '--interactive') {
+      return readBoolArg(argv, i);
+    }
+  }
+  return false;
+}
+
 function buildArgv(tptp, args) {
   const argv = parseArgs(String(args ?? ''));
   if (!argv.some(x => x.endsWith('.p') || x.startsWith('/'))) {
@@ -145,10 +171,14 @@ async function runVampireInWorker({ tptp, args, onStdout, onStderr, requestInput
   };
 
   const argv = buildArgv(tptp, args);
+  const canReadline = typeof requestInput === 'function';
+  const interactive = isInteractiveArgs(argv) && canReadline;
   worker.postMessage({
     type: 'run',
     tptp: String(tptp ?? ''),
-    argv
+    argv,
+    interactive,
+    enableReadline: canReadline
   });
 
   if (typeof onReady === 'function') {
@@ -189,12 +219,14 @@ export async function runVampireRaw({ tptp, args, onStdout, onStderr, requestInp
     });
   };
 
-  const isInteractive = typeof requestInput === 'function';
+  const argv = buildArgv(tptp, args);
+  const canReadline = typeof requestInput === 'function';
+  const isInteractive = isInteractiveArgs(argv) && canReadline;
+  let inputPending = false;
   const stdin = () => null;
   const Module = {
     noInitialRun: true,
-    // Keep the runtime alive during interactive runs; allow exit otherwise
-    noExitRuntime: isInteractive,
+    noExitRuntime: false,
     locateFile: (path) => base + 'vampire-runner/' + path,
     print:  (s) => {
       const msg = String(s);
@@ -206,8 +238,15 @@ export async function runVampireRaw({ tptp, args, onStdout, onStderr, requestInp
       stderrBuf.push(msg);
       onStderr?.(msg);
     },
-    vampireReadline: requestInput
-      ? (prompt) => Promise.resolve(requestInput(String(prompt ?? '')))
+    vampireReadline: canReadline
+      ? async (prompt) => {
+          inputPending = true;
+          try {
+            return await Promise.resolve(requestInput(String(prompt ?? '')));
+          } finally {
+            inputPending = false;
+          }
+        }
       : undefined,
     stdin,
     input: stdin,
@@ -229,12 +268,10 @@ export async function runVampireRaw({ tptp, args, onStdout, onStderr, requestInp
     try { mod.FS.mkdir('/work'); } catch {}
     mod.FS.writeFile('/work/input.p', new TextEncoder().encode(String(tptp ?? '')));
 
-    const argv = buildArgv(tptp, args);
-
     const ret = mod.callMain(argv);
     try {
       const awaited = ret && typeof ret.then === 'function' ? await ret : ret;
-      if (!isInteractive) {
+      if (!isInteractive || !inputPending) {
         finish(typeof awaited === 'number' ? awaited : 0);
       }
     } catch (e) {

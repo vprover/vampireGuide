@@ -92,6 +92,11 @@ const config = {
             label: 'Playground',
           },
           {
+            to: 'proof-search-visualization',
+            position: 'left',
+            label: 'Proof Search Visualization',
+          },
+          {
             type: 'docSidebar',
             sidebarId: 'lecturesSidebar',
             position: 'left',

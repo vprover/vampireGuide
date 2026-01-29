@@ -25,7 +25,10 @@ self.onmessage = (ev) => {
   }
 };
 
-async function runOnce({ tptp, argv }) {
+async function runOnce({ tptp, argv, interactive, enableReadline }) {
+  const isInteractive = !!interactive;
+  const canReadline = !!enableReadline;
+  let inputPending = false;
   const base = new URL('.', import.meta.url).href;
   const createVampire = (await import('./vampire.js')).default;
 
@@ -41,7 +44,7 @@ async function runOnce({ tptp, argv }) {
   const stdin = () => null;
   const Module = {
     noInitialRun: true,
-    noExitRuntime: true,
+    noExitRuntime: isInteractive,
     locateFile: (path) => base + path,
     mainScriptUrlOrBlob: base + 'vampire.js',
     print: (s) => {
@@ -54,7 +57,16 @@ async function runOnce({ tptp, argv }) {
       stderrBuf.push(msg);
       self.postMessage({ type: 'stderr', data: msg });
     },
-    vampireReadline: (prompt) => requestInput(String(prompt ?? '')),
+    vampireReadline: canReadline
+      ? async (prompt) => {
+          inputPending = true;
+          try {
+            return await requestInput(String(prompt ?? ''));
+          } finally {
+            inputPending = false;
+          }
+        }
+      : undefined,
     stdin,
     input: stdin,
     onExit: (code) => finish(code),
@@ -79,7 +91,7 @@ async function runOnce({ tptp, argv }) {
   const ret = mod.callMain(args);
   try {
     const awaited = ret && typeof ret.then === 'function' ? await ret : ret;
-    if (!Module.noExitRuntime) {
+    if (!isInteractive || !inputPending) {
       finish(typeof awaited === 'number' ? awaited : 0);
     }
   } catch (e) {

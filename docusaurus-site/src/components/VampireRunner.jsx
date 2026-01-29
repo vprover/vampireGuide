@@ -102,7 +102,7 @@ fof(b, conjecture, p).`,
   outputLanguage = 'tptp',
 }) {
   const [tptp, setTptp]   = useState(defaultProblem);
-  const [args, setArgs]   = useState('--manual_cs on --show_new on --proof on');
+  const [args, setArgs]   = useState('--proof on');
   const [out, setOut]     = useState('Ready.');
   const [pendingPrompt, setPendingPrompt] = useState(null);
   const [pendingInput, setPendingInput]   = useState('');
@@ -121,6 +121,7 @@ fof(b, conjecture, p).`,
   const flushTimerRef     = useRef(null);
   const cancelRunRef      = useRef(null);
   const runIdRef          = useRef(0);
+  const szsDoneRef        = useRef(false);
 
   useEffect(() => {
     latestOutRef.current = out;
@@ -283,6 +284,7 @@ fof(b, conjecture, p).`,
       pendingPromiseRef.current = null;
     }
     setRunning(true);
+    szsDoneRef.current = false;
     setHasOutput(false);
     hasOutputRef.current = false;
     latestOutRef.current = '';
@@ -308,6 +310,10 @@ fof(b, conjecture, p).`,
         onStdout: (msg) => {
           if (runIdRef.current !== newRunId) return;
           const text = String(msg ?? '');
+          if (!szsDoneRef.current && hasSZSStatus(text)) {
+            szsDoneRef.current = true;
+            setRunning(false);
+          }
           if (text && !hasOutputRef.current) {
             hasOutputRef.current = true;
             setHasOutput(true);
@@ -317,6 +323,10 @@ fof(b, conjecture, p).`,
         onStderr: (msg) => {
           if (runIdRef.current !== newRunId) return;
           const text = String(msg ?? '');
+          if (!szsDoneRef.current && hasSZSStatus(text)) {
+            szsDoneRef.current = true;
+            setRunning(false);
+          }
           if (text && !hasOutputRef.current) {
             hasOutputRef.current = true;
             setHasOutput(true);
@@ -362,6 +372,10 @@ fof(b, conjecture, p).`,
     }
   }
 
+  function hasSZSStatus(text) {
+    return /\bSZS\s+status\b/i.test(text);
+  }
+
   return (
     <div style={{ fontFamily: 'system-ui, sans-serif', maxWidth: 980, margin: '0 auto' }}>
       <style>{`
@@ -385,7 +399,7 @@ fof(b, conjecture, p).`,
             <textarea
               value={args}
               onChange={e => setArgs(e.target.value)}
-              placeholder={`Example:\n  --manual_cs on --show_new on --proof on`}
+              placeholder={`Example:\n  --proof on`}
             />
           </div>
         )}
