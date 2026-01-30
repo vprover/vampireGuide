@@ -67,6 +67,7 @@ export default function ProofSearchCanvas({
   const rafRef = useRef(null);
   const timeRef = useRef(0);
   const themeRef = useRef('light');
+  const tapRef = useRef({time: 0, id: null, x: 0, y: 0});
 
   useEffect(() => {
     nodesRef.current.clear();
@@ -392,6 +393,7 @@ export default function ProofSearchCanvas({
     const canvas = canvasRef.current;
     if (!canvas) return undefined;
     const handleMove = (ev) => {
+      if (ev.pointerType === 'touch') return;
       const {w, h} = sizeRef.current;
       const rect = canvas.getBoundingClientRect();
       const {zoom, panX, panY} = cameraRef.current;
@@ -448,6 +450,7 @@ export default function ProofSearchCanvas({
       canvas.style.cursor = 'default';
     };
     const handleDown = (ev) => {
+      if (ev.pointerType === 'touch') return;
       const rect = canvas.getBoundingClientRect();
       const {zoom, panX, panY} = cameraRef.current;
       const x = (ev.clientX - rect.left - panX) / zoom;
@@ -487,7 +490,8 @@ export default function ProofSearchCanvas({
         canvas.style.cursor = 'grabbing';
       }
     };
-    const handleUp = () => {
+    const handleUp = (ev) => {
+      if (ev?.pointerType === 'touch') return;
       dragRef.current = null;
       canvas.style.cursor = 'grab';
     };
@@ -522,10 +526,10 @@ export default function ProofSearchCanvas({
     canvas.addEventListener('dblclick', handleDbl);
     const handleTouchStart = (ev) => {
       if (ev.touches.length === 0) return;
-      ev.preventDefault();
       const rect = canvas.getBoundingClientRect();
       const {zoom, panX, panY} = cameraRef.current;
       if (ev.touches.length >= 2) {
+        ev.preventDefault();
         const t1 = ev.touches[0];
         const t2 = ev.touches[1];
         const cX = (t1.clientX + t2.clientX) / 2 - rect.left;
@@ -564,6 +568,7 @@ export default function ProofSearchCanvas({
         }
       });
       if (chosen) {
+        ev.preventDefault();
         dragRef.current = {
           type: 'node',
           id: chosen.id,
@@ -571,7 +576,8 @@ export default function ProofSearchCanvas({
           offsetY: chosen.y - y,
           startX: x,
           startY: y,
-          dragging: true,
+          startTime: performance.now(),
+          dragging: false,
         };
         chosen.vx = 0;
         chosen.vy = 0;
@@ -581,11 +587,11 @@ export default function ProofSearchCanvas({
     };
     const handleTouchMove = (ev) => {
       if (ev.touches.length === 0) return;
-      ev.preventDefault();
       const rect = canvas.getBoundingClientRect();
       const state = dragRef.current;
       const {zoom, panX, panY} = cameraRef.current;
       if (ev.touches.length >= 2) {
+        ev.preventDefault();
         const t1 = ev.touches[0];
         const t2 = ev.touches[1];
         const cX = (t1.clientX + t2.clientX) / 2 - rect.left;
@@ -617,21 +623,46 @@ export default function ProofSearchCanvas({
       }
 
       if (state && state.type === 'node') {
+        ev.preventDefault();
         const t = ev.touches[0];
         const x = (t.clientX - rect.left - panX) / zoom;
         const y = (t.clientY - rect.top - panY) / zoom;
         const node = nodesRef.current.get(state.id);
         if (node) {
-          node.x = x + state.offsetX;
-          node.y = y + state.offsetY;
-          node.vx = 0;
-          node.vy = 0;
+          const dx = x - state.startX;
+          const dy = y - state.startY;
+          const distance = Math.hypot(dx, dy);
+          if (!state.dragging && distance > 4) {
+            state.dragging = true;
+          }
+          if (state.dragging) {
+            node.x = x + state.offsetX;
+            node.y = y + state.offsetY;
+            node.vx = 0;
+            node.vy = 0;
+          }
         }
       }
     };
     const handleTouchEnd = (ev) => {
-      ev.preventDefault();
       if (ev.touches.length >= 2) return;
+      const state = dragRef.current;
+      if (state && state.type === 'node' && !state.dragging) {
+        const now = performance.now();
+        const tapDuration = state.startTime ? now - state.startTime : 0;
+        if (tapDuration < 250) {
+          const last = tapRef.current;
+          if (last.id === state.id && now - last.time < 320) {
+            const node = nodesRef.current.get(state.id);
+            if (node && node.status === 'passive' && onSelect) {
+              onSelect(node.id);
+            }
+            tapRef.current = {time: 0, id: null, x: 0, y: 0};
+          } else {
+            tapRef.current = {time: now, id: state.id, x: 0, y: 0};
+          }
+        }
+      }
       dragRef.current = null;
       canvas.style.cursor = 'grab';
     };
@@ -675,7 +706,7 @@ export default function ProofSearchCanvas({
   return (
     <canvas
       ref={canvasRef}
-      style={{width: '100%', height: '100%', display: 'block', touchAction: 'none'}}
+      style={{width: '100%', height: '100%', display: 'block', touchAction: 'pan-y'}}
     />
   );
 }
