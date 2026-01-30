@@ -16,6 +16,8 @@ const LIGHT_COLORS = {
   tooltipBg: 'rgba(15, 24, 44, 0.9)',
   tooltipStroke: 'rgba(255,255,255,0.15)',
   tooltipText: '#f5f7ff',
+  subsumed: '#ff6b6b',
+  highlight: '#ffe75a',
 };
 
 const DARK_COLORS = {
@@ -33,6 +35,8 @@ const DARK_COLORS = {
   tooltipBg: 'rgba(20, 27, 44, 0.92)',
   tooltipStroke: 'rgba(255,255,255,0.2)',
   tooltipText: '#e6edf7',
+  subsumed: '#ff6b6b',
+  highlight: '#ffe75a',
 };
 
 function getPalette(theme) {
@@ -113,6 +117,9 @@ export default function ProofSearchCanvas({
           id,
           text: clause.text || '',
           status: clause.status || 'new',
+          prevStatus: null,
+          statusChangedAt: now,
+          subsumed: Boolean(clause.subsumed),
           x: baseX + Math.cos(angle) * radius,
           y: baseY + Math.sin(angle) * radius,
           vx: 0,
@@ -122,7 +129,21 @@ export default function ProofSearchCanvas({
       } else {
         const node = map.get(id);
         node.text = clause.text || node.text;
-        node.status = clause.status || node.status;
+        const nextStatus = clause.status || node.status;
+        if (nextStatus !== node.status) {
+          if (
+            node.status === 'new' &&
+            nextStatus === 'passive' &&
+            typeof window !== 'undefined'
+          ) {
+            // eslint-disable-next-line no-console
+            console.log(`[viz] clause ${node.id} new -> passive`);
+          }
+          node.prevStatus = node.status;
+          node.status = nextStatus;
+          node.statusChangedAt = now;
+        }
+        node.subsumed = Boolean(clause.subsumed);
       }
     });
     // Remove nodes that are no longer in the current clause set
@@ -277,6 +298,7 @@ export default function ProofSearchCanvas({
         if (!dragging) {
           const target = targets.get(String(node.id));
           if (target) {
+            // Pull back to the layout position.
             node.vx += (target.x - node.x) * 0.02;
             node.vy += (target.y - node.y) * 0.02;
           } else {
@@ -296,6 +318,8 @@ export default function ProofSearchCanvas({
 
       // Directed edges from parents to children
       const edgeList = edgesRef.current;
+      const hoverId = hoverRef.current?.node?.id;
+      const highlight = hoverId ? computeHighlightSets(hoverId, edgeList) : null;
       if (edgeList && edgeList.length) {
         ctx.strokeStyle = palette.link;
         ctx.lineWidth = 1.4;
@@ -308,22 +332,81 @@ export default function ProofSearchCanvas({
           if (!from || !to) continue;
           drawArrow(ctx, from.x, from.y, to.x, to.y);
         }
+        if (highlight?.edgeKeys?.size) {
+          ctx.save();
+          ctx.strokeStyle = palette.highlight;
+          ctx.lineWidth = 3;
+          ctx.globalAlpha = 0.5;
+          ctx.shadowColor = palette.highlight;
+          ctx.shadowBlur = 16;
+          ctx.shadowOffsetX = 0;
+          ctx.shadowOffsetY = 0;
+          for (let i = 0; i < edgeList.length; i += step) {
+            const edge = edgeList[i];
+            if (!highlight.edgeKeys.has(`${edge.from}->${edge.to}`)) continue;
+            const from = nodeMap.get(String(edge.from));
+            const to = nodeMap.get(String(edge.to));
+            if (!from || !to) continue;
+            drawArrow(ctx, from.x, from.y, to.x, to.y);
+          }
+          ctx.strokeStyle = palette.link;
+          ctx.lineWidth = 1.6;
+          ctx.globalAlpha = 0.95;
+          ctx.shadowBlur = 0;
+          for (let i = 0; i < edgeList.length; i += step) {
+            const edge = edgeList[i];
+            if (!highlight.edgeKeys.has(`${edge.from}->${edge.to}`)) continue;
+            const from = nodeMap.get(String(edge.from));
+            const to = nodeMap.get(String(edge.to));
+            if (!from || !to) continue;
+            drawArrow(ctx, from.x, from.y, to.x, to.y);
+          }
+          ctx.restore();
+        }
       }
 
       // Nodes
-      const hoverId = hoverRef.current?.node?.id;
       nodes.forEach((node) => {
         const age = (ts - node.bornAt) / 1000;
-        const pulse = awaitingInput ? 1 + 0.06 * Math.sin(ts / 280 + Number(node.id) * 0.3) : 1;
-        const baseRadius = 16 + Math.min(18, (node.text?.length || 0) * 0.15);
+        const pulse = awaitingInput && node.status === 'passive'
+          ? 1 + 0.06 * Math.sin(ts / 280 + Number(node.id) * 0.3)
+          : 1;
+        const baseRadius = 18;
         const hoverScale = node.id === hoverId ? 1.12 : 1;
         const radius = baseRadius * hoverScale;
-        const color = node.id === String(selectedId)
+        let color = node.id === String(selectedId)
           ? palette.selected
           : (palette[node.status] || palette.default);
+        if (node.prevStatus && node.prevStatus !== node.status && node.id !== String(selectedId)) {
+          const prev = palette[node.prevStatus] || palette.default;
+          const t = clamp((ts - (node.statusChangedAt || ts)) / 1500, 0, 1);
+          color = mixColor(prev, color, t);
+          if (t >= 1) {
+            node.prevStatus = null;
+          }
+        }
+
+        if (highlight?.nodes?.has(String(node.id))) {
+          const inner = radius * pulse + 2;
+          const outer = radius * pulse + 20;
+          const grad = ctx.createRadialGradient(node.x, node.y, inner, node.x, node.y, outer);
+          grad.addColorStop(0, rgbaFrom(palette.highlight, 0.75));
+          grad.addColorStop(0.5, rgbaFrom(palette.highlight, 0.35));
+          grad.addColorStop(1, rgbaFrom(palette.highlight, 0));
+          ctx.globalAlpha = 1;
+          ctx.fillStyle = grad;
+          ctx.beginPath();
+          ctx.arc(node.x, node.y, outer, 0, Math.PI * 2);
+          ctx.fill();
+        }
 
         ctx.beginPath();
-        ctx.fillStyle = color;
+        const isFalse = isFalseClause(node.text);
+        if (isFalse) {
+          ctx.fillStyle = themeRef.current === 'dark' ? '#000000' : '#ffffff';
+        } else {
+          ctx.fillStyle = color;
+        }
         ctx.globalAlpha = 0.95;
         ctx.arc(node.x, node.y, radius * pulse, 0, Math.PI * 2);
         ctx.fill();
@@ -336,6 +419,29 @@ export default function ProofSearchCanvas({
         ctx.arc(node.x, node.y, radius * pulse + 6, 0, Math.PI * 2);
         ctx.stroke();
 
+        if (!node.subsumed) {
+          ctx.save();
+          ctx.globalAlpha = 0.7;
+          ctx.strokeStyle = themeRef.current === 'dark' ? '#ffffff' : '#000000';
+          ctx.lineWidth = 1.2;
+          ctx.beginPath();
+          ctx.arc(node.x, node.y, radius * pulse + 1, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.restore();
+        }
+
+        if (node.subsumed) {
+          ctx.save();
+          ctx.globalAlpha = 0.85;
+          ctx.strokeStyle = palette.subsumed;
+          ctx.lineWidth = 2.2;
+          ctx.setLineDash([5, 4]);
+          ctx.beginPath();
+          ctx.arc(node.x, node.y, radius * pulse + 2, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.restore();
+        }
+
         // Label
         ctx.globalAlpha = 1;
         ctx.fillStyle = palette.text;
@@ -344,7 +450,21 @@ export default function ProofSearchCanvas({
         ctx.font = `600 ${fontPx}px system-ui, sans-serif`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(node.id, node.x, node.y);
+        if (isFalse) {
+          const trophySize = Math.max(12, 10 / zoom);
+          const gap = Math.max(4, 3 / zoom);
+          const total = trophySize + gap + fontPx;
+          const startY = node.y - total / 2;
+          const trophyY = startY + trophySize / 2;
+          const idY = startY + trophySize + gap + fontPx / 2;
+          ctx.textBaseline = 'middle';
+          ctx.fillText(node.id, node.x, idY);
+          ctx.font = `${trophySize}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif`;
+          ctx.textBaseline = 'middle';
+          ctx.fillText('🏆', node.x, trophyY);
+        } else {
+          ctx.fillText(node.id, node.x, node.y);
+        }
       });
 
       // Hover tooltip
@@ -492,6 +612,12 @@ export default function ProofSearchCanvas({
     };
     const handleUp = (ev) => {
       if (ev?.pointerType === 'touch') return;
+      const state = dragRef.current;
+      if (state && state.type === 'node' && state.dragging) {
+        const node = nodesRef.current.get(state.id);
+        if (node) {
+        }
+      }
       dragRef.current = null;
       canvas.style.cursor = 'grab';
     };
@@ -665,6 +791,11 @@ export default function ProofSearchCanvas({
           }
         }
       }
+      if (state && state.type === 'node' && state.dragging) {
+        const node = nodesRef.current.get(state.id);
+        if (node) {
+        }
+      }
       dragRef.current = null;
       canvas.style.cursor = 'grab';
     };
@@ -762,6 +893,57 @@ function drawArrow(ctx, x1, y1, x2, y2) {
   ctx.fill();
 }
 
+function computeHighlightSets(rootId, edges) {
+  const parents = new Map();
+  const children = new Map();
+  edges.forEach((edge) => {
+    const from = String(edge.from);
+    const to = String(edge.to);
+    if (!parents.has(to)) parents.set(to, new Set());
+    parents.get(to).add(from);
+    if (!children.has(from)) children.set(from, new Set());
+    children.get(from).add(to);
+  });
+
+  const root = String(rootId);
+  const ancestors = new Set();
+  const descendants = new Set();
+  const edgeKeys = new Set();
+
+  // Walk up: collect only edges on paths to ancestors
+  const queueUp = [root];
+  while (queueUp.length) {
+    const current = queueUp.pop();
+    const ps = parents.get(current);
+    if (!ps) continue;
+    ps.forEach((p) => {
+      edgeKeys.add(`${p}->${current}`);
+      if (!ancestors.has(p)) {
+        ancestors.add(p);
+        queueUp.push(p);
+      }
+    });
+  }
+
+  // Walk down: collect only edges on paths to descendants
+  const queueDown = [root];
+  while (queueDown.length) {
+    const current = queueDown.pop();
+    const cs = children.get(current);
+    if (!cs) continue;
+    cs.forEach((c) => {
+      edgeKeys.add(`${current}->${c}`);
+      if (!descendants.has(c)) {
+        descendants.add(c);
+        queueDown.push(c);
+      }
+    });
+  }
+
+  const nodes = new Set([root, ...ancestors, ...descendants]);
+  return {nodes, ancestors, descendants, edgeKeys};
+}
+
 function computeTargets(nodes, edges, width, height, layoutMode, minX = 0, minY = 0) {
   const centerX = minX + width * 0.5;
   const centerY = minY + height * 0.5;
@@ -846,18 +1028,22 @@ function computeTargets(nodes, edges, width, height, layoutMode, minX = 0, minY 
     const usableH = Math.max(1, height - topPad - bottomPad);
     const cols = statusOrder.length;
     const stepX = cols > 1 ? usableW / (cols - 1) : 0;
+    const columnTargets = new Map();
     groups.forEach((layer, d) => {
       if (!layer.length) return;
       layer.sort((a, b) => String(a.id).localeCompare(String(b.id)));
       layer.forEach((node, idx) => {
         const t = (idx + 1) / (layer.length + 1);
         const jitter = (seededRandom(`${node.id}:jy`) - 0.5) * 0.08;
-        targets.set(String(node.id), {
+        const target = {
           x: minX + leftPad + stepX * d,
           y: minY + topPad + usableH * clamp(t + jitter, 0.05, 0.95),
-        });
+        };
+        targets.set(String(node.id), target);
+        columnTargets.set(String(node.id), {x: target.x, y: target.y});
       });
     });
+    targets._columnTargets = columnTargets;
     return targets;
   }
 
@@ -876,18 +1062,22 @@ function computeTargets(nodes, edges, width, height, layoutMode, minX = 0, minY 
     const usableW = Math.max(1, width - leftPad - rightPad);
     const usableH = Math.max(1, height - topPad - bottomPad);
     const stepX = maxDepth > 0 ? usableW / maxDepth : 0;
+    const columnTargets = new Map();
     layers.forEach((layer, d) => {
       if (!layer.length) return;
       layer.sort((a, b) => String(a.id).localeCompare(String(b.id)));
       layer.forEach((node, idx) => {
         const t = (idx + 1) / (layer.length + 1);
         const jitter = (seededRandom(`${node.id}:jy`) - 0.5) * 0.08;
-        targets.set(String(node.id), {
+        const target = {
           x: minX + leftPad + stepX * d,
           y: minY + topPad + usableH * clamp(t + jitter, 0.05, 0.95),
-        });
+        };
+        targets.set(String(node.id), target);
+        columnTargets.set(String(node.id), {x: target.x, y: target.y});
       });
     });
+    targets._columnTargets = columnTargets;
     return targets;
   }
 
@@ -925,6 +1115,56 @@ function drawRoundedRect(ctx, x, y, w, h, r) {
   ctx.lineTo(x, y + radius);
   ctx.arcTo(x, y, x + radius, y, radius);
   ctx.closePath();
+}
+
+function isFalseClause(text) {
+  return /\$false\b/i.test(String(text || '').trim());
+}
+
+function mixColor(a, b, t) {
+  const c1 = toRgb(a);
+  const c2 = toRgb(b);
+  const r = Math.round(lerp(c1.r, c2.r, t));
+  const g = Math.round(lerp(c1.g, c2.g, t));
+  const bch = Math.round(lerp(c1.b, c2.b, t));
+  return `rgb(${r}, ${g}, ${bch})`;
+}
+
+function rgbaFrom(color, alpha) {
+  const c = toRgb(color);
+  return `rgba(${c.r}, ${c.g}, ${c.b}, ${alpha})`;
+}
+
+function toRgb(color) {
+  if (!color) return {r: 0, g: 0, b: 0};
+  if (color.startsWith('#')) {
+    const hex = color.slice(1);
+    if (hex.length === 3) {
+      return {
+        r: parseInt(hex[0] + hex[0], 16),
+        g: parseInt(hex[1] + hex[1], 16),
+        b: parseInt(hex[2] + hex[2], 16),
+      };
+    }
+    if (hex.length === 6) {
+      return {
+        r: parseInt(hex.slice(0, 2), 16),
+        g: parseInt(hex.slice(2, 4), 16),
+        b: parseInt(hex.slice(4, 6), 16),
+      };
+    }
+  } else if (color.startsWith('rgb')) {
+    const match = color.match(/rgba?\(([^)]+)\)/i);
+    if (match) {
+      const parts = match[1].split(',').map((p) => parseFloat(p.trim()));
+      return {
+        r: Math.max(0, Math.min(255, parts[0] || 0)),
+        g: Math.max(0, Math.min(255, parts[1] || 0)),
+        b: Math.max(0, Math.min(255, parts[2] || 0)),
+      };
+    }
+  }
+  return {r: 0, g: 0, b: 0};
 }
 
 function seededRandom(seed) {

@@ -266,6 +266,11 @@
   border-radius: 50%;
 }
 
+.subsumedDot {
+  background: rgba(154, 166, 178, 0.6);
+  border: 2px solid #ff6b6b;
+}
+
 @media (min-width: 1000px) {
   .layout {
     grid-template-columns: 1fr;

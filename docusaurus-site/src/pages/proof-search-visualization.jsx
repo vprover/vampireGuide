@@ -124,6 +124,7 @@ const DEFAULT_ARGS = '--manual_cs on --show_everything on --proof on --avatar of
 
 const TAG_CLAUSE_RE = /^\s*\[(\w+)\]\s*([a-z_]+):\s*(\d+)\.\s*(.*)$/i;
 const SELECT_RE = /\bselected\s+clause\s+(\d+)/i;
+const REDUCE_RE = /^\s*\[SA\]\s*(forward reduce|backward reduce|forward subsumption|backward subsumption|subsumption|tautology deletion|redundancy deletion|simplified):\s*(\d+)\./i;
 const isDebugEdges = () => typeof window !== 'undefined' && Boolean(window.__VampVizDebug);
 
 function highlightNowOrWhenReady(el) {
@@ -286,8 +287,21 @@ export default function ProofSearchVisualization() {
       id: key,
       text: text ?? existing?.text ?? '',
       status: status ?? existing?.status ?? 'new',
+      subsumed: existing?.subsumed ?? false,
     };
     map.set(key, next);
+  };
+
+  const markSubsumed = (id) => {
+    const key = String(id);
+    const map = clauseMapRef.current;
+    const existing = map.get(key);
+    map.set(key, {
+      id: key,
+      text: existing?.text ?? '',
+      status: existing?.status ?? 'new',
+      subsumed: true,
+    });
   };
 
   const commitClauses = () => {
@@ -299,9 +313,11 @@ export default function ProofSearchVisualization() {
         text: clause.text || '',
         ids: [],
         statusById: new Map(),
+        subsumedById: new Map(),
       };
       entry.ids.push(String(clause.id));
       entry.statusById.set(String(clause.id), clause.status || 'new');
+      entry.subsumedById.set(String(clause.id), Boolean(clause.subsumed));
       grouped.set(textKey, entry);
     });
 
@@ -323,11 +339,13 @@ export default function ProofSearchVisualization() {
       const status = passiveIds.length
         ? 'passive'
         : (activeIds.length ? 'active' : 'new');
+      const subsumed = entry.subsumedById.get(displayId) || false;
       entry.ids.forEach((id) => idToDisplay.set(id, displayId));
       displayClauses.push({
         id: displayId,
         text: entry.text,
         status,
+        subsumed,
       });
     });
 
@@ -383,6 +401,10 @@ export default function ProofSearchVisualization() {
   };
 
   const parseOutputLine = (line) => {
+    const reduceMatch = line.match(REDUCE_RE);
+    if (reduceMatch) {
+      markSubsumed(reduceMatch[2]);
+    }
     const tagged = line.match(TAG_CLAUSE_RE);
     if (tagged) {
       const tag = tagged[1]?.toUpperCase?.() || '';
@@ -554,6 +576,10 @@ export default function ProofSearchVisualization() {
                 <span className={styles.legendItem}>
                   <span className={styles.dot} style={{background: '#ffb347'}} />
                   Selected
+                </span>
+                <span className={styles.legendItem}>
+                  <span className={`${styles.dot} ${styles.subsumedDot}`} />
+                  Subsumed
                 </span>
               </div>
               <div className={styles.hint}>
