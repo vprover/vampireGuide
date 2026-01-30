@@ -569,6 +569,7 @@ export default function ProofSearchCanvas({
       });
       if (chosen) {
         ev.preventDefault();
+        hoverRef.current = {node: chosen};
         dragRef.current = {
           type: 'node',
           id: chosen.id,
@@ -582,6 +583,7 @@ export default function ProofSearchCanvas({
         chosen.vx = 0;
         chosen.vy = 0;
       } else {
+        hoverRef.current = null;
         dragRef.current = null;
       }
     };
