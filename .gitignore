@@ -3,3 +3,4 @@ docusaurus-site/static/vampire-runner/vampire.wasm
 docusaurus-site/node_modules
 .emcache
 vampire
+.tmp_lua_repl

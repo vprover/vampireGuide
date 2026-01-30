@@ -126,6 +126,47 @@ const TAG_CLAUSE_RE = /^\s*\[(\w+)\]\s*([a-z_]+):\s*(\d+)\.\s*(.*)$/i;
 const SELECT_RE = /\bselected\s+clause\s+(\d+)/i;
 const isDebugEdges = () => typeof window !== 'undefined' && Boolean(window.__VampVizDebug);
 
+function highlightNowOrWhenReady(el) {
+  if (!el || typeof window === 'undefined') return;
+  const tryHl = () => {
+    if (window.Prism && typeof window.Prism.highlightElement === 'function') {
+      window.Prism.highlightElement(el);
+    }
+  };
+  tryHl();
+  window.addEventListener('load', tryHl, {once: true});
+}
+
+function LiveCode({value, onChange, className = 'language-tptp', minHeight = '18rem'}) {
+  const codeRef = useRef(null);
+
+  useEffect(() => {
+    if (!codeRef.current) return;
+    const current = codeRef.current.textContent ?? '';
+    if (current !== (value || '')) {
+      codeRef.current.textContent = value || '';
+      highlightNowOrWhenReady(codeRef.current);
+    }
+  }, [value]);
+
+  const handleInput = () => {
+    if (!codeRef.current) return;
+    onChange(codeRef.current.textContent || '');
+  };
+
+  return (
+    <pre className={`prism-live ${className}`} style={{minHeight, margin: 0}}>
+      <code
+        ref={codeRef}
+        contentEditable
+        spellCheck={false}
+        onInput={handleInput}
+        style={{outline: 'none', display: 'block', whiteSpace: 'pre'}}
+      />
+    </pre>
+  );
+}
+
 function normalizePhaseStatus(phase) {
   if (!phase) return 'new';
   if (phase.includes('active')) return 'active';
@@ -194,12 +235,17 @@ export default function ProofSearchVisualization() {
   const [edges, setEdges] = useState([]);
   const flushTimerRef = useRef(null);
   const outputRef = useRef('Ready.');
+  const outputCodeRef = useRef(null);
   const runIdRef = useRef(0);
   const cancelRunRef = useRef(null);
   const szsDoneRef = useRef(false);
 
   useEffect(() => {
     outputRef.current = output;
+  }, [output]);
+
+  useEffect(() => {
+    highlightNowOrWhenReady(outputCodeRef.current);
   }, [output]);
 
   useEffect(() => () => {
@@ -546,10 +592,13 @@ export default function ProofSearchVisualization() {
               </div>
               <textarea
                 id="viz-problem"
-                className={`${styles.textarea} ${styles.mono}`}
+                className={styles.hiddenInput}
                 value={tptp}
                 onChange={(e) => setTptp(e.target.value)}
               />
+              <div className={styles.liveCode}>
+                <LiveCode value={tptp} onChange={setTptp} className="language-tptp" minHeight="14rem" />
+              </div>
 
               <label htmlFor="viz-args">Args</label>
               <input
@@ -574,7 +623,11 @@ export default function ProofSearchVisualization() {
 
             <div className={styles.panel}>
               <label>Output</label>
-              <pre className={`${styles.output} ${styles.mono}`}>{output}</pre>
+              <pre className={styles.output}>
+                <code ref={outputCodeRef} className={`language-tptp ${styles.mono}`}>
+                  {output}
+                </code>
+              </pre>
 
               <div className={styles.promptRow}>
                 <input

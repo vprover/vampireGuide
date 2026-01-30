@@ -154,6 +154,26 @@
   color: var(--ifm-font-color-base);
 }
 
+.hiddenInput {
+  display: none;
+}
+
+.liveCode {
+  border-radius: 10px;
+  border: 1px solid var(--ifm-color-emphasis-300);
+  background: var(--ifm-background-surface-color);
+  color: var(--ifm-font-color-base);
+  padding: 0.5rem;
+}
+
+.liveCode :global(pre) {
+  margin: 0;
+}
+
+.liveCode :global(code) {
+  color: inherit;
+}
+
 .argsInput {
   width: 100%;
   padding: 0.6rem 0.75rem;
