@@ -116,18 +116,8 @@ const config = {
         ],
       },
       footer: {
-        style: 'dark',
-        links: [
-          {
-            title: 'Docs',
-            items: [
-              {
-                label: 'Tutorial',
-                to: '/docs/tutorial/intro',
-              },
-            ],
-          },
-        ],
+        style: 'light',
+        links: [],
         copyright: `Copyright © ${new Date().getFullYear()}. Built with Docusaurus.`,
       },
 

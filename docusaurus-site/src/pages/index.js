@@ -36,7 +36,8 @@ export default function Home() {
   return (
     <Layout
       title={`${siteConfig.title}`}
-      description="Description will go into a meta tag in <head />">
+      description="Description will go into a meta tag in <head />"
+      wrapperClassName={styles.homeWrapper}>
       <HomepageHeader />
       
       {/* <main>

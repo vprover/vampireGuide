@@ -2,41 +2,53 @@
 import React, {useEffect, useRef} from 'react';
 
 const LIGHT_COLORS = {
-  new: '#46bdf0',
-  active: '#42d392',
-  passive: '#9aa6b2',
-  selected: '#ffb347',
-  default: '#6b93ff',
-  text: '#0c1622',
-  glow: 'rgba(74, 157, 255, 0.25)',
-  bg0: '#f7fbff',
-  bg1: '#edf3ff',
-  grid: 'rgba(100, 125, 160, 0.12)',
-  link: 'rgba(70, 110, 200, 0.35)',
-  tooltipBg: 'rgba(15, 24, 44, 0.9)',
-  tooltipStroke: 'rgba(255,255,255,0.15)',
-  tooltipText: '#f5f7ff',
-  subsumed: '#ff6b6b',
-  highlight: '#ffe75a',
+  new: '#ff9fb2',
+  active: '#b62929',
+  passive: '#8a8a8a',
+  selected: '#f97316',
+  default: '#1a1a1a',
+  text: '#0b0b0b',
+  glow: 'rgba(140, 20, 20, 0.22)',
+  bg0: '#fbfbfb',
+  bg1: '#f2f2f2',
+  grid: 'rgba(20, 20, 20, 0.08)',
+  link: 'rgba(60, 60, 60, 0.35)',
+  tooltipBg: 'rgba(18, 12, 12, 0.9)',
+  tooltipStroke: 'rgba(255,255,255,0.12)',
+  tooltipText: '#f8f4f4',
+  tooltipOp: '#ff6b6b',
+  tooltipVar: '#ffd166',
+  tooltipNum: '#f59e0b',
+  tooltipBool: '#ffffff',
+  tooltipSym: '#f8f4f4',
+  tooltipPunct: '#c0b0b0',
+  subsumed: '#ff4d4d',
+  highlight: '#fff59d',
 };
 
 const DARK_COLORS = {
-  new: '#5bc5ff',
-  active: '#41e6a4',
-  passive: '#7e8a96',
-  selected: '#ffb347',
-  default: '#7aa2f7',
-  text: '#eef2ff',
-  glow: 'rgba(94, 197, 255, 0.25)',
-  bg0: '#0b1020',
-  bg1: '#121a2f',
-  grid: 'rgba(120, 150, 200, 0.12)',
-  link: 'rgba(110, 170, 255, 0.35)',
-  tooltipBg: 'rgba(20, 27, 44, 0.92)',
+  new: '#ff3b5c',
+  active: '#9a1b1b',
+  passive: '#5f5f5f',
+  selected: '#f59e0b',
+  default: '#e0e0e0',
+  text: '#f4f1f1',
+  glow: 'rgba(255, 40, 40, 0.22)',
+  bg0: '#0a0a0a',
+  bg1: '#101010',
+  grid: 'rgba(255, 255, 255, 0.08)',
+  link: 'rgba(200, 200, 200, 0.28)',
+  tooltipBg: 'rgba(18, 10, 10, 0.95)',
   tooltipStroke: 'rgba(255,255,255,0.2)',
-  tooltipText: '#e6edf7',
-  subsumed: '#ff6b6b',
-  highlight: '#ffe75a',
+  tooltipText: '#f3eaea',
+  tooltipOp: '#ff8080',
+  tooltipVar: '#ffd78a',
+  tooltipNum: '#fbbf24',
+  tooltipBool: '#ffffff',
+  tooltipSym: '#f3eaea',
+  tooltipPunct: '#b9aaaa',
+  subsumed: '#ff4d4d',
+  highlight: '#fff59d',
 };
 
 function getPalette(theme) {
@@ -72,6 +84,7 @@ export default function ProofSearchCanvas({
   const timeRef = useRef(0);
   const themeRef = useRef('light');
   const tapRef = useRef({time: 0, id: null, x: 0, y: 0});
+  const hoverFadeRef = useRef({id: null, alpha: 0, lastTs: 0});
 
   useEffect(() => {
     nodesRef.current.clear();
@@ -318,8 +331,28 @@ export default function ProofSearchCanvas({
 
       // Directed edges from parents to children
       const edgeList = edgesRef.current;
-      const hoverId = hoverRef.current?.node?.id;
-      const highlight = hoverId ? computeHighlightSets(hoverId, edgeList) : null;
+      const hoverId = hoverRef.current?.node?.id || null;
+      const fade = hoverFadeRef.current;
+      if (hoverId && hoverId !== fade.id) {
+        fade.id = hoverId;
+        fade.alpha = 0;
+        fade.lastTs = ts;
+      }
+      if (fade.lastTs == null) fade.lastTs = ts;
+      const dt = Math.min(1, (ts - fade.lastTs) / 400);
+      const target = hoverId ? 1 : 0;
+      if (target > (fade.alpha || 0)) {
+        fade.alpha = Math.min(1, (fade.alpha || 0) + dt);
+      } else if (target < (fade.alpha || 0)) {
+        fade.alpha = Math.max(0, (fade.alpha || 0) - dt);
+      }
+      fade.lastTs = ts;
+      if (!hoverId && fade.alpha === 0) {
+        fade.id = null;
+      }
+      const highlightId = fade.id;
+      const highlightAlpha = fade.alpha || 0;
+      const highlight = highlightId ? computeHighlightSets(highlightId, edgeList) : null;
       if (edgeList && edgeList.length) {
         ctx.strokeStyle = palette.link;
         ctx.lineWidth = 1.4;
@@ -332,13 +365,13 @@ export default function ProofSearchCanvas({
           if (!from || !to) continue;
           drawArrow(ctx, from.x, from.y, to.x, to.y);
         }
-        if (highlight?.edgeKeys?.size) {
+        if (highlight?.edgeKeys?.size && highlightAlpha > 0) {
           ctx.save();
-          ctx.strokeStyle = palette.highlight;
+          ctx.strokeStyle = '#c1121f';
           ctx.lineWidth = 3;
-          ctx.globalAlpha = 0.5;
+          ctx.globalAlpha = 0.55 * highlightAlpha;
           ctx.shadowColor = palette.highlight;
-          ctx.shadowBlur = 16;
+          ctx.shadowBlur = 14 * highlightAlpha;
           ctx.shadowOffsetX = 0;
           ctx.shadowOffsetY = 0;
           for (let i = 0; i < edgeList.length; i += step) {
@@ -351,7 +384,7 @@ export default function ProofSearchCanvas({
           }
           ctx.strokeStyle = palette.link;
           ctx.lineWidth = 1.6;
-          ctx.globalAlpha = 0.95;
+          ctx.globalAlpha = 0.95 * highlightAlpha;
           ctx.shadowBlur = 0;
           for (let i = 0; i < edgeList.length; i += step) {
             const edge = edgeList[i];
@@ -386,12 +419,12 @@ export default function ProofSearchCanvas({
           }
         }
 
-        if (highlight?.nodes?.has(String(node.id))) {
+        if (highlight?.nodes?.has(String(node.id)) && highlightAlpha > 0) {
           const inner = radius * pulse + 2;
           const outer = radius * pulse + 20;
           const grad = ctx.createRadialGradient(node.x, node.y, inner, node.x, node.y, outer);
-          grad.addColorStop(0, rgbaFrom(palette.highlight, 0.75));
-          grad.addColorStop(0.5, rgbaFrom(palette.highlight, 0.35));
+          grad.addColorStop(0, rgbaFrom(palette.highlight, 0.75 * highlightAlpha));
+          grad.addColorStop(0.5, rgbaFrom(palette.highlight, 0.35 * highlightAlpha));
           grad.addColorStop(1, rgbaFrom(palette.highlight, 0));
           ctx.globalAlpha = 1;
           ctx.fillStyle = grad;
@@ -474,11 +507,20 @@ export default function ProofSearchCanvas({
         const screenX = node.x * zoom + panX;
         const screenY = node.y * zoom + panY;
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-        const lines = wrapText(ctx, node.text || '', 220);
         const pad = 10;
-        ctx.font = '12px system-ui, sans-serif';
+        const maxWidth = Math.min(340, w - 20);
+        ctx.font = '12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace';
         const lineHeight = 16;
-        const boxWidth = 240;
+        const tokens = tokenizeClause(node.text || '');
+        const lines = wrapTokens(ctx, tokens, maxWidth - pad * 2);
+        const lineWidths = lines.map((line) =>
+          line.reduce((sum, tok) => sum + ctx.measureText(tok.text).width, 0)
+        );
+        const contentWidth = Math.min(
+          maxWidth,
+          Math.max(140, ...lineWidths.map((w) => w + pad * 2))
+        );
+        const boxWidth = Math.min(maxWidth, contentWidth);
         const boxHeight = pad * 2 + lineHeight * Math.max(1, lines.length);
         const boxX = clamp(screenX + 20, 10, w - boxWidth - 10);
         const boxY = clamp(screenY + 20, 10, h - boxHeight - 10);
@@ -491,11 +533,17 @@ export default function ProofSearchCanvas({
         ctx.fill();
         ctx.stroke();
 
-        ctx.fillStyle = palette.tooltipText;
         ctx.textAlign = 'left';
         ctx.textBaseline = 'top';
         lines.forEach((line, idx) => {
-          ctx.fillText(line, boxX + pad, boxY + pad + idx * lineHeight);
+          let cursorX = boxX + pad;
+          const y = boxY + pad + idx * lineHeight;
+          line.forEach((tok) => {
+            if (!tok.text) return;
+            ctx.fillStyle = tokenColor(tok.type, palette);
+            ctx.fillText(tok.text, cursorX, y);
+            cursorX += ctx.measureText(tok.text).width;
+          });
         });
       }
 
@@ -844,22 +892,83 @@ export default function ProofSearchCanvas({
   );
 }
 
-function wrapText(ctx, text, maxWidth) {
-  const words = String(text || '').split(/\s+/).filter(Boolean);
-  if (!words.length) return ['(empty clause)'];
-  const lines = [];
-  let line = words[0];
-  for (let i = 1; i < words.length; i += 1) {
-    const test = line + ' ' + words[i];
-    if (ctx.measureText(test).width > maxWidth) {
-      lines.push(line);
-      line = words[i];
-    } else {
-      line = test;
-    }
+function tokenizeClause(text) {
+  const raw = String(text || '').trim();
+  if (!raw) {
+    return [{text: '(empty clause)', type: 'empty'}];
   }
-  lines.push(line);
-  return lines.slice(0, 6);
+  const regex = /(\s+|\$false|\$true|!=|<=|>=|<=>|=>|[()|,&=:.~]|[A-Za-z_][A-Za-z0-9_]*|\d+|[^\s])/g;
+  const tokens = [];
+  let match;
+  while ((match = regex.exec(raw)) !== null) {
+    const value = match[0];
+    tokens.push({text: value, type: classifyToken(value)});
+  }
+  return tokens;
+}
+
+function classifyToken(token) {
+  if (/^\s+$/.test(token)) return 'ws';
+  if (/^\$false$|^\$true$/i.test(token)) return 'bool';
+  if (/^[A-Z]/.test(token)) return 'var';
+  if (/^\d+$/.test(token)) return 'num';
+  if (/^(~|\||&|=>|<=>|=|!=|<=|>=)$/.test(token)) return 'op';
+  if (/^[a-z]/.test(token)) return 'sym';
+  if (/^[()|,&=:.~]$/.test(token)) return 'punct';
+  return 'sym';
+}
+
+function tokenColor(type, palette) {
+  switch (type) {
+    case 'op':
+      return palette.tooltipOp;
+    case 'var':
+      return palette.tooltipVar;
+    case 'num':
+      return palette.tooltipNum;
+    case 'bool':
+      return palette.tooltipBool;
+    case 'punct':
+      return palette.tooltipPunct;
+    case 'ws':
+      return palette.tooltipText;
+    default:
+      return palette.tooltipSym || palette.tooltipText;
+  }
+}
+
+function wrapTokens(ctx, tokens, maxWidth) {
+  const lines = [];
+  let line = [];
+  let width = 0;
+  const pushLine = () => {
+    if (line.length) lines.push(line);
+    line = [];
+    width = 0;
+  };
+  tokens.forEach((tok) => {
+    if (tok.type === 'ws' && line.length === 0) return;
+    const tokenWidth = ctx.measureText(tok.text).width;
+    if (tokenWidth > maxWidth && tok.text.length > 1) {
+      // Break long tokens into characters
+      tok.text.split('').forEach((ch) => {
+        const chWidth = ctx.measureText(ch).width;
+        if (line.length && width + chWidth > maxWidth) {
+          pushLine();
+        }
+        line.push({text: ch, type: tok.type});
+        width += chWidth;
+      });
+      return;
+    }
+    if (line.length && width + tokenWidth > maxWidth) {
+      pushLine();
+    }
+    line.push(tok);
+    width += tokenWidth;
+  });
+  if (line.length) lines.push(line);
+  return lines.slice(0, 8);
 }
 
 function drawArrow(ctx, x1, y1, x2, y2) {

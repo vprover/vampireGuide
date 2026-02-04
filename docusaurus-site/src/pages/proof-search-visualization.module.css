@@ -191,18 +191,25 @@
 }
 
 .runButton {
-  background: linear-gradient(135deg, #2e8555, #2e5f85);
+  background: linear-gradient(135deg, #c1121f, #4a0000);
   color: #fff;
   border: none;
-  border-radius: 999px;
+  border-radius: 8px;
   padding: 0.6rem 1.25rem;
   font-weight: 600;
   cursor: pointer;
+  box-shadow: 0 0 12px rgba(160, 10, 10, 0.25);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .runButton:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+.runButton:not(:disabled):hover {
+  transform: translateY(-1px);
+  box-shadow: 0 0 16px rgba(160, 10, 10, 0.35);
 }
 
 .statusTag {

@@ -12,33 +12,51 @@ img, div, span, p, h1, h2, h3, h4, h5, h6, a {
   transition: 0.25s all;
 }
 
+html, body {
+  overflow-x: hidden;
+}
+
 /* You can override the default Infima variables here. */
 :root {
-  --ifm-color-primary: #2e8555;
-  --ifm-color-primary-dark: #29784c;
-  --ifm-color-primary-darker: #277148;
-  --ifm-color-primary-darkest: #205d3b;
-  --ifm-color-primary-light: #33925d;
-  --ifm-color-primary-lighter: #359962;
-  --ifm-color-primary-lightest: #3cad6e;
+  --ifm-color-primary: #8b0000;
+  --ifm-color-primary-dark: #7a0000;
+  --ifm-color-primary-darker: #6e0000;
+  --ifm-color-primary-darkest: #4f0000;
+  --ifm-color-primary-light: #a10a0a;
+  --ifm-color-primary-lighter: #b11226;
+  --ifm-color-primary-lightest: #d62828;
+  --ifm-background-color: #f7f5f5;
+  --ifm-background-surface-color: #ffffff;
+  --vamp-footer-bg: #e6e1e1;
+  --vamp-footer-text: #1b1b1b;
+  --vamp-footer-border: rgba(0, 0, 0, 0.12);
+  --vamp-footer-height: 3.5rem;
   --ifm-code-font-size: 95%;
   --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.1);
 }
 
 /* For readability concerns, you should choose a lighter palette in dark mode. */
 [data-theme='dark'] {
-  --ifm-color-primary: #25c2a0;
-  --ifm-color-primary-dark: #21af90;
-  --ifm-color-primary-darker: #1fa588;
-  --ifm-color-primary-darkest: #1a8870;
-  --ifm-color-primary-light: #29d5b0;
-  --ifm-color-primary-lighter: #32d8b4;
-  --ifm-color-primary-lightest: #4fddbf;
+  --ifm-color-primary: #e11d48;
+  --ifm-color-primary-dark: #be123c;
+  --ifm-color-primary-darker: #a10f33;
+  --ifm-color-primary-darkest: #6f0a22;
+  --ifm-color-primary-light: #f43f5e;
+  --ifm-color-primary-lighter: #fb7185;
+  --ifm-color-primary-lightest: #fecdd3;
+  --ifm-background-color: #0b0b0b;
+  --ifm-background-surface-color: #121212;
+  --vamp-footer-bg: #050505;
+  --vamp-footer-text: #e6dede;
+  --vamp-footer-border: rgba(255, 255, 255, 0.1);
+  --vamp-footer-height: 3.5rem;
   --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
 }
 
 .hero {
-  height:45rem;
+  min-height: 0;
+  height: auto;
+  margin-bottom: 0;
 }
 
 .homepageHeader {
@@ -46,6 +64,7 @@ img, div, span, p, h1, h2, h3, h4, h5, h6, a {
   flex-direction: row;
   justify-content: center;
   align-items:center;
+  flex-wrap: wrap;
 }
 
 .homepageHeader > img {
@@ -55,6 +74,74 @@ img, div, span, p, h1, h2, h3, h4, h5, h6, a {
 #vampLogo {
   opacity: 0.7;
   margin: "0em 3em"
+}
+
+@media screen and (max-width: 996px) {
+  #vampLogo {
+    max-width: 80vw;
+    height: auto;
+  }
+}
+
+.footer {
+  background: var(--vamp-footer-bg);
+  color: var(--vamp-footer-text);
+  min-height: var(--vamp-footer-height);
+  padding: 0 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.footer__link-item {
+  color: inherit;
+}
+
+.footer__title,
+.footer__copyright {
+  color: inherit;
+  margin: 0;
+  text-align: center;
+}
+
+/* Global vampire button theme */
+.button {
+  border-radius: 8px;
+  font-weight: 600;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+.button--primary,
+.button--secondary {
+  background: linear-gradient(135deg, #c1121f, #4a0000);
+  color: #fff;
+  border: 1px solid rgba(193, 18, 31, 0.6);
+  box-shadow: 0 0 12px rgba(160, 10, 10, 0.25);
+}
+
+.button--primary:hover,
+.button--secondary:hover {
+  background: linear-gradient(135deg, #e11d48, #6f0000);
+  color: #fff;
+  border-color: rgba(225, 29, 72, 0.8);
+  box-shadow: 0 0 16px rgba(225, 29, 72, 0.35);
+  transform: translateY(-1px);
+}
+
+[data-theme='dark'] .button--primary,
+[data-theme='dark'] .button--secondary {
+  background: linear-gradient(135deg, #ff1f3d, #2a0000);
+  border-color: rgba(255, 31, 61, 0.7);
+  box-shadow: 0 0 14px rgba(255, 31, 61, 0.25);
+  color: #000000;
+}
+
+[data-theme='dark'] .button--primary:hover,
+[data-theme='dark'] .button--secondary:hover {
+  background: linear-gradient(135deg, #ff4d5a, #4a0000);
+  border-color: rgba(255, 77, 90, 0.9);
+  box-shadow: 0 0 18px rgba(255, 77, 90, 0.4);
+  color: #000000;
 }
 
 #vampLogo:hover {
@@ -74,12 +161,12 @@ img, div, span, p, h1, h2, h3, h4, h5, h6, a {
 }
 
 .greenbold {
-  color: green;
+  color: var(--ifm-color-primary);
   font-weight: bold;
 }
 
 .bluebold {
-  color: rgb(80,130,255);
+  color: var(--ifm-color-primary-lightest);
   font-weight: bold;
 }
 

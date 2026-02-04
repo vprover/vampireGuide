@@ -562,19 +562,19 @@ export default function ProofSearchVisualization() {
             <div className={styles.canvasFooter}>
               <div className={styles.legend}>
                 <span className={styles.legendItem}>
-                  <span className={styles.dot} style={{background: '#6cd4ff'}} />
+                  <span className={styles.dot} style={{background: '#ff9fb2'}} />
                   New
                 </span>
                 <span className={styles.legendItem}>
-                  <span className={styles.dot} style={{background: '#6ee7a8'}} />
+                  <span className={styles.dot} style={{background: '#b62929'}} />
                   Active
                 </span>
                 <span className={styles.legendItem}>
-                  <span className={styles.dot} style={{background: '#9aa6b2'}} />
+                  <span className={styles.dot} style={{background: '#8a8a8a'}} />
                   Passive
                 </span>
                 <span className={styles.legendItem}>
-                  <span className={styles.dot} style={{background: '#ffb347'}} />
+                  <span className={styles.dot} style={{background: '#f97316'}} />
                   Selected
                 </span>
                 <span className={styles.legendItem}>
