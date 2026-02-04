@@ -12,6 +12,10 @@ html[data-theme="light"] code[class*="language-"] {
   color: #24292e;
 }
 
+html[data-theme="light"] {
+  --vamp-prism-bg: #fff;
+}
+
 /* token colors (GitHub-ish) */
 html[data-theme="light"] .token.comment,
 html[data-theme="light"] .token.prolog,
@@ -62,6 +66,10 @@ html[data-theme="dark"] pre[class*="language-"],
 html[data-theme="dark"] code[class*="language-"] {
   background: #282a36;
   color: #f8f8f2;
+}
+
+html[data-theme="dark"] {
+  --vamp-prism-bg: #282a36;
 }
 
 html[data-theme="dark"] .token.comment,

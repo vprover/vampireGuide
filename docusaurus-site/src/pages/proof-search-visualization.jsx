@@ -230,6 +230,7 @@ export default function ProofSearchVisualization() {
   const [manualInput, setManualInput] = useState('');
   const [runToken, setRunToken] = useState(0);
   const [layoutMode, setLayoutMode] = useState('sequential');
+  const [showHelp, setShowHelp] = useState(false);
   const pendingResolveRef = useRef(null);
   const clauseMapRef = useRef(new Map());
   const edgeMapRef = useRef(new Map());
@@ -252,6 +253,19 @@ export default function ProofSearchVisualization() {
   useEffect(() => () => {
     if (flushTimerRef.current) clearTimeout(flushTimerRef.current);
   }, []);
+
+  useEffect(() => {
+    if (!showHelp) return;
+    const handleKey = (ev) => {
+      if (ev.key === 'Escape') setShowHelp(false);
+    };
+    document.addEventListener('keydown', handleKey);
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.removeEventListener('keydown', handleKey);
+      document.body.style.overflow = '';
+    };
+  }, [showHelp]);
 
   const flushOutput = () => {
     if (flushTimerRef.current) return;
@@ -522,8 +536,9 @@ export default function ProofSearchVisualization() {
         <div className={styles.hero}>
           <h1>Proof Search Visualization</h1>
           <p className={styles.hint}>
-            Run Vampire in manual clause-selection mode and explore the evolving clause graph. Click a node
-            when prompted to select the next clause.
+            Run Vampire in manual clause-selection mode and explore the evolving clause graph.
+            <br />
+            Click a node to select the next clause.
           </p>
         </div>
 
@@ -638,13 +653,21 @@ export default function ProofSearchVisualization() {
                 <button className={styles.runButton} onClick={onRun} disabled={running}>
                   {running ? 'Running…' : 'Run Vampire'}
                 </button>
+                <button className={styles.helpButton} type="button" onClick={() => setShowHelp(true)}>
+                  Help
+                </button>
                 <span className={styles.statusTag}>
                   {running ? 'Live run' : 'Idle'}
                 </span>
               </div>
-              <p className={styles.hint}>
-                Tip: Use <code className={styles.mono}>--show_everything on</code> for the fullest clause stream.
-              </p>
+              <div className={styles.hintStack}>
+                <p className={styles.hint}>
+                  Tip: Use <code className={styles.mono}>--show_everything on</code> for the fullest clause stream.
+                </p>
+                <p className={styles.hint}>
+                  Tip: Remove <code className={styles.mono}>--manual_cs on</code> to let Vampire select clauses automatically.
+                </p>
+              </div>
             </div>
 
             <div className={styles.panel}>
@@ -668,12 +691,46 @@ export default function ProofSearchVisualization() {
                 </button>
               </div>
               <div className={styles.hint}>
-                You can click a clause node or type an id to answer the prompt.
+                You can double‑click a passive clause node or type an id to answer the prompt.
               </div>
             </div>
           </div>
         </div>
       </div>
+      {showHelp && (
+        <div className={styles.modalBackdrop} onClick={() => setShowHelp(false)}>
+          <div className={styles.modal} onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
+            <div className={styles.modalHeader}>
+              <h3>Interactive Proof Search Help</h3>
+              <button className={styles.modalClose} type="button" onClick={() => setShowHelp(false)}>
+                Close
+              </button>
+            </div>
+            <div className={styles.modalBody}>
+              <p>
+                This page lets you run Vampire in the browser and explore the clause stream visually.
+              </p>
+              <ol className={styles.modalList}>
+                <li>Paste or choose a TPTP problem using the buttons at the top.</li>
+                <li>Adjust arguments. For interactive mode keep <code className={styles.mono}>--manual_cs on</code>.</li>
+                <li>Press <strong>Run Vampire</strong> to start the proof search.</li>
+                <li>New/active/passive clauses appear as nodes; arrows show inference links.</li>
+                <li>Hover (or tap) a node to see its clause text.</li>
+                <li>Drag nodes to rearrange the layout.</li>
+                <li>Double‑click a passive node to select it during manual clause selection.</li>
+              </ol>
+              <hr className={styles.modalRule} />
+              <h4>Navigation</h4>
+              <ul className={styles.modalList}>
+                <li><strong>Zoom (desktop):</strong> Ctrl + scroll wheel.</li>
+                <li><strong>Zoom (mobile):</strong> pinch with two fingers.</li>
+                <li><strong>Pan (desktop):</strong> drag empty space.</li>
+                <li><strong>Pan (mobile):</strong> two‑finger drag.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      )}
     </Layout>
   );
 }

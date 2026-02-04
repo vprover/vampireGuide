@@ -382,9 +382,28 @@ fof(b, conjecture, p).`,
         .vr-row{display:flex;gap:16px;align-items:stretch;flex-wrap:wrap}
         .vr-col{flex:1 1 320px;min-width:0}
         label{display:block;font-weight:600;margin:.5rem 0}
-        textarea{width:100%;height:18rem}
-        button.vr-run{padding:.5rem .9rem;border-radius:.5rem;border:1px solid #ccc;cursor:pointer}
-        button.vr-run:hover{background:#eee}
+        textarea{
+          width:100%;
+          height:18rem;
+          background:var(--vamp-prism-bg, var(--ifm-pre-background));
+          border-radius:var(--ifm-pre-border-radius);
+          border:1px solid var(--ifm-color-emphasis-200);
+        }
+        button.vr-run{
+          padding:.6rem 1.25rem;
+          border-radius:.5rem;
+          border:none;
+          cursor:pointer;
+          font-weight:600;
+          color:#fff;
+          background:linear-gradient(135deg,#c1121f,#4a0000);
+          box-shadow:0 0 12px rgba(160,10,10,.25);
+          transition:transform .2s ease,box-shadow .2s ease;
+        }
+        button.vr-run:hover{
+          transform:translateY(-1px);
+          box-shadow:0 0 16px rgba(160,10,10,.35);
+        }
       `}</style>
 
       <div className="vr-row">
@@ -405,7 +424,7 @@ fof(b, conjecture, p).`,
         )}
       </div>
 
-      <p><button className="vr-run" onClick={onRun}>Run Vampire</button></p>
+      <p style={{ marginTop: '1rem' }}><button className="vr-run" onClick={onRun}>Run Vampire</button></p>
 
       <label>Output</label>
       <div
