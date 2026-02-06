@@ -650,8 +650,8 @@ export default function ProofSearchVisualization() {
               />
 
               <div className={styles.runRow}>
-                <button className={styles.runButton} onClick={onRun} disabled={running}>
-                  {running ? 'Running…' : 'Run Vampire'}
+                <button className={styles.runButton} onClick={onRun}>
+                  Run Vampire
                 </button>
                 <button className={styles.helpButton} type="button" onClick={() => setShowHelp(true)}>
                   Help
