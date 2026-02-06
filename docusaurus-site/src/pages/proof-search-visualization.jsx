@@ -241,6 +241,7 @@ export default function ProofSearchVisualization() {
   const runIdRef = useRef(0);
   const cancelRunRef = useRef(null);
   const szsDoneRef = useRef(false);
+  const negatedRef = useRef(new Set());
 
   useEffect(() => {
     outputRef.current = output;
@@ -284,6 +285,7 @@ export default function ProofSearchVisualization() {
   const resetRunState = () => {
     clauseMapRef.current.clear();
     edgeMapRef.current.clear();
+    negatedRef.current.clear();
     setClauses([]);
     setEdges([]);
     setSelectedId(null);
@@ -302,8 +304,19 @@ export default function ProofSearchVisualization() {
       text: text ?? existing?.text ?? '',
       status: status ?? existing?.status ?? 'new',
       subsumed: existing?.subsumed ?? false,
+      negated: existing?.negated ?? negatedRef.current.has(key),
     };
     map.set(key, next);
+  };
+
+  const markNegated = (id) => {
+    const key = String(id);
+    negatedRef.current.add(key);
+    const map = clauseMapRef.current;
+    const existing = map.get(key);
+    if (existing) {
+      map.set(key, {...existing, negated: true});
+    }
   };
 
   const markSubsumed = (id) => {
@@ -328,10 +341,12 @@ export default function ProofSearchVisualization() {
         ids: [],
         statusById: new Map(),
         subsumedById: new Map(),
+        negatedById: new Map(),
       };
       entry.ids.push(String(clause.id));
       entry.statusById.set(String(clause.id), clause.status || 'new');
       entry.subsumedById.set(String(clause.id), Boolean(clause.subsumed));
+      entry.negatedById.set(String(clause.id), Boolean(clause.negated));
       grouped.set(textKey, entry);
     });
 
@@ -354,12 +369,14 @@ export default function ProofSearchVisualization() {
         ? 'passive'
         : (activeIds.length ? 'active' : 'new');
       const subsumed = entry.subsumedById.get(displayId) || false;
+      const negated = entry.negatedById.get(displayId) || false;
       entry.ids.forEach((id) => idToDisplay.set(id, displayId));
       displayClauses.push({
         id: displayId,
         text: entry.text,
         status,
         subsumed,
+        negated,
       });
     });
 
@@ -415,6 +432,12 @@ export default function ProofSearchVisualization() {
   };
 
   const parseOutputLine = (line) => {
+    if (/negated conjecture/i.test(line)) {
+      const idMatch = line.match(/:\s*(\d+)\.\s/);
+      if (idMatch) {
+        markNegated(idMatch[1]);
+      }
+    }
     const reduceMatch = line.match(REDUCE_RE);
     if (reduceMatch) {
       markSubsumed(reduceMatch[2]);
@@ -430,6 +453,16 @@ export default function ProofSearchVisualization() {
       if (bracketMatches.length) {
         bracket = bracketMatches[bracketMatches.length - 1][1];
         text = text.replace(/\s*\[[^\]]+\]\s*$/, '');
+      }
+      if (bracket) {
+        if (/negated conjecture/i.test(bracket)) {
+          markNegated(id);
+        } else {
+          const refs = Array.from(bracket.matchAll(/\b(\d+)\b/g)).map((m) => m[1]);
+          if (refs.some((ref) => negatedRef.current.has(String(ref)))) {
+            markNegated(id);
+          }
+        }
       }
       if (tag === 'SA') {
         const status = normalizePhaseStatus(phase);
@@ -577,24 +610,28 @@ export default function ProofSearchVisualization() {
             <div className={styles.canvasFooter}>
               <div className={styles.legend}>
                 <span className={styles.legendItem}>
-                  <span className={styles.dot} style={{background: '#ff9fb2'}} />
+                  <span className={`${styles.dot} ${styles.legendDotNew}`} />
                   New
                 </span>
                 <span className={styles.legendItem}>
-                  <span className={styles.dot} style={{background: '#b62929'}} />
+                  <span className={`${styles.dot} ${styles.legendDotActive}`} />
                   Active
                 </span>
                 <span className={styles.legendItem}>
-                  <span className={styles.dot} style={{background: '#8a8a8a'}} />
+                  <span className={`${styles.dot} ${styles.legendDotPassive}`} />
                   Passive
                 </span>
                 <span className={styles.legendItem}>
-                  <span className={styles.dot} style={{background: '#f97316'}} />
+                  <span className={`${styles.dot} ${styles.legendDotSelected}`} />
                   Selected
                 </span>
                 <span className={styles.legendItem}>
                   <span className={`${styles.dot} ${styles.subsumedDot}`} />
                   Subsumed
+                </span>
+                <span className={styles.legendItem}>
+                  <span className={`${styles.dot} ${styles.negatedDot}`} />
+                  Negated conjecture
                 </span>
               </div>
               <div className={styles.hint}>

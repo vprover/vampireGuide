@@ -23,6 +23,7 @@ const LIGHT_COLORS = {
   tooltipSym: '#f8f4f4',
   tooltipPunct: '#c0b0b0',
   subsumed: '#ff4d4d',
+  negated: '#7c3aed',
   highlight: '#fff59d',
 };
 
@@ -48,6 +49,7 @@ const DARK_COLORS = {
   tooltipSym: '#f3eaea',
   tooltipPunct: '#b9aaaa',
   subsumed: '#ff4d4d',
+  negated: '#c084fc',
   highlight: '#fff59d',
 };
 
@@ -133,6 +135,7 @@ export default function ProofSearchCanvas({
           prevStatus: null,
           statusChangedAt: now,
           subsumed: Boolean(clause.subsumed),
+          negated: Boolean(clause.negated),
           x: baseX + Math.cos(angle) * radius,
           y: baseY + Math.sin(angle) * radius,
           vx: 0,
@@ -157,6 +160,7 @@ export default function ProofSearchCanvas({
           node.statusChangedAt = now;
         }
         node.subsumed = Boolean(clause.subsumed);
+        node.negated = Boolean(clause.negated);
       }
     });
     // Remove nodes that are no longer in the current clause set
@@ -471,6 +475,17 @@ export default function ProofSearchCanvas({
           ctx.setLineDash([5, 4]);
           ctx.beginPath();
           ctx.arc(node.x, node.y, radius * pulse + 2, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.restore();
+        }
+
+        if (node.negated) {
+          ctx.save();
+          ctx.globalAlpha = 0.9;
+          ctx.strokeStyle = palette.negated;
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(node.x, node.y, radius * pulse - 4, 0, Math.PI * 2);
           ctx.stroke();
           ctx.restore();
         }

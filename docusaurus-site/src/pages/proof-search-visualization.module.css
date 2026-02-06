@@ -299,9 +299,47 @@
   border-radius: 50%;
 }
 
+.legendDotNew {
+  background: #ff9fb2;
+}
+
+.legendDotActive {
+  background: #b62929;
+}
+
+.legendDotPassive {
+  background: #8a8a8a;
+}
+
+.legendDotSelected {
+  background: #f97316;
+}
+
+:global([data-theme='dark']) .legendDotNew {
+  background: #ff3b5c;
+}
+
+:global([data-theme='dark']) .legendDotActive {
+  background: #9a1b1b;
+}
+
+:global([data-theme='dark']) .legendDotPassive {
+  background: #5f5f5f;
+}
+
+:global([data-theme='dark']) .legendDotSelected {
+  background: #f59e0b;
+}
+
 .subsumedDot {
   background: rgba(154, 166, 178, 0.6);
   border: 2px solid #ff6b6b;
+  border-style: dashed;
+}
+
+.negatedDot {
+  background: transparent;
+  border: 2px solid #7c3aed;
 }
 
 .modalBackdrop {
