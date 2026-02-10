@@ -252,6 +252,8 @@ export default function ProofSearchCanvas({
       const maxY = minY + viewH;
       const centerX = minX + viewW * 0.5;
       const centerY = minY + viewH * 0.5;
+      const dragState = dragRef.current;
+      const grabbedId = dragState && dragState.type === 'node' ? dragState.id : null;
 
       // Subtle grid (world space)
       ctx.strokeStyle = palette.grid;
@@ -293,10 +295,18 @@ export default function ProofSearchCanvas({
             const force = 60 / dist2;
             const fx = force * dx;
             const fy = force * dy;
-            a.vx += fx;
-            a.vy += fy;
-            b.vx -= fx;
-            b.vy -= fy;
+            if (grabbedId && String(a.id) === String(grabbedId)) {
+              b.vx -= fx;
+              b.vy -= fy;
+            } else if (grabbedId && String(b.id) === String(grabbedId)) {
+              a.vx += fx;
+              a.vy += fy;
+            } else {
+              a.vx += fx;
+              a.vy += fy;
+              b.vx -= fx;
+              b.vy -= fy;
+            }
           }
         }
       } else {
@@ -310,8 +320,8 @@ export default function ProofSearchCanvas({
 
       for (let i = 0; i < count; i += 1) {
         const node = nodes[i];
-        const dragState = dragRef.current;
-        const dragging = dragState && dragState.type === 'node' && dragState.id === node.id && dragState.dragging;
+        const grabbed = grabbedId && String(node.id) === String(grabbedId);
+        const dragging = grabbed && dragState?.dragging;
         if (!dragging) {
           const target = targets.get(String(node.id));
           if (target) {
@@ -324,9 +334,14 @@ export default function ProofSearchCanvas({
           }
           node.vx *= 0.78;
           node.vy *= 0.78;
+        } else {
+          node.vx = 0;
+          node.vy = 0;
         }
-        node.x += node.vx;
-        node.y += node.vy;
+        if (!grabbed) {
+          node.x += node.vx;
+          node.y += node.vy;
+        }
 
         const pad = 28;
         node.x = clamp(node.x, minX + pad, maxX - pad);
