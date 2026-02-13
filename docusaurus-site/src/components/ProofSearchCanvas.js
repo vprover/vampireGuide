@@ -25,6 +25,7 @@ const LIGHT_COLORS = {
   subsumed: '#ff4d4d',
   negated: '#7c3aed',
   highlight: '#fff59d',
+  edgeGlow: '160, 20, 20',
 };
 
 const DARK_COLORS = {
@@ -51,6 +52,7 @@ const DARK_COLORS = {
   subsumed: '#ff4d4d',
   negated: '#c084fc',
   highlight: '#fff59d',
+  edgeGlow: '255, 60, 60',
 };
 
 function getPalette(theme) {
@@ -65,6 +67,8 @@ function clamp(v, min, max) {
   return Math.max(min, Math.min(max, v));
 }
 
+const NODE_RADIUS = 18;
+
 export default function ProofSearchCanvas({
   clauses,
   edges = [],
@@ -72,6 +76,7 @@ export default function ProofSearchCanvas({
   awaitingInput,
   resetToken,
   layoutMode = 'radial',
+  centerToken,
   onSelect,
 }) {
   const canvasRef = useRef(null);
@@ -81,18 +86,39 @@ export default function ProofSearchCanvas({
   const edgesRef = useRef([]);
   const layoutRef = useRef({targets: new Map(), dirty: true});
   const sizeRef = useRef({w: 0, h: 0, dpr: 1});
-  const cameraRef = useRef({zoom: 1, panX: 0, panY: 0});
+  const cameraRef = useRef({zoom: 1, panX: 0, panY: 0, userMoved: false, centered: false});
   const rafRef = useRef(null);
   const timeRef = useRef(0);
   const themeRef = useRef('light');
   const tapRef = useRef({time: 0, id: null, x: 0, y: 0});
+  const centerReqRef = useRef(0);
+  const nodesChangedRef = useRef({lastTs: 0});
+  const interactionRef = useRef({lastTs: 0, blocked: false});
   const hoverFadeRef = useRef({id: null, alpha: 0, lastTs: 0});
+  const vCenterRef = useRef({scheduled: false, done: false, timer: null, raf: null});
 
   useEffect(() => {
     nodesRef.current.clear();
     hoverRef.current = null;
     layoutRef.current = {targets: new Map(), dirty: true};
+    cameraRef.current.zoom = 1;
+    cameraRef.current.panX = 0;
+    cameraRef.current.panY = 0;
+    cameraRef.current.userMoved = false;
+    cameraRef.current.centered = false;
+    centerReqRef.current = 0;
+    interactionRef.current.lastTs = performance.now();
+    interactionRef.current.blocked = false;
+    if (vCenterRef.current.timer) clearTimeout(vCenterRef.current.timer);
+    if (vCenterRef.current.raf) cancelAnimationFrame(vCenterRef.current.raf);
+    vCenterRef.current = {scheduled: false, done: false, timer: null, raf: null};
   }, [resetToken]);
+
+  useEffect(() => {
+    if (centerToken == null) return;
+    centerReqRef.current = centerToken;
+    cameraRef.current.centered = false;
+  }, [centerToken]);
 
   useEffect(() => {
     edgesRef.current = Array.isArray(edges) ? edges : [];
@@ -170,6 +196,69 @@ export default function ProofSearchCanvas({
       }
     });
     layoutRef.current.dirty = true;
+    nodesChangedRef.current.lastTs = now;
+    if (!vCenterRef.current.scheduled && !vCenterRef.current.done && map.size > 0) {
+      vCenterRef.current.scheduled = true;
+      vCenterRef.current.timer = setTimeout(() => {
+        vCenterRef.current.timer = null;
+        if (vCenterRef.current.done) return;
+        const {w, h} = sizeRef.current;
+        if (!w || !h) return;
+        if (cameraRef.current.userMoved || interactionRef.current.blocked) return;
+        const nodes = Array.from(nodesRef.current.values());
+        if (nodes.length === 0) return;
+        let minX = Infinity;
+        let maxX = -Infinity;
+        let minY = Infinity;
+        let maxY = -Infinity;
+        nodes.forEach((node) => {
+          if (node.x < minX) minX = node.x;
+          if (node.x > maxX) maxX = node.x;
+          if (node.y < minY) minY = node.y;
+          if (node.y > maxY) maxY = node.y;
+        });
+        if (
+          !Number.isFinite(minX) ||
+          !Number.isFinite(maxX) ||
+          !Number.isFinite(minY) ||
+          !Number.isFinite(maxY)
+        ) {
+          return;
+        }
+        const {zoom, panX, panY} = cameraRef.current;
+        const boundsW = Math.max(1, maxX - minX);
+        const boundsH = Math.max(1, maxY - minY);
+        const padding = 80;
+        const fitZoom = clamp(
+          Math.min((w - padding * 2) / boundsW, (h - padding * 2) / boundsH),
+          0.1,
+          2.5
+        );
+        const targetZoom = Math.min(zoom, fitZoom);
+        const centerX = (minX + maxX) * 0.5;
+        const centerY = (minY + maxY) * 0.5;
+        const targetPanX = w * 0.5 - centerX * targetZoom;
+        const targetPanY = h * 0.5 - centerY * targetZoom;
+        const startZoom = zoom;
+        const startPanX = panX;
+        const startPanY = panY;
+        const duration = 250;
+        const start = performance.now();
+        const step = (ts) => {
+          const t = clamp((ts - start) / duration, 0, 1);
+          cameraRef.current.zoom = lerp(startZoom, targetZoom, t);
+          cameraRef.current.panX = lerp(startPanX, targetPanX, t);
+          cameraRef.current.panY = lerp(startPanY, targetPanY, t);
+          if (t < 1) {
+            vCenterRef.current.raf = requestAnimationFrame(step);
+          } else {
+            vCenterRef.current.raf = null;
+          }
+        };
+        vCenterRef.current.raf = requestAnimationFrame(step);
+        vCenterRef.current.done = true;
+      }, 1000);
+    }
   }, [clauses]);
 
   useEffect(() => {
@@ -238,9 +327,6 @@ export default function ProofSearchCanvas({
       ctx.fillStyle = gradient;
       ctx.fillRect(0, 0, w, h);
 
-      // Zoomed world transform
-      ctx.setTransform(dpr * zoom, 0, 0, dpr * zoom, panX * dpr, panY * dpr);
-
       const nodes = Array.from(nodesRef.current.values());
       const nodeMap = new Map(nodes.map((n) => [String(n.id), n]));
       const count = nodes.length;
@@ -254,6 +340,74 @@ export default function ProofSearchCanvas({
       const centerY = minY + viewH * 0.5;
       const dragState = dragRef.current;
       const grabbedId = dragState && dragState.type === 'node' ? dragState.id : null;
+
+      if (count > 0) {
+        const centerSX = w * 0.5;
+        const centerSY = h * 0.5;
+        const glowBins = new Map();
+        const maxNodes = 220;
+        let offscreenSeen = 0;
+
+        nodes.forEach((node) => {
+          if (offscreenSeen >= maxNodes) return;
+          const sx = node.x * zoom + panX;
+          const sy = node.y * zoom + panY;
+          if (sx >= 0 && sx <= w && sy >= 0 && sy <= h) return;
+          offscreenSeen += 1;
+
+          const dx = sx - centerSX;
+          const dy = sy - centerSY;
+          if (dx === 0 && dy === 0) return;
+          let t = Infinity;
+          if (dx > 0) t = Math.min(t, (w - centerSX) / dx);
+          if (dx < 0) t = Math.min(t, (0 - centerSX) / dx);
+          if (dy > 0) t = Math.min(t, (h - centerSY) / dy);
+          if (dy < 0) t = Math.min(t, (0 - centerSY) / dy);
+          if (!Number.isFinite(t) || t <= 0) return;
+
+          const edgeX = centerSX + dx * t;
+          const edgeY = centerSY + dy * t;
+          const clampX = clamp(sx, 0, w);
+          const clampY = clamp(sy, 0, h);
+          const dist = Math.hypot(sx - clampX, sy - clampY);
+          const weight = clamp(dist / (Math.min(w, h) * 0.45), 0, 1);
+
+          const keyX = Math.round(edgeX / 40);
+          const keyY = Math.round(edgeY / 40);
+          const key = `${keyX}:${keyY}`;
+          const prev = glowBins.get(key) || {x: 0, y: 0, weight: 0, count: 0};
+          prev.x += edgeX;
+          prev.y += edgeY;
+          prev.weight += weight;
+          prev.count += 1;
+          glowBins.set(key, prev);
+        });
+
+        if (glowBins.size > 0) {
+          const glowColor = (alpha) => `rgba(${palette.edgeGlow}, ${alpha})`;
+          const maxAlpha = 0.4;
+          const baseSize = 90;
+          const extraSize = 140;
+          glowBins.forEach((spot) => {
+            const weight = clamp(Math.sqrt(spot.weight), 0, 2.2);
+            const intensity = clamp(weight / 2.2, 0, 1);
+            if (intensity <= 0.02) return;
+            const cx = spot.x / spot.count;
+            const cy = spot.y / spot.count;
+            const radius = baseSize + extraSize * intensity;
+            const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, radius);
+            grad.addColorStop(0, glowColor(maxAlpha * intensity));
+            grad.addColorStop(1, glowColor(0));
+            ctx.fillStyle = grad;
+            ctx.beginPath();
+            ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+            ctx.fill();
+          });
+        }
+      }
+
+      // Zoomed world transform
+      ctx.setTransform(dpr * zoom, 0, 0, dpr * zoom, panX * dpr, panY * dpr);
 
       // Subtle grid (world space)
       ctx.strokeStyle = palette.grid;
@@ -277,10 +431,29 @@ export default function ProofSearchCanvas({
       }
 
       if (layoutRef.current.dirty) {
-        layoutRef.current.targets = computeTargets(nodes, edgesRef.current, viewW, viewH, layoutMode, minX, minY);
+        layoutRef.current.targets = computeTargets(nodes, edgesRef.current, w, h, layoutMode);
         layoutRef.current.dirty = false;
       }
       const targets = layoutRef.current.targets;
+      const bounds = targets?._bounds;
+      if (
+        bounds &&
+        !cameraRef.current.userMoved &&
+        !cameraRef.current.centered &&
+        centerReqRef.current &&
+        !interactionRef.current.blocked
+      ) {
+        const quietFor = ts - (nodesChangedRef.current.lastTs || 0);
+        const idleFor = ts - (interactionRef.current.lastTs || 0);
+        if (quietFor > 1000 && idleFor > 1000) {
+          const cx = (bounds.minX + bounds.maxX) * 0.5;
+          const cy = (bounds.minY + bounds.maxY) * 0.5;
+          cameraRef.current.panX = w * 0.5 - cx * zoom;
+          cameraRef.current.panY = h * 0.5 - cy * zoom;
+          cameraRef.current.centered = true;
+          centerReqRef.current = 0;
+        }
+      }
 
       // Physics step
       const maxPairwise = 140;
@@ -342,14 +515,31 @@ export default function ProofSearchCanvas({
           node.x += node.vx;
           node.y += node.vy;
         }
-
-        const pad = 28;
-        node.x = clamp(node.x, minX + pad, maxX - pad);
-        node.y = clamp(node.y, minY + pad, maxY - pad);
       }
 
       // Directed edges from parents to children
       const edgeList = edgesRef.current;
+      if (layoutMode === 'sequential' && edgeList && edgeList.length) {
+        const minDx = 40;
+        const desiredX = new Map();
+        edgeList.forEach((edge) => {
+          const from = nodeMap.get(String(edge.from));
+          const to = nodeMap.get(String(edge.to));
+          if (!from || !to) return;
+          const targetX = from.x + minDx;
+          const prev = desiredX.get(String(to.id)) || -Infinity;
+          if (targetX > prev) desiredX.set(String(to.id), targetX);
+        });
+        desiredX.forEach((x, id) => {
+          if (grabbedId && String(grabbedId) === String(id)) return;
+          const node = nodeMap.get(String(id));
+          if (!node) return;
+          if (node.x < x) {
+            node.x = x;
+            node.vx = 0;
+          }
+        });
+      }
       const hoverId = hoverRef.current?.node?.id || null;
       const fade = hoverFadeRef.current;
       if (hoverId && hoverId !== fade.id) {
@@ -423,9 +613,10 @@ export default function ProofSearchCanvas({
         const pulse = awaitingInput && node.status === 'passive'
           ? 1 + 0.06 * Math.sin(ts / 280 + Number(node.id) * 0.3)
           : 1;
-        const baseRadius = 18;
+        const baseRadius = NODE_RADIUS;
         const hoverScale = node.id === hoverId ? 1.12 : 1;
         const radius = baseRadius * hoverScale;
+        const screenRadius = radius * zoom;
         let color = node.id === String(selectedId)
           ? palette.selected
           : (palette[node.status] || palette.default);
@@ -507,25 +698,34 @@ export default function ProofSearchCanvas({
 
         // Label
         ctx.globalAlpha = 1;
-        ctx.fillStyle = palette.text;
-        const minIdFont = 10;
-        const fontPx = Math.max(12, minIdFont / zoom);
-        ctx.font = `600 ${fontPx}px system-ui, sans-serif`;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
         if (isFalse) {
-          const trophySize = Math.max(12, 10 / zoom);
-          const gap = Math.max(4, 3 / zoom);
-          const total = trophySize + gap + fontPx;
-          const startY = node.y - total / 2;
-          const trophyY = startY + trophySize / 2;
-          const idY = startY + trophySize + gap + fontPx / 2;
-          ctx.textBaseline = 'middle';
-          ctx.fillText(node.id, node.x, idY);
+          const trophySize = Math.max(10, 8 / zoom);
           ctx.font = `${trophySize}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif`;
+          ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
-          ctx.fillText('🏆', node.x, trophyY);
-        } else {
+          ctx.fillStyle = palette.text;
+          if (screenRadius >= 14) {
+            const minIdFont = 10;
+            const fontPx = Math.max(12, minIdFont / zoom);
+            const gap = Math.max(4, 3 / zoom);
+            const total = trophySize + gap + fontPx;
+            const startY = node.y - total / 2;
+            const trophyY = startY + trophySize / 2;
+            const idY = startY + trophySize + gap + fontPx / 2;
+            ctx.fillText('🏆', node.x, trophyY);
+            ctx.fillStyle = palette.text;
+            ctx.font = `600 ${fontPx}px system-ui, sans-serif`;
+            ctx.fillText(node.id, node.x, idY);
+          } else {
+            ctx.fillText('🏆', node.x, node.y);
+          }
+        } else if (screenRadius >= 10) {
+          ctx.fillStyle = palette.text;
+          const minIdFont = 10;
+          const fontPx = Math.max(12, minIdFont / zoom);
+          ctx.font = `600 ${fontPx}px system-ui, sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
           ctx.fillText(node.id, node.x, node.y);
         }
       });
@@ -590,8 +790,13 @@ export default function ProofSearchCanvas({
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return undefined;
+    const markInteraction = () => {
+      interactionRef.current.lastTs = performance.now();
+      interactionRef.current.blocked = true;
+    };
     const handleMove = (ev) => {
       if (ev.pointerType === 'touch') return;
+      markInteraction();
       const {w, h} = sizeRef.current;
       const rect = canvas.getBoundingClientRect();
       const {zoom, panX, panY} = cameraRef.current;
@@ -606,6 +811,7 @@ export default function ProofSearchCanvas({
           const dy = ev.clientY - dragging.startClientY;
           cameraRef.current.panX = dragging.startPanX + dx;
           cameraRef.current.panY = dragging.startPanY + dy;
+          cameraRef.current.userMoved = true;
           canvas.style.cursor = 'grabbing';
           return;
         }
@@ -630,7 +836,7 @@ export default function ProofSearchCanvas({
 
       let nearest = null;
       let best = Infinity;
-      const hitRadius = 28 / zoom;
+      const hitRadius = NODE_RADIUS;
       nodesRef.current.forEach((node) => {
         const dx = x - node.x;
         const dy = y - node.y;
@@ -649,13 +855,14 @@ export default function ProofSearchCanvas({
     };
     const handleDown = (ev) => {
       if (ev.pointerType === 'touch') return;
+      markInteraction();
       const rect = canvas.getBoundingClientRect();
       const {zoom, panX, panY} = cameraRef.current;
       const x = (ev.clientX - rect.left - panX) / zoom;
       const y = (ev.clientY - rect.top - panY) / zoom;
       let chosen = null;
       let best = Infinity;
-      const hitRadius = 28 / zoom;
+      const hitRadius = NODE_RADIUS;
       nodesRef.current.forEach((node) => {
         const dx = x - node.x;
         const dy = y - node.y;
@@ -690,6 +897,7 @@ export default function ProofSearchCanvas({
     };
     const handleUp = (ev) => {
       if (ev?.pointerType === 'touch') return;
+      markInteraction();
       const state = dragRef.current;
       if (state && state.type === 'node' && state.dragging) {
         const node = nodesRef.current.get(state.id);
@@ -700,6 +908,7 @@ export default function ProofSearchCanvas({
       canvas.style.cursor = 'grab';
     };
     const handleDbl = (ev) => {
+      markInteraction();
       if (!onSelect) return;
       const rect = canvas.getBoundingClientRect();
       const {zoom, panX, panY} = cameraRef.current;
@@ -707,7 +916,7 @@ export default function ProofSearchCanvas({
       const y = (ev.clientY - rect.top - panY) / zoom;
       let chosen = null;
       let best = Infinity;
-      const hitRadius = 28 / zoom;
+      const hitRadius = NODE_RADIUS;
       nodesRef.current.forEach((node) => {
         const dx = x - node.x;
         const dy = y - node.y;
@@ -730,6 +939,7 @@ export default function ProofSearchCanvas({
     canvas.addEventListener('dblclick', handleDbl);
     const handleTouchStart = (ev) => {
       if (ev.touches.length === 0) return;
+      markInteraction();
       const rect = canvas.getBoundingClientRect();
       const {zoom, panX, panY} = cameraRef.current;
       if (ev.touches.length >= 2) {
@@ -761,7 +971,7 @@ export default function ProofSearchCanvas({
       const y = (t.clientY - rect.top - panY) / zoom;
       let chosen = null;
       let best = Infinity;
-      const hitRadius = 28 / zoom;
+      const hitRadius = NODE_RADIUS;
       nodesRef.current.forEach((node) => {
         const dx = x - node.x;
         const dy = y - node.y;
@@ -793,6 +1003,7 @@ export default function ProofSearchCanvas({
     };
     const handleTouchMove = (ev) => {
       if (ev.touches.length === 0) return;
+      markInteraction();
       const rect = canvas.getBoundingClientRect();
       const state = dragRef.current;
       const {zoom, panX, panY} = cameraRef.current;
@@ -820,10 +1031,11 @@ export default function ProofSearchCanvas({
           };
           dragRef.current = start;
         }
-        const nextZoom = clamp(start.startZoom * (dist / start.startDist), 0.4, 2.5);
+        const nextZoom = clamp(start.startZoom * (dist / start.startDist), 0.1, 2.5);
         cameraRef.current.zoom = nextZoom;
         cameraRef.current.panX = cX - start.worldX * nextZoom;
         cameraRef.current.panY = cY - start.worldY * nextZoom;
+        cameraRef.current.userMoved = true;
         canvas.style.cursor = 'grabbing';
         return;
       }
@@ -852,6 +1064,7 @@ export default function ProofSearchCanvas({
     };
     const handleTouchEnd = (ev) => {
       if (ev.touches.length >= 2) return;
+      markInteraction();
       const state = dragRef.current;
       if (state && state.type === 'node' && !state.dragging) {
         const now = performance.now();
@@ -881,9 +1094,10 @@ export default function ProofSearchCanvas({
     canvas.addEventListener('touchmove', handleTouchMove, {passive: false});
     canvas.addEventListener('touchend', handleTouchEnd);
     canvas.addEventListener('touchcancel', handleTouchEnd);
-    const handleWheel = (ev) => {
+      const handleWheel = (ev) => {
       if (!ev.ctrlKey) return;
       ev.preventDefault();
+      markInteraction();
       const rect = canvas.getBoundingClientRect();
       const {zoom, panX, panY} = cameraRef.current;
       const cx = ev.clientX - rect.left;
@@ -891,12 +1105,13 @@ export default function ProofSearchCanvas({
       const worldX = (cx - panX) / zoom;
       const worldY = (cy - panY) / zoom;
       const factor = Math.exp(-ev.deltaY * 0.001);
-      const nextZoom = clamp(zoom * factor, 0.4, 2.5);
+      const nextZoom = clamp(zoom * factor, 0.1, 2.5);
       const nextPanX = cx - worldX * nextZoom;
       const nextPanY = cy - worldY * nextZoom;
       cameraRef.current.zoom = nextZoom;
       cameraRef.current.panX = nextPanX;
       cameraRef.current.panY = nextPanY;
+      cameraRef.current.userMoved = true;
     };
     canvas.addEventListener('wheel', handleWheel, {passive: false});
     return () => {
@@ -1083,9 +1298,9 @@ function computeHighlightSets(rootId, edges) {
   return {nodes, ancestors, descendants, edgeKeys};
 }
 
-function computeTargets(nodes, edges, width, height, layoutMode, minX = 0, minY = 0) {
-  const centerX = minX + width * 0.5;
-  const centerY = minY + height * 0.5;
+function computeTargets(nodes, edges, width, height, layoutMode) {
+  const centerX = width * 0.5;
+  const centerY = height * 0.5;
   const targets = new Map();
   const nodeIds = nodes.map((n) => String(n.id));
   const hasEdges = Array.isArray(edges) && edges.length > 0;
@@ -1119,6 +1334,7 @@ function computeTargets(nodes, edges, width, height, layoutMode, minX = 0, minY 
         });
       });
     });
+    targets._bounds = {minX: 0, minY: 0, maxX: width, maxY: height};
     return targets;
   }
 
@@ -1159,30 +1375,28 @@ function computeTargets(nodes, edges, width, height, layoutMode, minX = 0, minY 
       const slot = idx >= 0 ? idx : statusOrder.length - 1;
       groups[slot].push(node);
     });
-    const leftPad = 70;
-    const rightPad = 70;
-    const topPad = 40;
-    const bottomPad = 40;
-    const usableW = Math.max(1, width - leftPad - rightPad);
-    const usableH = Math.max(1, height - topPad - bottomPad);
+    const leftPad = 80;
+    const topPad = 60;
     const cols = statusOrder.length;
-    const stepX = cols > 1 ? usableW / (cols - 1) : 0;
-    const columnTargets = new Map();
+    const colSpacing = 160;
+    const rowSpacing = 70;
+    const maxLayer = Math.max(1, ...groups.map((g) => g.length));
+    const worldW = Math.max(width, leftPad * 2 + (cols - 1) * colSpacing);
+    const worldH = Math.max(height, topPad * 2 + (maxLayer - 1) * rowSpacing);
     groups.forEach((layer, d) => {
       if (!layer.length) return;
       layer.sort((a, b) => String(a.id).localeCompare(String(b.id)));
+      const layerHeight = (layer.length - 1) * rowSpacing;
+      const offsetY = (worldH - topPad * 2 - layerHeight) * 0.5;
       layer.forEach((node, idx) => {
-        const t = (idx + 1) / (layer.length + 1);
-        const jitter = (seededRandom(`${node.id}:jy`) - 0.5) * 0.08;
-        const target = {
-          x: minX + leftPad + stepX * d,
-          y: minY + topPad + usableH * clamp(t + jitter, 0.05, 0.95),
-        };
-        targets.set(String(node.id), target);
-        columnTargets.set(String(node.id), {x: target.x, y: target.y});
+        const jitter = (seededRandom(`${node.id}:jy`) - 0.5) * 6;
+        targets.set(String(node.id), {
+          x: leftPad + colSpacing * d,
+          y: topPad + offsetY + idx * rowSpacing + jitter,
+        });
       });
     });
-    targets._columnTargets = columnTargets;
+    targets._bounds = {minX: 0, minY: 0, maxX: worldW, maxY: worldH};
     return targets;
   }
 
@@ -1194,29 +1408,27 @@ function computeTargets(nodes, edges, width, height, layoutMode, minX = 0, minY 
   });
 
   if (layoutMode === 'sequential') {
-    const leftPad = 70;
-    const rightPad = 70;
-    const topPad = 40;
-    const bottomPad = 40;
-    const usableW = Math.max(1, width - leftPad - rightPad);
-    const usableH = Math.max(1, height - topPad - bottomPad);
-    const stepX = maxDepth > 0 ? usableW / maxDepth : 0;
-    const columnTargets = new Map();
+    const leftPad = 80;
+    const topPad = 60;
+    const colSpacing = 160;
+    const rowSpacing = 70;
+    const maxLayer = Math.max(1, ...layers.map((layer) => layer.length));
+    const worldW = Math.max(width, leftPad * 2 + maxDepth * colSpacing);
+    const worldH = Math.max(height, topPad * 2 + (maxLayer - 1) * rowSpacing);
     layers.forEach((layer, d) => {
       if (!layer.length) return;
       layer.sort((a, b) => String(a.id).localeCompare(String(b.id)));
+      const layerHeight = (layer.length - 1) * rowSpacing;
+      const offsetY = (worldH - topPad * 2 - layerHeight) * 0.5;
       layer.forEach((node, idx) => {
-        const t = (idx + 1) / (layer.length + 1);
-        const jitter = (seededRandom(`${node.id}:jy`) - 0.5) * 0.08;
-        const target = {
-          x: minX + leftPad + stepX * d,
-          y: minY + topPad + usableH * clamp(t + jitter, 0.05, 0.95),
-        };
-        targets.set(String(node.id), target);
-        columnTargets.set(String(node.id), {x: target.x, y: target.y});
+        const jitter = (seededRandom(`${node.id}:jy`) - 0.5) * 6;
+        targets.set(String(node.id), {
+          x: leftPad + colSpacing * d,
+          y: topPad + offsetY + idx * rowSpacing + jitter,
+        });
       });
     });
-    targets._columnTargets = columnTargets;
+    targets._bounds = {minX: 0, minY: 0, maxX: worldW, maxY: worldH};
     return targets;
   }
 
@@ -1234,7 +1446,7 @@ function computeTargets(nodes, edges, width, height, layoutMode, minX = 0, minY 
       });
     });
   });
-
+  targets._bounds = {minX: 0, minY: 0, maxX: width, maxY: height};
   return targets;
 }
 

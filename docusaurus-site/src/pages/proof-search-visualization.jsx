@@ -231,6 +231,7 @@ export default function ProofSearchVisualization() {
   const [runToken, setRunToken] = useState(0);
   const [layoutMode, setLayoutMode] = useState('sequential');
   const [showHelp, setShowHelp] = useState(false);
+  const [centerToken, setCenterToken] = useState(0);
   const pendingResolveRef = useRef(null);
   const clauseMapRef = useRef(new Map());
   const edgeMapRef = useRef(new Map());
@@ -242,10 +243,17 @@ export default function ProofSearchVisualization() {
   const cancelRunRef = useRef(null);
   const szsDoneRef = useRef(false);
   const negatedRef = useRef(new Set());
+  const centeredRunRef = useRef(false);
 
   useEffect(() => {
     outputRef.current = output;
   }, [output]);
+
+  useEffect(() => {
+    if (!awaitingInput || centeredRunRef.current) return;
+    centeredRunRef.current = true;
+    setCenterToken((prev) => prev + 1);
+  }, [awaitingInput]);
 
   useEffect(() => {
     highlightNowOrWhenReady(outputCodeRef.current);
@@ -286,6 +294,7 @@ export default function ProofSearchVisualization() {
     clauseMapRef.current.clear();
     edgeMapRef.current.clear();
     negatedRef.current.clear();
+    centeredRunRef.current = false;
     setClauses([]);
     setEdges([]);
     setSelectedId(null);
@@ -585,6 +594,7 @@ export default function ProofSearchVisualization() {
               awaitingInput={awaitingInput}
               resetToken={runToken}
               layoutMode={layoutMode}
+              centerToken={centerToken}
               onSelect={awaitingInput ? handleClauseSelection : undefined}
             />
             </div>
