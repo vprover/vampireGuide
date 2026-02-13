@@ -495,7 +495,11 @@ export default function ProofSearchCanvas({
         const node = nodes[i];
         const grabbed = grabbedId && String(node.id) === String(grabbedId);
         const dragging = grabbed && dragState?.dragging;
-        if (!dragging) {
+        const frozen = !dragging && node.freezeUntil && ts < node.freezeUntil;
+        if (frozen) {
+          node.vx = 0;
+          node.vy = 0;
+        } else if (!dragging) {
           const target = targets.get(String(node.id));
           if (target) {
             // Pull back to the layout position.
@@ -511,7 +515,7 @@ export default function ProofSearchCanvas({
           node.vx = 0;
           node.vy = 0;
         }
-        if (!grabbed) {
+        if (!grabbed && !frozen) {
           node.x += node.vx;
           node.y += node.vy;
         }
@@ -534,6 +538,7 @@ export default function ProofSearchCanvas({
           if (grabbedId && String(grabbedId) === String(id)) return;
           const node = nodeMap.get(String(id));
           if (!node) return;
+          if (node.freezeUntil && ts < node.freezeUntil) return;
           if (node.x < x) {
             node.x = x;
             node.vx = 0;
@@ -903,6 +908,13 @@ export default function ProofSearchCanvas({
         const node = nodesRef.current.get(state.id);
         if (node) {
         }
+      } else if (state && state.type === 'node') {
+        const node = nodesRef.current.get(state.id);
+        if (node) {
+          node.freezeUntil = performance.now() + 320;
+          node.vx = 0;
+          node.vy = 0;
+        }
       }
       dragRef.current = null;
       canvas.style.cursor = 'grab';
@@ -1069,10 +1081,15 @@ export default function ProofSearchCanvas({
       if (state && state.type === 'node' && !state.dragging) {
         const now = performance.now();
         const tapDuration = state.startTime ? now - state.startTime : 0;
+        const node = nodesRef.current.get(state.id);
+        if (node) {
+          node.freezeUntil = now + 320;
+          node.vx = 0;
+          node.vy = 0;
+        }
         if (tapDuration < 250) {
           const last = tapRef.current;
           if (last.id === state.id && now - last.time < 320) {
-            const node = nodesRef.current.get(state.id);
             if (node && node.status === 'passive' && onSelect) {
               onSelect(node.id);
             }
