@@ -5,11 +5,54 @@
 // See: https://docusaurus.io/docs/api/docusaurus-config
 
 import path from 'path';
+import fs from 'fs';
+import {fileURLToPath} from 'url';
 import {themes as prismThemes} from 'prism-react-renderer';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 
 // This runs in Node.js - Don't use client-side code here (browser APIs, JSX...)
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+function readVampireVersion() {
+  const fallback = {
+    repo: 'https://github.com/vprover/vampire',
+    tag: '',
+    ref: '',
+  };
+  const versionPath = path.resolve(__dirname, '..', 'vampire-version.env');
+  if (!fs.existsSync(versionPath)) return fallback;
+  const raw = fs.readFileSync(versionPath, 'utf8');
+  const entries = Object.fromEntries(
+    raw
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter((line) => line && !line.startsWith('#') && line.includes('='))
+      .map((line) => {
+        const idx = line.indexOf('=');
+        return [line.slice(0, idx).trim(), line.slice(idx + 1).trim()];
+      })
+  );
+  return {
+    repo: entries.VAMPIRE_REPO || fallback.repo,
+    tag: entries.VAMPIRE_TAG || fallback.tag,
+    ref: entries.VAMPIRE_REF || fallback.ref,
+  };
+}
+
+const vampireVersion = readVampireVersion();
+const vampireShortRef = vampireVersion.ref ? vampireVersion.ref.slice(0, 8) : '';
+const vampireTagHtml = vampireVersion.tag
+  ? `<a href="${vampireVersion.repo}/releases/tag/${vampireVersion.tag}">${vampireVersion.tag}</a>`
+  : '';
+const vampireCommitHtml = vampireVersion.ref
+  ? `<a href="${vampireVersion.repo}/commit/${vampireVersion.ref}">${vampireShortRef}</a>`
+  : '';
+const vampireFooterVersion = vampireTagHtml && vampireCommitHtml
+  ? `Vampire WASM source: ${vampireTagHtml} (${vampireCommitHtml}).`
+  : (vampireCommitHtml ? `Vampire WASM source: ${vampireCommitHtml}.` : '');
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
@@ -118,7 +161,7 @@ const config = {
       footer: {
         style: 'light',
         links: [],
-        copyright: `Copyright © ${new Date().getFullYear()}. Built with Docusaurus.`,
+        copyright: `Copyright © ${new Date().getFullYear()}. Built with Docusaurus. ${vampireFooterVersion}`,
       },
 
       prism: {

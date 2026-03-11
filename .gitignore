@@ -4,3 +4,4 @@ docusaurus-site/node_modules
 .emcache
 vampire
 .tmp_lua_repl
+paper

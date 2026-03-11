@@ -2,7 +2,13 @@
 set -euo pipefail
 
 VAMPIRE_DIR=${VAMPIRE_DIR:-vampire}
-# Pin to a known-good commit for reproducible builds; override via env if needed.
+# Pin to a known-good commit for reproducible builds. Values can be shared
+# with the website footer via vampire-version.env.
+VERSION_FILE=${VERSION_FILE:-vampire-version.env}
+if [[ -f "$VERSION_FILE" ]]; then
+  # shellcheck disable=SC1090
+  source "$VERSION_FILE"
+fi
 VAMPIRE_REF=${VAMPIRE_REF:-5a7e9a5e82bc89aa8303ae5033d1d22b555c6fd7}
 VAMPIRE_RECLONE=${VAMPIRE_RECLONE:-0}
 
@@ -23,8 +29,20 @@ else
   if [[ -n "$VAMPIRE_REF" ]]; then
     current_ref=$(git -C "$VAMPIRE_DIR" rev-parse HEAD)
     if [[ "$current_ref" != "$VAMPIRE_REF" ]]; then
-      echo "Warning: '$VAMPIRE_DIR' is at $current_ref, expected $VAMPIRE_REF."
-      echo "Set VAMPIRE_RECLONE=1 to reclone a clean copy at the pinned ref."
+      echo "Repo '$VAMPIRE_DIR' is at $current_ref, expected pinned ref $VAMPIRE_REF."
+      echo "Fetching and checking out pinned ref..."
+      git -C "$VAMPIRE_DIR" fetch origin "$VAMPIRE_REF" || true
+      git -C "$VAMPIRE_DIR" fetch --tags origin || true
+      if ! git -C "$VAMPIRE_DIR" checkout "$VAMPIRE_REF"; then
+        echo "error: unable to check out pinned ref $VAMPIRE_REF in '$VAMPIRE_DIR'." >&2
+        echo "Set VAMPIRE_RECLONE=1 for a clean clone if needed." >&2
+        exit 1
+      fi
+    fi
+    verified_ref=$(git -C "$VAMPIRE_DIR" rev-parse HEAD)
+    if [[ "$verified_ref" != "$VAMPIRE_REF" ]]; then
+      echo "error: build is not pinned to expected ref $VAMPIRE_REF (got $verified_ref)." >&2
+      exit 1
     fi
   fi
 fi
