@@ -2,7 +2,6 @@
 import React, {useEffect, useRef} from 'react';
 
 const LIGHT_COLORS = {
-  new: '#ff9fb2',
   active: '#b62929',
   passive: '#8a8a8a',
   selected: '#f97316',
@@ -23,13 +22,14 @@ const LIGHT_COLORS = {
   tooltipSym: '#f8f4f4',
   tooltipPunct: '#c0b0b0',
   subsumed: '#ff4d4d',
+  subsumedFill: '#f6a7b7',
   negated: '#7c3aed',
   highlight: '#fff59d',
+  focus: '#39ff14',
   edgeGlow: '160, 20, 20',
 };
 
 const DARK_COLORS = {
-  new: '#ff3b5c',
   active: '#9a1b1b',
   passive: '#5f5f5f',
   selected: '#f59e0b',
@@ -50,8 +50,10 @@ const DARK_COLORS = {
   tooltipSym: '#f3eaea',
   tooltipPunct: '#b9aaaa',
   subsumed: '#ff4d4d',
+  subsumedFill: '#c45a71',
   negated: '#c084fc',
   highlight: '#fff59d',
+  focus: '#39ff14',
   edgeGlow: '255, 60, 60',
 };
 
@@ -77,6 +79,10 @@ export default function ProofSearchCanvas({
   resetToken,
   layoutMode = 'radial',
   centerToken,
+  focusedNodes = [],
+  focusedEdges = [],
+  categoryNodes = [],
+  categoryEdges = [],
   onSelect,
 }) {
   const canvasRef = useRef(null);
@@ -95,6 +101,7 @@ export default function ProofSearchCanvas({
   const nodesChangedRef = useRef({lastTs: 0});
   const interactionRef = useRef({lastTs: 0, blocked: false});
   const hoverFadeRef = useRef({id: null, alpha: 0, lastTs: 0});
+  const panelFadeRef = useRef({alpha: 1, lastTs: 0});
   const vCenterRef = useRef({scheduled: false, done: false, timer: null, raf: null});
 
   useEffect(() => {
@@ -109,6 +116,7 @@ export default function ProofSearchCanvas({
     centerReqRef.current = 0;
     interactionRef.current.lastTs = performance.now();
     interactionRef.current.blocked = false;
+    panelFadeRef.current = {alpha: 1, lastTs: 0};
     if (vCenterRef.current.timer) clearTimeout(vCenterRef.current.timer);
     if (vCenterRef.current.raf) cancelAnimationFrame(vCenterRef.current.raf);
     vCenterRef.current = {scheduled: false, done: false, timer: null, raf: null};
@@ -157,7 +165,7 @@ export default function ProofSearchCanvas({
         map.set(id, {
           id,
           text: clause.text || '',
-          status: clause.status || 'new',
+          status: clause.status || 'passive',
           prevStatus: null,
           statusChangedAt: now,
           subsumed: Boolean(clause.subsumed),
@@ -167,20 +175,13 @@ export default function ProofSearchCanvas({
           vx: 0,
           vy: 0,
           bornAt: now,
+          arrivedAt: now,
         });
       } else {
         const node = map.get(id);
         node.text = clause.text || node.text;
         const nextStatus = clause.status || node.status;
         if (nextStatus !== node.status) {
-          if (
-            node.status === 'new' &&
-            nextStatus === 'passive' &&
-            typeof window !== 'undefined'
-          ) {
-            // eslint-disable-next-line no-console
-            console.log(`[viz] clause ${node.id} new -> passive`);
-          }
           node.prevStatus = node.status;
           node.status = nextStatus;
           node.statusChangedAt = now;
@@ -266,13 +267,7 @@ export default function ProofSearchCanvas({
     if (!canvas) return undefined;
     const parent = canvas.parentElement;
     if (!parent) return undefined;
-    let rafId = null;
-    let pending = null;
-    const applySize = () => {
-      rafId = null;
-      if (!pending) return;
-      const {width, height, dpr} = pending;
-      pending = null;
+    const applySize = (width, height, dpr) => {
       const nextW = Math.max(1, Math.floor(width * dpr));
       const nextH = Math.max(1, Math.floor(height * dpr));
       const prev = sizeRef.current;
@@ -289,15 +284,11 @@ export default function ProofSearchCanvas({
       const rect = entries[0]?.contentRect;
       if (!rect) return;
       const dpr = window.devicePixelRatio || 1;
-      pending = {width: rect.width, height: rect.height, dpr};
-      if (rafId == null) {
-        rafId = requestAnimationFrame(applySize);
-      }
+      applySize(rect.width, rect.height, dpr);
     });
     ro.observe(parent);
     return () => {
       ro.disconnect();
-      if (rafId != null) cancelAnimationFrame(rafId);
     };
   }, []);
 
@@ -567,6 +558,22 @@ export default function ProofSearchCanvas({
       const highlightId = fade.id;
       const highlightAlpha = fade.alpha || 0;
       const highlight = highlightId ? computeHighlightSets(highlightId, edgeList) : null;
+      const suppressPanelHighlight = Boolean(highlightId);
+      const panelFade = panelFadeRef.current;
+      if (panelFade.lastTs == null) panelFade.lastTs = ts;
+      const panelDt = Math.min(1, (ts - panelFade.lastTs) / 400);
+      const panelTarget = suppressPanelHighlight ? 0 : 1;
+      if (panelTarget > (panelFade.alpha || 0)) {
+        panelFade.alpha = Math.min(1, (panelFade.alpha || 0) + panelDt);
+      } else if (panelTarget < (panelFade.alpha || 0)) {
+        panelFade.alpha = Math.max(0, (panelFade.alpha || 0) - panelDt);
+      }
+      panelFade.lastTs = ts;
+      const panelAlpha = panelFade.alpha || 0;
+      const focusedNodeSet = new Set((focusedNodes || []).map((id) => String(id)));
+      const focusedEdgeSet = new Set((focusedEdges || []).map((edge) => `${edge.from}->${edge.to}`));
+      const categoryNodeSet = new Set((categoryNodes || []).map((id) => String(id)));
+      const categoryEdgeSet = new Set((categoryEdges || []).map((edge) => `${edge.from}->${edge.to}`));
       if (edgeList && edgeList.length) {
         ctx.strokeStyle = palette.link;
         ctx.lineWidth = 1.4;
@@ -610,11 +617,48 @@ export default function ProofSearchCanvas({
           }
           ctx.restore();
         }
+        if (categoryEdgeSet.size && panelAlpha > 0) {
+          ctx.save();
+          ctx.strokeStyle = palette.highlight;
+          ctx.lineWidth = 2.2;
+          ctx.globalAlpha = 0.8 * panelAlpha;
+          ctx.shadowColor = palette.highlight;
+          ctx.shadowBlur = 10 * panelAlpha;
+          for (let i = 0; i < edgeList.length; i += step) {
+            const edge = edgeList[i];
+            if (!categoryEdgeSet.has(`${edge.from}->${edge.to}`)) continue;
+            const from = nodeMap.get(String(edge.from));
+            const to = nodeMap.get(String(edge.to));
+            if (!from || !to) continue;
+            drawArrow(ctx, from.x, from.y, to.x, to.y);
+          }
+          ctx.restore();
+        }
+        if (focusedEdgeSet.size && panelAlpha > 0) {
+          ctx.save();
+          ctx.strokeStyle = palette.focus;
+          ctx.lineWidth = 3;
+          ctx.globalAlpha = 0.85 * panelAlpha;
+          ctx.shadowColor = palette.focus;
+          ctx.shadowBlur = 16 * panelAlpha;
+          ctx.shadowOffsetX = 0;
+          ctx.shadowOffsetY = 0;
+          for (let i = 0; i < edgeList.length; i += step) {
+            const edge = edgeList[i];
+            if (!focusedEdgeSet.has(`${edge.from}->${edge.to}`)) continue;
+            const from = nodeMap.get(String(edge.from));
+            const to = nodeMap.get(String(edge.to));
+            if (!from || !to) continue;
+            drawArrow(ctx, from.x, from.y, to.x, to.y);
+          }
+          ctx.restore();
+        }
       }
 
       // Nodes
       nodes.forEach((node) => {
         const age = (ts - node.bornAt) / 1000;
+        const arriveT = clamp((ts - (node.arrivedAt || node.bornAt || ts)) / 900, 0, 1);
         const pulse = awaitingInput && node.status === 'passive'
           ? 1 + 0.06 * Math.sin(ts / 280 + Number(node.id) * 0.3)
           : 1;
@@ -647,11 +691,39 @@ export default function ProofSearchCanvas({
           ctx.arc(node.x, node.y, outer, 0, Math.PI * 2);
           ctx.fill();
         }
+        if (categoryNodeSet.has(String(node.id)) && panelAlpha > 0) {
+          const inner = radius * pulse + 2;
+          const outer = radius * pulse + 14;
+          const grad = ctx.createRadialGradient(node.x, node.y, inner, node.x, node.y, outer);
+          grad.addColorStop(0, rgbaFrom(palette.highlight, 0.34 * panelAlpha));
+          grad.addColorStop(0.55, rgbaFrom(palette.highlight, 0.14 * panelAlpha));
+          grad.addColorStop(1, rgbaFrom(palette.highlight, 0));
+          ctx.globalAlpha = 1;
+          ctx.fillStyle = grad;
+          ctx.beginPath();
+          ctx.arc(node.x, node.y, outer, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        if (focusedNodeSet.has(String(node.id)) && panelAlpha > 0) {
+          const inner = radius * pulse + 2;
+          const outer = radius * pulse + 20;
+          const grad = ctx.createRadialGradient(node.x, node.y, inner, node.x, node.y, outer);
+          grad.addColorStop(0, rgbaFrom(palette.focus, 0.9 * panelAlpha));
+          grad.addColorStop(0.5, rgbaFrom(palette.focus, 0.42 * panelAlpha));
+          grad.addColorStop(1, rgbaFrom(palette.focus, 0));
+          ctx.globalAlpha = 1;
+          ctx.fillStyle = grad;
+          ctx.beginPath();
+          ctx.arc(node.x, node.y, outer, 0, Math.PI * 2);
+          ctx.fill();
+        }
 
         ctx.beginPath();
         const isFalse = isFalseClause(node.text);
         if (isFalse) {
           ctx.fillStyle = themeRef.current === 'dark' ? '#000000' : '#ffffff';
+        } else if (node.subsumed) {
+          ctx.fillStyle = palette.subsumedFill;
         } else {
           ctx.fillStyle = color;
         }
@@ -659,12 +731,12 @@ export default function ProofSearchCanvas({
         ctx.arc(node.x, node.y, radius * pulse, 0, Math.PI * 2);
         ctx.fill();
 
-        // Glow
-        ctx.globalAlpha = 0.18 + Math.min(0.2, age * 0.05);
+        // Arrival glow: a transient birth effect rather than a persistent "new" state.
+        ctx.globalAlpha = (0.14 + Math.min(0.12, age * 0.03)) * (1 - arriveT) + 0.08;
         ctx.strokeStyle = palette.glow;
-        ctx.lineWidth = 10;
+        ctx.lineWidth = lerp(14, 8, arriveT);
         ctx.beginPath();
-        ctx.arc(node.x, node.y, radius * pulse + 6, 0, Math.PI * 2);
+        ctx.arc(node.x, node.y, radius * pulse + lerp(10, 6, arriveT), 0, Math.PI * 2);
         ctx.stroke();
 
         if (!node.subsumed) {
@@ -790,7 +862,7 @@ export default function ProofSearchCanvas({
       active = false;
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
-  }, [awaitingInput, selectedId, layoutMode]);
+  }, [awaitingInput, selectedId, layoutMode, focusedNodes, focusedEdges]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -1326,14 +1398,13 @@ function computeTargets(nodes, edges, width, height, layoutMode) {
     const rings = {
       active: [],
       passive: [],
-      new: [],
       other: [],
     };
     nodes.forEach((node) => {
       const key = rings[node.status] ? node.status : 'other';
       rings[key].push(node);
     });
-    const order = ['active', 'passive', 'new', 'other'];
+    const order = ['active', 'passive', 'other'];
     const maxRadius = Math.min(width, height) * 0.42;
     const ringCount = order.filter((k) => rings[k].length).length || 1;
     const step = ringCount > 1 ? maxRadius / (ringCount + 1) : maxRadius * 0.6;
@@ -1384,8 +1455,14 @@ function computeTargets(nodes, edges, width, height, layoutMode) {
     if (!changed) break;
   }
 
+  nodes.forEach((node) => {
+    if (Number.isFinite(node.layoutDepth)) {
+      depth.set(String(node.id), node.layoutDepth);
+    }
+  });
+
   if (!hasEdges && layoutMode === 'sequential') {
-    const statusOrder = ['new', 'active', 'passive', 'other'];
+    const statusOrder = ['active', 'passive', 'other'];
     const groups = statusOrder.map(() => []);
     nodes.forEach((node) => {
       const idx = statusOrder.indexOf(node.status);

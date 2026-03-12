@@ -168,6 +168,22 @@ function LiveCode({value, onChange, className = 'language-tptp', minHeight = '18
   );
 }
 
+function HighlightedClause({value, className = '', preClassName = ''}) {
+  const codeRef = useRef(null);
+
+  useEffect(() => {
+    if (!codeRef.current) return;
+    codeRef.current.textContent = value || '';
+    highlightNowOrWhenReady(codeRef.current);
+  }, [value]);
+
+  return (
+    <pre className={`${styles.highlightedClause} ${preClassName}`.trim()}>
+      <code ref={codeRef} className={`language-tptp ${className}`.trim()} />
+    </pre>
+  );
+}
+
 function normalizePhaseStatus(phase) {
   if (!phase) return 'new';
   if (phase.includes('active')) return 'active';
@@ -188,6 +204,14 @@ function pickSmallestId(ids) {
     return ids.map(Number).sort((a, b) => a - b)[0].toString();
   }
   return ids.slice().sort()[0];
+}
+
+function compareClauseIds(a, b) {
+  const aStr = String(a);
+  const bStr = String(b);
+  const numeric = /^\d+$/.test(aStr) && /^\d+$/.test(bStr);
+  if (numeric) return Number(aStr) - Number(bStr);
+  return aStr.localeCompare(bStr);
 }
 
 const BASE_CACHE_KEY = 'vampireRunner.baseUrl.v2';
@@ -219,6 +243,31 @@ async function getWorkingBaseUrl() {
   return base;
 }
 
+function parseInferenceRule(raw) {
+  const cleaned = String(raw || '')
+    .replace(/\b\d+\b/g, ' ')
+    .replace(/[(),]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  return cleaned || 'other';
+}
+
+function summarizeRules(inferences) {
+  const counts = new Map();
+  inferences.forEach((item) => {
+    counts.set(item.rule, (counts.get(item.rule) || 0) + 1);
+  });
+  return Array.from(counts.entries())
+    .map(([rule, count]) => ({rule, count}))
+    .sort((a, b) => b.count - a.count || a.rule.localeCompare(b.rule));
+}
+
+function shortClause(text, max = 88) {
+  const oneLine = String(text || '').replace(/\s+/g, ' ').trim();
+  if (oneLine.length <= max) return oneLine;
+  return `${oneLine.slice(0, max - 1)}…`;
+}
+
 export default function ProofSearchVisualization() {
   const [tptp, setTptp] = useState(DEFAULT_PROBLEM);
   const [args, setArgs] = useState(DEFAULT_ARGS);
@@ -232,9 +281,18 @@ export default function ProofSearchVisualization() {
   const [layoutMode, setLayoutMode] = useState('sequential');
   const [showHelp, setShowHelp] = useState(false);
   const [centerToken, setCenterToken] = useState(0);
+  const [inferenceEvents, setInferenceEvents] = useState([]);
+  const [inferenceRuleFilter, setInferenceRuleFilter] = useState('all');
+  const [selectedInferenceKey, setSelectedInferenceKey] = useState(null);
+  const [showProblemPanel, setShowProblemPanel] = useState(true);
+  const [showOutputPanel, setShowOutputPanel] = useState(true);
+  const [showStatsPanel, setShowStatsPanel] = useState(false);
+  const canvasShellRef = useRef(null);
+  const resizeStateRef = useRef(null);
   const pendingResolveRef = useRef(null);
   const clauseMapRef = useRef(new Map());
   const edgeMapRef = useRef(new Map());
+  const inferenceRef = useRef([]);
   const [edges, setEdges] = useState([]);
   const flushTimerRef = useRef(null);
   const outputRef = useRef('Ready.');
@@ -261,6 +319,28 @@ export default function ProofSearchVisualization() {
 
   useEffect(() => () => {
     if (flushTimerRef.current) clearTimeout(flushTimerRef.current);
+  }, []);
+
+  useEffect(() => {
+    const handleMove = (event) => {
+      const state = resizeStateRef.current;
+      const shell = canvasShellRef.current;
+      if (!state || !shell) return;
+      const nextHeight = Math.max(180, Math.round(state.startHeight + (event.clientY - state.startY)));
+      shell.style.height = `${nextHeight}px`;
+    };
+    const handleUp = () => {
+      if (!resizeStateRef.current) return;
+      resizeStateRef.current = null;
+      document.body.style.userSelect = '';
+      document.body.style.cursor = '';
+    };
+    window.addEventListener('pointermove', handleMove);
+    window.addEventListener('pointerup', handleUp);
+    return () => {
+      window.removeEventListener('pointermove', handleMove);
+      window.removeEventListener('pointerup', handleUp);
+    };
   }, []);
 
   useEffect(() => {
@@ -302,6 +382,10 @@ export default function ProofSearchVisualization() {
     setManualInput('');
     outputRef.current = '';
     setOutput('');
+    inferenceRef.current = [];
+    setInferenceEvents([]);
+    setInferenceRuleFilter('all');
+    setSelectedInferenceKey(null);
   };
 
   const upsertClause = (id, text, status) => {
@@ -342,6 +426,34 @@ export default function ProofSearchVisualization() {
 
   const commitClauses = () => {
     const rawClauses = Array.from(clauseMapRef.current.values());
+    const rawIds = rawClauses.map((clause) => String(clause.id));
+    const rawParents = new Map();
+    edgeMapRef.current.forEach((edge) => {
+      const from = String(edge.from);
+      const to = String(edge.to);
+      if (!rawParents.has(to)) rawParents.set(to, []);
+      rawParents.get(to).push(from);
+    });
+    const rawDepth = new Map(rawIds.map((id) => [id, 0]));
+    for (let iter = 0; iter < rawIds.length; iter += 1) {
+      let changed = false;
+      rawIds.forEach((id) => {
+        const parents = rawParents.get(id);
+        if (!parents || !parents.length) return;
+        let maxParent = 0;
+        parents.forEach((parentId) => {
+          if (rawDepth.has(parentId)) {
+            maxParent = Math.max(maxParent, rawDepth.get(parentId) || 0);
+          }
+        });
+        const next = maxParent + 1;
+        if (next > (rawDepth.get(id) || 0)) {
+          rawDepth.set(id, next);
+          changed = true;
+        }
+      });
+      if (!changed) break;
+    }
     const grouped = new Map();
     rawClauses.forEach((clause) => {
       const textKey = normalizeClauseText(clause.text || '');
@@ -351,18 +463,18 @@ export default function ProofSearchVisualization() {
         statusById: new Map(),
         subsumedById: new Map(),
         negatedById: new Map(),
+        minDepth: Infinity,
       };
       entry.ids.push(String(clause.id));
       entry.statusById.set(String(clause.id), clause.status || 'new');
       entry.subsumedById.set(String(clause.id), Boolean(clause.subsumed));
       entry.negatedById.set(String(clause.id), Boolean(clause.negated));
+      entry.minDepth = Math.min(entry.minDepth, rawDepth.get(String(clause.id)) || 0);
       grouped.set(textKey, entry);
     });
 
     const idToDisplay = new Map();
     const displayClauses = [];
-    const allowed = new Set(['new', 'passive', 'active']);
-    const selectedKey = selectedId ? String(selectedId) : null;
     grouped.forEach((entry) => {
       const passiveIds = entry.ids.filter((id) => entry.statusById.get(id) === 'passive');
       const activeIds = entry.ids.filter((id) => entry.statusById.get(id) === 'active');
@@ -376,9 +488,9 @@ export default function ProofSearchVisualization() {
       const displayId = pickSmallestId(displayPool);
       const status = passiveIds.length
         ? 'passive'
-        : (activeIds.length ? 'active' : 'new');
-      const subsumed = entry.subsumedById.get(displayId) || false;
-      const negated = entry.negatedById.get(displayId) || false;
+        : (activeIds.length ? 'active' : 'passive');
+      const subsumed = entry.ids.some((id) => entry.subsumedById.get(id));
+      const negated = entry.ids.some((id) => entry.negatedById.get(id));
       entry.ids.forEach((id) => idToDisplay.set(id, displayId));
       displayClauses.push({
         id: displayId,
@@ -386,22 +498,140 @@ export default function ProofSearchVisualization() {
         status,
         subsumed,
         negated,
+        layoutDepth: Number.isFinite(entry.minDepth) ? entry.minDepth : 0,
       });
     });
 
-    const displayEdges = [];
-    edgeMapRef.current.forEach((edge) => {
-      const from = idToDisplay.get(String(edge.from));
-      const to = idToDisplay.get(String(edge.to));
-      if (!from || !to || from === to) return;
-      const key = `${from}->${to}`;
-      if (!displayEdges.some((e) => e.key === key)) {
-        displayEdges.push({from, to, key});
+    const nextDisplayIdMap = Object.fromEntries(idToDisplay.entries());
+    const projectedInferences = inferenceRef.current.map((item, index) => {
+      const childDisplayId = nextDisplayIdMap[String(item.childId)] || String(item.childId);
+      const parentDisplayIds = Array.from(
+        new Set(item.parentIds.map((id) => nextDisplayIdMap[String(id)] || String(id)))
+      );
+      const edgeKeys = parentDisplayIds
+        .filter((id) => id && id !== childDisplayId)
+        .map((id) => `${id}->${childDisplayId}`);
+      const derivationKey = `${childDisplayId}::${parentDisplayIds.slice().sort(compareClauseIds).join('|')}`;
+      return {
+        item,
+        index,
+        childDisplayId,
+        parentDisplayIds,
+        edgeKeys,
+        derivationKey,
+      };
+    });
+
+    const primaryDerivationKeyByChild = new Map();
+    projectedInferences.forEach((proj) => {
+      const childId = String(proj.childDisplayId);
+      if (!primaryDerivationKeyByChild.has(childId)) {
+        primaryDerivationKeyByChild.set(childId, proj.derivationKey);
       }
+    });
+
+    const displayEdgeMeta = new Map();
+    projectedInferences.forEach((proj) => {
+      const isPrimary = primaryDerivationKeyByChild.get(String(proj.childDisplayId)) === proj.derivationKey;
+      if (!isPrimary) return;
+      proj.edgeKeys.forEach((key) => {
+        if (!displayEdgeMeta.has(key)) {
+          const [from, to] = key.split('->');
+          if (!from || !to || from === to) return;
+          displayEdgeMeta.set(key, {from, to, key});
+        }
+      });
+    });
+    const displayEdges = Array.from(displayEdgeMeta.values());
+
+    const displayIds = displayClauses.map((clause) => String(clause.id));
+    const displayParents = new Map();
+    displayEdges.forEach((edge) => {
+      const from = String(edge.from);
+      const to = String(edge.to);
+      if (!displayParents.has(to)) displayParents.set(to, []);
+      displayParents.get(to).push(from);
+    });
+    const displayDepthById = new Map(displayIds.map((id) => [id, 0]));
+    for (let iter = 0; iter < displayIds.length; iter += 1) {
+      let changed = false;
+      displayIds.forEach((id) => {
+        const parents = displayParents.get(id);
+        if (!parents || !parents.length) return;
+        let maxParent = 0;
+        parents.forEach((parentId) => {
+          if (displayDepthById.has(parentId)) {
+            maxParent = Math.max(maxParent, displayDepthById.get(parentId) || 0);
+          }
+        });
+        const next = maxParent + 1;
+        if (next > (displayDepthById.get(id) || 0)) {
+          displayDepthById.set(id, next);
+          changed = true;
+        }
+      });
+      if (!changed) break;
+    }
+    const rowOrderById = new Map();
+    const depthGroups = new Map();
+    displayIds.forEach((id) => {
+      const depth = displayDepthById.get(id) || 0;
+      const group = depthGroups.get(depth) || [];
+      group.push(id);
+      depthGroups.set(depth, group);
+    });
+    depthGroups.forEach((ids) => {
+      ids
+        .slice()
+        .sort(compareClauseIds)
+        .forEach((id, index) => {
+          rowOrderById.set(id, index);
+        });
+    });
+    const normalizedInferences = projectedInferences.map(({item, index, childDisplayId, parentDisplayIds, edgeKeys, derivationKey}) => {
+      return {
+        ...item,
+        index,
+        derivationKey,
+        childDepth: rawDepth.get(String(item.childId)) || 0,
+        childDisplayDepth: displayDepthById.get(String(childDisplayId)) || 0,
+        childDisplayRow: rowOrderById.get(String(childDisplayId)) || 0,
+        childDisplayId,
+        parentDisplayIds,
+        edgeKeys,
+      };
+    });
+    const groupedInferences = [];
+    const groupByPrimaryKey = new Map();
+    const childPrimaryKey = new Map();
+    normalizedInferences.forEach((item) => {
+      const primaryKey = primaryDerivationKeyByChild.get(String(item.childDisplayId));
+      if (primaryKey) {
+        childPrimaryKey.set(item.key, primaryKey);
+      }
+      if (item.derivationKey !== primaryKey) return;
+      const group = {
+        ...item,
+        alternatives: [],
+      };
+      groupByPrimaryKey.set(primaryKey, group);
+      groupedInferences.push(group);
+    });
+    const seenAlternativeKeys = new Set();
+    normalizedInferences.forEach((item) => {
+      const primaryKey = childPrimaryKey.get(item.key);
+      if (!primaryKey || item.derivationKey === primaryKey) return;
+      const uniqueAltKey = `${primaryKey}::${item.derivationKey}`;
+      if (seenAlternativeKeys.has(uniqueAltKey)) return;
+      seenAlternativeKeys.add(uniqueAltKey);
+      const group = groupByPrimaryKey.get(primaryKey);
+      if (!group) return;
+      group.alternatives.push(item);
     });
 
     setClauses(displayClauses);
     setEdges(displayEdges.map(({from, to}) => ({from, to})));
+    setInferenceEvents(groupedInferences);
     if (isDebugEdges()) {
       console.debug('[viz] clauses', displayClauses.length, 'edges', displayEdges.length);
     }
@@ -481,6 +711,17 @@ export default function ProofSearchVisualization() {
             ? Array.from(bracket.matchAll(/\b(\d+)\b/g)).map(m => m[1])
             : [];
           addEdges(id, parentIds);
+          if (bracket && parentIds.length) {
+            inferenceRef.current.push({
+              key: `${id}:${bracket}:${inferenceRef.current.length}`,
+              childId: String(id),
+              childText: text,
+              parentIds: parentIds.map(String),
+              parentTexts: parentIds.map((pid) => clauseMapRef.current.get(String(pid))?.text || ''),
+              rule: parseInferenceRule(bracket),
+              raw: bracket,
+            });
+          }
           if (isDebugEdges() && parentIds.length) {
             console.debug('[viz] edge', id, '<-', parentIds, bracket);
           }
@@ -571,6 +812,67 @@ export default function ProofSearchVisualization() {
   };
 
   const hasSZSStatus = (line) => /\bSZS\s+status\b/i.test(line);
+  const statsInferences = inferenceEvents.filter((item) => item.rule !== 'cnf transformation');
+  const ruleSummary = summarizeRules(statsInferences);
+  const filteredInferences = (inferenceRuleFilter === 'all'
+    ? statsInferences
+    : statsInferences.filter((item) => item.rule === inferenceRuleFilter))
+    .slice()
+    .sort((a, b) => {
+      const depthDiff = (b.childDisplayDepth || 0) - (a.childDisplayDepth || 0);
+      if (depthDiff !== 0) return depthDiff;
+      const rowDiff = (b.childDisplayRow || 0) - (a.childDisplayRow || 0);
+      if (rowDiff !== 0) return rowDiff;
+      const rawDepthDiff = (b.childDepth || 0) - (a.childDepth || 0);
+      if (rawDepthDiff !== 0) return rawDepthDiff;
+      return (b.index || 0) - (a.index || 0);
+    });
+  const selectedInference = filteredInferences.find((item) => item.key === selectedInferenceKey)
+    || filteredInferences[0]
+    || null;
+  const passiveCount = clauses.filter((clause) => clause.status === 'passive').length;
+  const activeCount = clauses.filter((clause) => clause.status === 'active').length;
+  const subsumedCount = clauses.filter((clause) => clause.subsumed).length;
+  const focusedNodes = showStatsPanel && selectedInference
+    ? Array.from(new Set([...selectedInference.parentDisplayIds, selectedInference.childDisplayId]))
+    : [];
+  const focusedEdges = showStatsPanel && selectedInference
+    ? selectedInference.edgeKeys.map((key) => {
+      const [from, to] = key.split('->');
+      return {from, to};
+    })
+    : [];
+  const categoryNodes = showStatsPanel && inferenceRuleFilter !== 'all'
+    ? Array.from(
+      new Set(
+        filteredInferences.flatMap((item) => [...item.parentDisplayIds, item.childDisplayId])
+      )
+    )
+    : [];
+  const categoryEdges = showStatsPanel && inferenceRuleFilter !== 'all'
+    ? Array.from(
+      new Set(filteredInferences.flatMap((item) => item.edgeKeys))
+    ).map((key) => {
+      const [from, to] = key.split('->');
+      return {from, to};
+    })
+    : [];
+  const onToggleKeyDown = (event, toggle) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      toggle((value) => !value);
+    }
+  };
+  const handleResizeStart = (event) => {
+    const shell = canvasShellRef.current;
+    if (!shell) return;
+    resizeStateRef.current = {
+      startY: event.clientY,
+      startHeight: shell.getBoundingClientRect().height,
+    };
+    document.body.style.userSelect = 'none';
+    document.body.style.cursor = 'ns-resize';
+  };
 
   return (
     <Layout title="Proof Search Visualization" description="Interactive visualization of Vampire clause selection.">
@@ -585,161 +887,362 @@ export default function ProofSearchVisualization() {
         </div>
 
         <div className={styles.layout}>
-          <div className={styles.canvasCard}>
-            <div className={styles.canvasStage}>
-            <ProofSearchCanvas
-              clauses={clauses}
-              edges={edges}
-              selectedId={selectedId}
-              awaitingInput={awaitingInput}
-              resetToken={runToken}
-              layoutMode={layoutMode}
-              centerToken={centerToken}
-              onSelect={awaitingInput ? handleClauseSelection : undefined}
-            />
-            </div>
-            <div className={styles.layoutControls}>
-              <span className={styles.layoutLabel}>Layout</span>
-              <div className={styles.layoutButtons}>
-                <button
-                  type="button"
-                  className={`${styles.layoutButton} ${layoutMode === 'radial' ? styles.layoutButtonActive : ''}`}
-                  onClick={() => setLayoutMode('radial')}
-                >
-                  Radial
-                </button>
-                <button
-                  type="button"
-                  className={`${styles.layoutButton} ${layoutMode === 'sequential' ? styles.layoutButtonActive : ''}`}
-                  onClick={() => setLayoutMode('sequential')}
-                >
-                  Sequential
-                </button>
+          <div
+            ref={canvasShellRef}
+            className={styles.canvasShell}
+          >
+            <div className={styles.canvasCard}>
+              <div className={styles.canvasStage}>
+              <ProofSearchCanvas
+                clauses={clauses}
+                edges={edges}
+                selectedId={selectedId}
+                awaitingInput={awaitingInput}
+                resetToken={runToken}
+                layoutMode={layoutMode}
+                centerToken={centerToken}
+                focusedNodes={focusedNodes}
+                focusedEdges={focusedEdges}
+                categoryNodes={categoryNodes}
+                categoryEdges={categoryEdges}
+                onSelect={awaitingInput ? handleClauseSelection : undefined}
+              />
+              </div>
+              <div className={styles.layoutControls}>
+                <span className={styles.layoutLabel}>Layout</span>
+                <div className={styles.layoutButtons}>
+                  <button
+                    type="button"
+                    className={`${styles.layoutButton} ${layoutMode === 'radial' ? styles.layoutButtonActive : ''}`}
+                    onClick={() => setLayoutMode('radial')}
+                  >
+                    Radial
+                  </button>
+                  <button
+                    type="button"
+                    className={`${styles.layoutButton} ${layoutMode === 'sequential' ? styles.layoutButtonActive : ''}`}
+                    onClick={() => setLayoutMode('sequential')}
+                  >
+                    Sequential
+                  </button>
+                </div>
+              </div>
+              <div className={styles.canvasFooter}>
+                <div className={styles.legend}>
+                  <span className={styles.legendItem}>
+                    <span className={`${styles.dot} ${styles.legendDotActive}`} />
+                    Active
+                  </span>
+                  <span className={styles.legendItem}>
+                    <span className={`${styles.dot} ${styles.legendDotPassive}`} />
+                    Passive
+                  </span>
+                  <span className={styles.legendItem}>
+                    <span className={`${styles.dot} ${styles.legendDotSelected}`} />
+                    Selected
+                  </span>
+                  <span className={styles.legendItem}>
+                    <span className={`${styles.dot} ${styles.subsumedDot}`} />
+                    Subsumed
+                  </span>
+                  <span className={styles.legendItem}>
+                    <span className={`${styles.dot} ${styles.negatedDot}`} />
+                    Negated conjecture
+                  </span>
+                </div>
+                <div className={styles.hint}>
+                  {awaitingInput ? 'Waiting for your clause choice…' : 'Awaiting run'}
+                </div>
               </div>
             </div>
-            <div className={styles.canvasFooter}>
-              <div className={styles.legend}>
-                <span className={styles.legendItem}>
-                  <span className={`${styles.dot} ${styles.legendDotNew}`} />
-                  New
-                </span>
-                <span className={styles.legendItem}>
-                  <span className={`${styles.dot} ${styles.legendDotActive}`} />
-                  Active
-                </span>
-                <span className={styles.legendItem}>
-                  <span className={`${styles.dot} ${styles.legendDotPassive}`} />
-                  Passive
-                </span>
-                <span className={styles.legendItem}>
-                  <span className={`${styles.dot} ${styles.legendDotSelected}`} />
-                  Selected
-                </span>
-                <span className={styles.legendItem}>
-                  <span className={`${styles.dot} ${styles.subsumedDot}`} />
-                  Subsumed
-                </span>
-                <span className={styles.legendItem}>
-                  <span className={`${styles.dot} ${styles.negatedDot}`} />
-                  Negated conjecture
-                </span>
+            <div
+              className={styles.resizeHandle}
+              onPointerDown={handleResizeStart}
+              role="presentation"
+            >
+              <span className={styles.resizeGrip} />
+            </div>
+          </div>
+
+          <div className={`${styles.panel} ${styles.statsPanel}`}>
+            <div
+              className={styles.panelHeader}
+              role="button"
+              tabIndex={0}
+              aria-expanded={showStatsPanel}
+              onClick={() => setShowStatsPanel((value) => !value)}
+              onKeyDown={(event) => onToggleKeyDown(event, setShowStatsPanel)}
+            >
+              <span className={styles.collapseButton} aria-hidden="true">
+                <span className={`${styles.collapseChevron} ${showStatsPanel ? styles.collapseChevronOpen : ''}`} />
+              </span>
+              <div className={styles.statsHeaderCopy}>
+                <h3 className={styles.statsTitle}>Proof Search Stats</h3>
+                {showStatsPanel && (
+                  <p className={styles.statsSubtitle}>
+                    Live counts by inference rule. Select a rule or inference to highlight it in the graph.
+                  </p>
+                )}
               </div>
-              <div className={styles.hint}>
-                {awaitingInput ? 'Waiting for your clause choice…' : 'Awaiting run'}
+              <div className={styles.statsTotals}>
+                <span className={styles.statPill}>{clauses.length} Clauses Shown</span>
+                <span className={styles.statPill}>{filteredInferences.length} Inferences Shown</span>
+                <span className={styles.statPill}>{passiveCount} Passive Clauses</span>
+                <span className={styles.statPill}>{activeCount} Active Clauses</span>
+                <span className={styles.statPill}>{subsumedCount} Subsumed Clauses</span>
               </div>
             </div>
+            {showStatsPanel && (
+              <>
+                <div className={styles.ruleChips}>
+                  <button
+                    type="button"
+                    className={`${styles.ruleChip} ${inferenceRuleFilter === 'all' ? styles.ruleChipActive : ''}`}
+                    onClick={() => {
+                      setInferenceRuleFilter('all');
+                      setSelectedInferenceKey(null);
+                    }}
+                  >
+                    All ({statsInferences.length})
+                  </button>
+                  {ruleSummary.map(({rule, count}) => (
+                    <button
+                      key={rule}
+                      type="button"
+                      className={`${styles.ruleChip} ${inferenceRuleFilter === rule ? styles.ruleChipActive : ''}`}
+                      onClick={() => {
+                        setInferenceRuleFilter(rule);
+                        setSelectedInferenceKey(null);
+                      }}
+                    >
+                      {rule} ({count})
+                    </button>
+                  ))}
+                </div>
+                <div className={styles.statsGrid}>
+                  <div className={styles.inferenceList}>
+                    {filteredInferences.length ? (
+                      filteredInferences.map((item) => (
+                        <button
+                          key={item.key}
+                          type="button"
+                          className={`${styles.inferenceItem} ${selectedInference?.key === item.key ? styles.inferenceItemActive : ''}`}
+                          onClick={() => setSelectedInferenceKey(item.key)}
+                        >
+                          <span className={styles.inferenceRule}>{item.rule}</span>
+                          <span className={styles.inferenceIds}>
+                            {item.parentDisplayIds.join(', ')} -&gt; {item.childDisplayId}
+                          </span>
+                          <HighlightedClause
+                            value={shortClause(item.childText)}
+                            preClassName={styles.inferenceSnippet}
+                            className={styles.inferenceSnippetCode}
+                          />
+                        </button>
+                      ))
+                    ) : (
+                      <div className={styles.emptyState}>No inferences parsed yet.</div>
+                    )}
+                  </div>
+
+                  <div className={styles.inferenceDetail}>
+                    {selectedInference ? (
+                      <>
+                        <div className={styles.detailTop}>
+                          <span className={styles.detailRule}>{selectedInference.rule}</span>
+                          <span className={styles.detailIds}>
+                            {selectedInference.parentDisplayIds.join(', ')} -&gt; {selectedInference.childDisplayId}
+                          </span>
+                        </div>
+                        <div className={styles.detailBlock}>
+                          <div className={styles.detailLabel}>Source annotation</div>
+                          <code className={styles.detailCode}>{selectedInference.raw}</code>
+                        </div>
+                        <div className={styles.detailBlock}>
+                          <div className={styles.detailLabel}>Parent clauses</div>
+                          {selectedInference.parentDisplayIds.map((id, index) => (
+                            <div key={`${selectedInference.key}:${id}:${index}`} className={styles.detailClause}>
+                              <span className={styles.detailClauseId}>{id}</span>
+                              <HighlightedClause
+                                value={selectedInference.parentTexts[index] || '(clause text unavailable)'}
+                                preClassName={styles.detailClauseText}
+                              />
+                            </div>
+                          ))}
+                        </div>
+                    <div className={styles.detailBlock}>
+                      <div className={styles.detailLabel}>Derived clause</div>
+                      <div className={styles.detailClause}>
+                        <span className={styles.detailClauseId}>{selectedInference.childDisplayId}</span>
+                        <HighlightedClause value={selectedInference.childText} preClassName={styles.detailClauseText} />
+                      </div>
+                    </div>
+                    {selectedInference.alternatives?.length ? (
+                      <div className={styles.detailBlock}>
+                        <div className={styles.detailLabel}>Alternative inferences</div>
+                        <div className={styles.altInferenceList}>
+                          {selectedInference.alternatives.map((alt) => (
+                            <div key={alt.key} className={styles.altInferenceItem}>
+                              <div className={styles.altInferenceTop}>
+                                <span className={styles.altInferenceRule}>{alt.rule}</span>
+                                <span className={styles.altInferenceIds}>
+                                  {alt.parentDisplayIds.join(', ')} -&gt; {alt.childDisplayId}
+                                </span>
+                              </div>
+                              <code className={styles.detailCode}>{alt.raw}</code>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : null}
+                    <div className={styles.detailHint}>
+                      The clause stream exposes the inference rule and participating clauses. Explicit substitutions are only shown when Vampire prints them.
+                    </div>
+                      </>
+                    ) : (
+                      <div className={styles.emptyState}>
+                        Pick a rule or inference to inspect its parent clauses and derived clause.
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </>
+            )}
           </div>
 
           <div className={styles.panelGrid}>
             <div className={styles.panel}>
-              <div className={styles.problemHeader}>
-                <label htmlFor="viz-problem">Problem (TPTP)</label>
+              <div
+                className={styles.panelHeader}
+                role="button"
+                tabIndex={0}
+                aria-expanded={showProblemPanel}
+                onClick={() => setShowProblemPanel((value) => !value)}
+                onKeyDown={(event) => onToggleKeyDown(event, setShowProblemPanel)}
+              >
+                <div className={styles.panelHeaderMain}>
+                  <span className={styles.collapseButton} aria-hidden="true">
+                    <span className={`${styles.collapseChevron} ${showProblemPanel ? styles.collapseChevronOpen : ''}`} />
+                  </span>
+                  <label htmlFor="viz-problem">Problem (TPTP)</label>
+                </div>
                 <div className={styles.exampleButtons}>
                   <button
                     className={styles.exampleButton}
                     type="button"
-                    onClick={() => setTptp(EXAMPLES.socrates)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setTptp(EXAMPLES.socrates);
+                    }}
                   >
                     Socrates
                   </button>
                   <button
                     className={styles.exampleButton}
                     type="button"
-                    onClick={() => setTptp(EXAMPLES.trivial)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setTptp(EXAMPLES.trivial);
+                    }}
                   >
                     Trivial
                   </button>
                   <button
                     className={styles.exampleButton}
                     type="button"
-                    onClick={() => setTptp(EXAMPLES.puz001)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setTptp(EXAMPLES.puz001);
+                    }}
                   >
                     PUZ001+1
                   </button>
                 </div>
               </div>
-              <textarea
-                id="viz-problem"
-                className={styles.hiddenInput}
-                value={tptp}
-                onChange={(e) => setTptp(e.target.value)}
-              />
-              <div className={styles.liveCode}>
-                <LiveCode value={tptp} onChange={setTptp} className="language-tptp" minHeight="14rem" />
-              </div>
+              {showProblemPanel && (
+                <>
+                  <textarea
+                    id="viz-problem"
+                    className={styles.hiddenInput}
+                    value={tptp}
+                    onChange={(e) => setTptp(e.target.value)}
+                  />
+                  <div className={styles.liveCode}>
+                    <LiveCode value={tptp} onChange={setTptp} className="language-tptp" minHeight="14rem" />
+                  </div>
 
-              <label htmlFor="viz-args">Args</label>
-              <input
-                id="viz-args"
-                className={`${styles.argsInput} ${styles.mono}`}
-                value={args}
-                onChange={(e) => setArgs(e.target.value)}
-              />
+                  <label htmlFor="viz-args">Args</label>
+                  <input
+                    id="viz-args"
+                    className={`${styles.argsInput} ${styles.mono}`}
+                    value={args}
+                    onChange={(e) => setArgs(e.target.value)}
+                  />
 
-              <div className={styles.runRow}>
-                <button className={styles.runButton} onClick={onRun}>
-                  Run Vampire
-                </button>
-                <button className={styles.helpButton} type="button" onClick={() => setShowHelp(true)}>
-                  Help
-                </button>
-                <span className={styles.statusTag}>
-                  {running ? 'Live run' : 'Idle'}
-                </span>
-              </div>
-              <div className={styles.hintStack}>
-                <p className={styles.hint}>
-                  Tip: Use <code className={styles.mono}>--show_everything on</code> for the fullest clause stream.
-                </p>
-                <p className={styles.hint}>
-                  Tip: Remove <code className={styles.mono}>--manual_cs on</code> to let Vampire select clauses automatically.
-                </p>
-              </div>
+                  <div className={styles.runRow}>
+                    <button className={styles.runButton} onClick={onRun}>
+                      Run Vampire
+                    </button>
+                    <button className={styles.helpButton} type="button" onClick={() => setShowHelp(true)}>
+                      Help
+                    </button>
+                    <span className={styles.statusTag}>
+                      {running ? 'Live run' : 'Idle'}
+                    </span>
+                  </div>
+                  <div className={styles.hintStack}>
+                    <p className={styles.hint}>
+                      Tip: Use <code className={styles.mono}>--show_everything on</code> for the fullest clause stream.
+                    </p>
+                    <p className={styles.hint}>
+                      Tip: Remove <code className={styles.mono}>--manual_cs on</code> to let Vampire select clauses automatically.
+                    </p>
+                  </div>
+                </>
+              )}
             </div>
 
             <div className={styles.panel}>
-              <label>Output</label>
-              <pre className={styles.output}>
-                <code ref={outputCodeRef} className={`language-tptp ${styles.mono}`}>
-                  {output}
-                </code>
-              </pre>
+              <div
+                className={styles.panelHeader}
+                role="button"
+                tabIndex={0}
+                aria-expanded={showOutputPanel}
+                onClick={() => setShowOutputPanel((value) => !value)}
+                onKeyDown={(event) => onToggleKeyDown(event, setShowOutputPanel)}
+              >
+                <div className={styles.panelHeaderMain}>
+                  <span className={styles.collapseButton} aria-hidden="true">
+                    <span className={`${styles.collapseChevron} ${showOutputPanel ? styles.collapseChevronOpen : ''}`} />
+                  </span>
+                  <label>Output</label>
+                </div>
+              </div>
+              {showOutputPanel && (
+                <>
+                  <pre className={styles.output}>
+                    <code ref={outputCodeRef} className={`language-tptp ${styles.mono}`}>
+                      {output}
+                    </code>
+                  </pre>
 
-              <div className={styles.promptRow}>
-                <input
-                  className={`${styles.smallInput} ${styles.mono}`}
-                  value={manualInput}
-                  onChange={(e) => setManualInput(e.target.value)}
-                  placeholder={awaitingInput ? 'Enter clause id…' : 'Waiting for prompt…'}
-                  disabled={!awaitingInput}
-                />
-                <button className={styles.runButton} onClick={handleManualSubmit} disabled={!awaitingInput}>
-                  Send
-                </button>
-              </div>
-              <div className={styles.hint}>
-                You can double‑click a passive clause node or type an id to answer the prompt.
-              </div>
+                  <div className={styles.promptRow}>
+                    <input
+                      className={`${styles.smallInput} ${styles.mono}`}
+                      value={manualInput}
+                      onChange={(e) => setManualInput(e.target.value)}
+                      placeholder={awaitingInput ? 'Enter clause id…' : 'Waiting for prompt…'}
+                      disabled={!awaitingInput}
+                    />
+                    <button className={styles.runButton} onClick={handleManualSubmit} disabled={!awaitingInput}>
+                      Send
+                    </button>
+                  </div>
+                  <div className={styles.hint}>
+                    You can double‑click a passive clause node or type an id to answer the prompt.
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>
