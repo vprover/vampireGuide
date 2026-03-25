@@ -1,25 +1,37 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" version="1.1"
-     viewBox="0 0 256 256" width="256" height="256"
-     shape-rendering="geometricPrecision">
-  <!-- Colors baked in for maximum compatibility -->
-  <!-- Background -->
-  <circle cx="128" cy="128" r="120" fill="#0f0f12"/>
+<svg id="Layer_2" data-name="Layer 2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 218 218">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: #fff;
+        stroke-linecap: round;
+      }
 
-  <!-- V (stroke-based) -->
-  <path d="M72 78 L128 194 L184 78"
-        fill="none"
-        stroke="#d0d0f0"
-        stroke-width="13"
-        stroke-linecap="straight"
-        stroke-linejoin="straight"/>
+      .cls-1, .cls-2, .cls-3 {
+        stroke: #fff;
+        stroke-miterlimit: 10;
+      }
 
-  <!-- Fang chevron -->
-  <path d="M116 168 L128 196 L140 168 L128 180 Z"
-        fill="#c00018"/>
+      .cls-2 {
+        fill: #3b3a3c;
+      }
 
-  <!-- Proof node -->
-  <circle cx="120" cy="120" r="4" fill="#c00018"/>
-  <circle cx="136" cy="120" r="4" fill="#c00018"/>
-  <circle cx="128" cy="130" r="4" fill="#c00018"/>
+      .cls-2, .cls-3 {
+        stroke-width: 11px;
+      }
+
+      .cls-3 {
+        fill: #bc1c1a;
+      }
+    </style>
+  </defs>
+  <g id="Layer_1-2" data-name="Layer 1">
+    <g>
+      <path class="cls-3" d="M109,5.5c-42.87,0-80.76,27.38-96.47,64.52,0,0,43.06,16.26,67.59,49.58,27.36,37.16,28.88,92.89,28.88,92.89,0,0,1.51-55.73,28.87-92.89,24.53-33.32,67.6-49.58,67.6-49.58C189.76,32.88,151.87,5.5,109,5.5Z"/>
+      <path class="cls-2" d="M109,212.5s-.32-53.72-27.06-90.46C53.69,83.23,12.53,70.02,12.53,70.02c-5.24,12.38-7.03,24.69-7.03,38.98,0,57.16,46.34,103.5,103.5,103.5"/>
+      <path class="cls-2" d="M109,212.5s.32-53.72,27.06-90.46c28.24-38.81,69.41-52.01,69.41-52.01,5.24,12.38,7.03,24.69,7.03,38.98,0,57.16-46.34,103.5-103.5,103.5"/>
+      <polygon class="cls-1" points="59.4 48.03 75.09 11.35 51.11 23.47 59.4 48.03"/>
+      <polygon class="cls-1" points="158.61 48.04 142.92 11.36 166.9 23.48 158.61 48.04"/>
+    </g>
+  </g>
 </svg>
