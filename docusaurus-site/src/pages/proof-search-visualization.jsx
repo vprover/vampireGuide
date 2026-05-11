@@ -1,6 +1,7 @@
 // src/pages/proof-search-visualization.jsx
 import React, {useCallback, useEffect, useRef, useState} from 'react';
 import Layout from '@theme/Layout';
+import LiveCode from '../components/LiveCode';
 import ProofSearchCanvas from '../components/ProofSearchCanvas';
 import PageActions from '../components/PageActions';
 import styles from './proof-search-visualization.module.css';
@@ -138,36 +139,6 @@ function highlightNowOrWhenReady(el) {
   };
   tryHl();
   window.addEventListener('load', tryHl, {once: true});
-}
-
-function LiveCode({value, onChange, className = 'language-tptp', minHeight = '18rem'}) {
-  const codeRef = useRef(null);
-
-  useEffect(() => {
-    if (!codeRef.current) return;
-    const current = codeRef.current.textContent ?? '';
-    if (current !== (value || '')) {
-      codeRef.current.textContent = value || '';
-      highlightNowOrWhenReady(codeRef.current);
-    }
-  }, [value]);
-
-  const handleInput = () => {
-    if (!codeRef.current) return;
-    onChange(codeRef.current.textContent || '');
-  };
-
-  return (
-    <pre className={`prism-live ${className}`} style={{minHeight, margin: 0}}>
-      <code
-        ref={codeRef}
-        contentEditable
-        spellCheck={false}
-        onInput={handleInput}
-        style={{outline: 'none', display: 'block', whiteSpace: 'pre'}}
-      />
-    </pre>
-  );
 }
 
 function HighlightedClause({value, className = '', preClassName = ''}) {

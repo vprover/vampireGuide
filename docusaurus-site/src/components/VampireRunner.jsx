@@ -1,5 +1,6 @@
 // src/components/VampireRunner.jsx
 import React, {useEffect, useRef, useState} from 'react';
+import LiveCode from './LiveCode';
 
 /** ---------------------- Utilities ---------------------- **/
 
@@ -51,45 +52,6 @@ async function findWorkingBaseUrl(){
 async function getWorkingBaseUrl(){
   const base = await findWorkingBaseUrl();
   return ensureSlash(base);
-}
-
-/** ---------------------- LiveCode (Prism-Live editor) ---------------------- **/
-
-function LiveCode({ value, onChange, className = 'language-tptp', minHeight = '18rem' }) {
-  const codeRef = useRef(null);
-
-  // Initialize content, and keep in sync with external changes
-  useEffect(() => {
-    if (!codeRef.current) return;
-    const current = codeRef.current.textContent ?? '';
-    if (current !== (value || '')) {
-      codeRef.current.textContent = value || '';
-      if (typeof window !== 'undefined') {
-        highlightNowOrWhenReady(codeRef.current);
-      }
-    }
-  }, [value]);
-
-  // Bubble edits up
-  function handleInput() {
-    if (!codeRef.current) return;
-    onChange(codeRef.current.textContent);
-  }
-
-  return (
-    <pre
-      className={`prism-live ${className}`}
-      style={{ minHeight, margin: 0 }}
-    >
-      <code
-        ref={codeRef}
-        contentEditable
-        spellCheck={false}
-        onInput={handleInput}
-        style={{ outline: 'none', display: 'block', whiteSpace: 'pre' }}
-      />
-    </pre>
-  );
 }
 
 /** ---------------------- Main Component ---------------------- **/

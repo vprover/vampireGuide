@@ -109,3 +109,12 @@ pre[class*="language-"] ::selection,
 code[class*="language-"] ::selection { background: rgba(180, 213, 255, 0.35); }
 html[data-theme="dark"] pre[class*="language-"] ::selection,
 html[data-theme="dark"] code[class*="language-"] ::selection { background: rgba(255, 255, 255, 0.15); }
+
+pre.vamp-livecode {
+  transition: box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+pre.vamp-livecode.vamp-livecode-error {
+  border-radius: var(--ifm-pre-border-radius, 8px);
+  box-shadow: 0 0 0 1px rgba(193, 18, 31, 0.4), 0 0 12px rgba(193, 18, 31, 0.16);
+}
