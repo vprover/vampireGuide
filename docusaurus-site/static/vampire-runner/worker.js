@@ -46,7 +46,6 @@ async function runOnce({ tptp, argv, interactive, enableReadline }) {
     noInitialRun: true,
     noExitRuntime: isInteractive,
     locateFile: (path) => base + path,
-    mainScriptUrlOrBlob: base + 'vampire.js',
     print: (s) => {
       const msg = String(s);
       stdoutBuf.push(msg);
