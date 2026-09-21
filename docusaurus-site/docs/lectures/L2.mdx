@@ -79,6 +79,8 @@ $\displaystyle\frac{}{\varepsilon + x = x}$ <span class="greenbold">$(+_1)$</spa
 - From now on: A clause is <span class="redbold">ground</span> if it contains no variables.
 - If a clause contains variables, we assume that it implicitly universally quantified. That is, we treat $p(x) \lor q(x)$ as $\forall x(p(x) \lor q(x))$.
 
+> 🎬 **Animation:** [Follow a formula through CNF conversion step by step](../tutorial/animations.mdx#cnf-conversion).
+
 ## Binary Resolution Inference System
 The <span class="redbold">binary resolution inference system</span>, denoted by $\mathbb{BR}$ is an inference system on propositional clauses (or ground clauses).
 
@@ -87,6 +89,8 @@ It consists of two inference rules:
     - $\displaystyle\frac{p\lor C_1 \;\;\;\; \neg p \lor C_2}{C_1 \lor C_2}$ $(BR)$
 - <span class="redbold">Factoring</span>, denoted by <span class="redbold">Fact</span>: 
     - $\displaystyle\frac{L \lor L \lor C}{L \lor C}$ $(Fact)$
+
+> 🎬 **Animation:** [See first-order resolution, including the unifier and resolvent](../tutorial/animations.mdx#first-order-resolution).
 
 ## Soundness
 - An <span class="redbold">inference is sound</span> if the conclusion of this inference is a logical consequence of its premises.

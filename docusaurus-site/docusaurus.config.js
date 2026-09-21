@@ -129,6 +129,11 @@ const config = {
             label: 'Tutorial',
           },
           {
+            to: '/docs/animations',
+            position: 'left',
+            label: 'Animations',
+          },
+          {
             type: 'docSidebar',
             sidebarId: 'playgroundSidebar',
             position: 'left',

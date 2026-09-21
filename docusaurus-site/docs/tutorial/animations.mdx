@@ -1,0 +1,36 @@
+---
+sidebar_position: 2
+title: Concept animations
+description: Animated explanations of CNF conversion, first-order resolution, and given-clause selection.
+slug: /animations
+---
+
+import ConceptAnimation from '@site/src/components/ConceptAnimation';
+
+# Concept animations
+
+These animations keep formulas and clauses visible as they change, making it easier to follow each transformation and inference step. Use the video timeline to pause, replay, or inspect any step.
+
+## CNF conversion {#cnf-conversion}
+
+The animation follows a formula through the main stages of conversion to clausal normal form: eliminating implications, moving negations inward, standardizing variables, moving quantifiers, Skolemizing, dropping universal quantifiers, and distributing disjunctions.
+
+<ConceptAnimation src="/animations/cnf-conversion.mp4" poster="/animations/cnf-conversion-poster.png" title="Step-by-step CNF conversion">
+  A complete, step-by-step conversion to clausal normal form.
+</ConceptAnimation>
+
+## First-order resolution {#first-order-resolution}
+
+The animation shows how two complementary literals are unified and resolved. Color and motion connect the most general unifier, the selected literals, and the resulting resolvent.
+
+<ConceptAnimation src="/animations/first-order-resolution.mp4" poster="/animations/first-order-resolution-poster.png" title="First-order resolution with unification">
+  First-order resolution with the substitution and resolvent kept in view.
+</ConceptAnimation>
+
+## Given-clause selection {#given-clause-selection}
+
+The animation follows clauses through the processed and unprocessed sets of a simplified saturation loop. It highlights the selected given clause, generated consequences, and the repeated search cycle.
+
+<ConceptAnimation src="/animations/given-clause-selection.mp4" poster="/animations/given-clause-selection-poster.png" title="Given-clause selection in a saturation loop">
+  A visual model of processed and unprocessed clauses during proof search.
+</ConceptAnimation>
